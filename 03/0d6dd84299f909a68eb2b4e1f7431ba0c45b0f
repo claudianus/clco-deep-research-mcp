@@ -1,0 +1,23 @@
+.github/workflows/publish.yml
+  2a2d4838e1ef3877 1-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "030d6dd84299f909a68eb2b4e1f7431ba0c45b0f",
+  "prompts": {
+    "2a2d4838e1ef3877": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a2b5dcc7-14b1-47f2-9890-7d4e790d98a4",
+        "model": "glm-5-turbo"
+      },
+      "human_author": "ryan.h.park",
+      "messages": [],
+      "total_additions": 19,
+      "total_deletions": 0,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}
