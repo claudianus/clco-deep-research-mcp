@@ -1,0 +1,19 @@
+pyproject.toml
+  s_0a52b2ee00b31f::t_bd63a10443bbc4 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "70135d0e509ecd123d5b16b3c121f3c7c15688e4",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
