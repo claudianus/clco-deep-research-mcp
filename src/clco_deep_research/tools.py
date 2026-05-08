@@ -89,11 +89,26 @@ async def tool_web_search(
 # Tool: fetch_page
 # ═══════════════════════════════════════════════════════════════
 
-async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 3000) -> str:
+async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 6000) -> str:
     """Fetch a page via Scrapling and extract clean, LLM-optimized content.
 
-    Strips nav, footer, ads, scripts. Returns structured markdown with
-    quality signals, content type, and link suggestions for follow-up.
+    Use Cases:
+    - General web pages, blogs, documentation
+    - Sites without anti-bot protection
+    - When you need fast fetching (uses lightweight DynamicFetcher)
+
+    When to use stealth=True parameter instead of stealthy_fetch:
+    - Site returns CAPTCHA or access denied
+    - Content appears incomplete (missing articles, blocked sections)
+    - You suspect anti-bot measures but want to try fast path first
+
+    When to use stealthy_fetch instead:
+    - You already know the site has strong protection (Cloudflare, DataDome)
+    - Previous fetch_page attempts failed
+    - You need guaranteed access and can accept slower fetching
+
+    Returns structured markdown with quality signals, content type,
+    and link suggestions for follow-up.
     """
     engine = DuckDuckGoEngine()
     page = await engine.fetch(url, stealth=stealth)
@@ -162,7 +177,7 @@ async def tool_fetch_bulk(
     urls: list[str],
     stealth: bool = False,
     max_concurrent: int = 5,
-    max_tokens: int = 1500,
+    max_tokens: int = 3000,
 ) -> str:
     """Fetch multiple URLs in parallel via Scrapling.
 
@@ -208,6 +223,9 @@ async def tool_deep_research(
     max_sources: int = 8,
     follow_links: bool = False,
     expand_queries: bool = True,
+    max_tokens_per_source: int = 2500,
+    max_total_tokens: int = 20000,
+    summarize: bool = False,
 ) -> str:
     """End-to-end deep research pipeline with query expansion.
 
@@ -218,9 +236,12 @@ async def tool_deep_research(
     5. Optionally follow external links for deeper coverage
     6. Format into token-efficient markdown for LLM consumption
 
-    Every source includes quality scores, content types, code metadata,
-    and link maps. The host LLM uses this to decide which sources to
-    deep-read, which to skim, and what to pursue next.
+    Token Management:
+    - max_tokens_per_source: Budget per source (default: 2500)
+    - max_total_tokens: Total output budget (default: 20000)
+    - summarize: Enable extractive summarization for over-budget (default: False)
+
+    Smart allocation gives more tokens to high-quality sources.
     """
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
@@ -231,19 +252,40 @@ async def tool_deep_research(
         max_sources=max_sources,
         follow_links=follow_links,
         expand_queries=expand_queries,
+        max_tokens_per_source=max_tokens_per_source,
+        max_total_tokens=max_total_tokens,
+        summarize=summarize,
     )
-    return format_for_llm(result)
+    return format_for_llm(
+        result,
+        max_tokens_per_source=max_tokens_per_source,
+        max_total_tokens=max_total_tokens,
+        summarize=summarize,
+    )
 
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: stealthy_fetch
 # ═══════════════════════════════════════════════════════════════
 
-async def tool_stealthy_fetch(url: str, max_tokens: int = 3000) -> str:
+async def tool_stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
     """Fetch a URL with full StealthyFetcher anti-bot bypass.
 
-    Use for sites behind Cloudflare, DataDome, or other anti-bot protection.
-    Automatically adapts browser fingerprint per site.
+    Use Cases:
+    - Sites behind Cloudflare Turnstile, DataDome, or PerimeterX
+    - When fetch_page returns [BLOCKED] or incomplete content
+    - High-value sources where access certainty matters
+
+    Trade-offs:
+    - Slower: ~3-5x slower than fetch_page due to browser automation
+    - More resource intensive: Uses headless browser
+    - May still fail on the most advanced protections
+
+    Recommendation: Try fetch_page first, fall back to stealthy_fetch
+    only if needed.
+
+    Automatically adapts browser fingerprint per site for maximum
+    compatibility.
     """
     return await tool_fetch_page(url, stealth=True, max_tokens=max_tokens)
 
@@ -272,8 +314,86 @@ async def tool_parallel_search(
 # Tool registry
 # ═══════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════
+# Tool Guidance — How Agents Should Choose Tools
+# ═══════════════════════════════════════════════════════════════
+
+TOOL_GUIDANCE = """
+## Tool Selection Guide for AI Agents
+
+When deciding which tool to use, follow this priority order:
+
+### 1. Need to search for information?
+**→ Use `web_search`** (single query) or **`parallel_search`** (multiple queries)
+
+- **web_search**: Best for single-topic exploration. Returns ranked results with content type hints.
+- **parallel_search**: Best when you need multiple angles simultaneously (e.g., "Python async" + "Python threading" + "Python concurrency").
+
+**When NOT to use**: When you already have specific URLs to read.
+
+### 2. Have specific URLs to read?
+**→ Use `fetch_page`** (single URL) or **`fetch_bulk`** (multiple URLs)
+
+- **fetch_page**: Best for reading one specific page. Fast, lightweight. Try this first.
+- **fetch_bulk**: Best when you have 2-10 URLs from search results and want to read them all in parallel.
+
+**Anti-bot handling**:
+- If fetch_page returns [BLOCKED] or incomplete content, retry with `stealth=True` parameter
+- If still blocked, use `stealthy_fetch` as last resort
+- **stealthy_fetch**: Slower but bypasses Cloudflare/DataDome. Use only when regular fetch fails.
+
+### 3. Need comprehensive research on a topic?
+**→ Use `deep_research`**
+
+Best for:
+- Exploring a topic you know little about
+- Need multiple perspectives and sources
+- Want synthesized results with quality scoring
+
+**Parameters**:
+- `max_sources`: How many pages to crawl (default 8, max 15)
+- `max_total_tokens`: Total output budget (default 20000)
+- `summarize=True`: If output is too large, enables smart summarization
+- `follow_links=True`: Crawl external links for deeper coverage (slower)
+
+**When NOT to use**: When you already know exactly which URLs to read (use fetch_bulk instead).
+
+### 4. Quick Decision Tree
+
+```
+Need to find sources?
+├── Yes → web_search or parallel_search
+│   └── Got URLs? → fetch_page or fetch_bulk
+│       └── Blocked? → stealthy_fetch
+└── No → deep_research (comprehensive)
+    └── Too much output? → Use summarize=True
+```
+
+### 5. Performance Tips
+
+- **Fastest**: web_search, fetch_page (DynamicFetcher)
+- **Slowest**: stealthy_fetch (StealthyFetcher, ~3-5x slower)
+- **Most comprehensive**: deep_research with follow_links=True
+- **Token efficient**: deep_research with summarize=True
+
+### 6. Common Mistakes to Avoid
+
+- ❌ Using stealthy_fetch for every URL (wastes time)
+- ❌ Using deep_research when you only need one page
+- ❌ Not checking quality badges in results ([HIGH], [BLOCKED], etc.)
+- ❌ Ignoring follow-up links in fetch_page results
+"""
+
+# ═══════════════════════════════════════════════════════════════
+# Tool registry with enhanced descriptions
+# ═══════════════════════════════════════════════════════════════
+
 TOOLS = {
-    "web_search": (tool_web_search, "Scrape a search engine results page directly via Scrapling. No API keys needed. Returns content type hints per result.", {
+    "web_search": (tool_web_search, 
+        "Search the web by scraping search engine results. "
+        "BEST FOR: Finding sources on a single topic. "
+        "NOT FOR: Reading known URLs (use fetch_page instead). "
+        "Returns ranked results with [AUTHORITY] badges and content type hints.", {
         "type": "object",
         "properties": {
             "query": {"type": "string", "description": "Search query"},
@@ -283,30 +403,40 @@ TOOLS = {
         },
         "required": ["query"],
     }),
-    "fetch_page": (tool_fetch_page, "Fetch a URL via Scrapling and extract clean, LLM-optimized content with quality signals and follow-up links.", {
+    "fetch_page": (tool_fetch_page, 
+        "Extract clean, readable content from a single URL. "
+        "BEST FOR: Reading one specific page quickly. "
+        "TRY FIRST before stealthy_fetch. "
+        "If blocked, retry with stealth=True or use stealthy_fetch.", {
         "type": "object",
         "properties": {
             "url": {"type": "string", "description": "URL to fetch"},
             "stealth": {"type": "boolean", "default": False,
-                        "description": "Use full anti-bot bypass for protected sites"},
-            "max_tokens": {"type": "integer", "default": 3000, "minimum": 500, "maximum": 8000,
+                        "description": "Use anti-bot bypass. Try this if first attempt is blocked."},
+            "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000,
                            "description": "Approximate max output tokens"},
         },
         "required": ["url"],
     }),
-    "fetch_bulk": (tool_fetch_bulk, "Fetch multiple URLs in parallel via Scrapling. Each result includes quality signals for LLM prioritization.", {
+    "fetch_bulk": (tool_fetch_bulk, 
+        "Fetch multiple URLs in parallel. "
+        "BEST FOR: Reading 2-10 known URLs simultaneously. "
+        "Each result includes quality signals ([HIGH], [BLOCKED]) for prioritization.", {
         "type": "object",
         "properties": {
             "urls": {"type": "array", "items": {"type": "string"},
                      "description": "List of URLs to fetch"},
             "stealth": {"type": "boolean", "default": False},
             "max_concurrent": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
-            "max_tokens": {"type": "integer", "default": 1500, "minimum": 300, "maximum": 5000},
+            "max_tokens": {"type": "integer", "default": 3000, "minimum": 300, "maximum": 5000},
         },
         "required": ["urls"],
     }),
     "deep_research": (tool_deep_research,
-        "Full pipeline: expand query → search → crawl → extract → structure for LLM. Includes query expansion, relevance scoring, and code-aware metadata.", {
+        "Comprehensive research: auto-expands query, searches multiple angles, crawls top results, and synthesizes findings. "
+        "BEST FOR: Exploring topics you don't know well. "
+        "NOT FOR: When you already have specific URLs (use fetch_bulk instead). "
+        "Smart token management keeps output manageable. Use summarize=True if too large.", {
         "type": "object",
         "properties": {
             "query": {"type": "string", "description": "Research question or topic"},
@@ -316,20 +446,31 @@ TOOLS = {
                              "description": "Also crawl external links found on result pages"},
             "expand_queries": {"type": "boolean", "default": True,
                                "description": "Generate subqueries for broader coverage"},
+            "max_tokens_per_source": {"type": "integer", "default": 2500, "minimum": 500, "maximum": 5000,
+                                       "description": "Token budget per source"},
+            "max_total_tokens": {"type": "integer", "default": 20000, "minimum": 2000, "maximum": 50000,
+                                  "description": "Total output token budget"},
+            "summarize": {"type": "boolean", "default": False,
+                           "description": "Enable extractive summarization for over-budget scenarios"},
         },
         "required": ["query"],
     }),
     "stealthy_fetch": (tool_stealthy_fetch,
-        "Fetch a URL with full anti-bot bypass (Cloudflare Turnstile, DataDome).", {
+        "Fetch a URL with full anti-bot bypass. "
+        "BEST FOR: Sites that block regular fetching (Cloudflare, DataDome). "
+        "USE AS LAST RESORT: Try fetch_page first, then fetch_page with stealth=True, then this. "
+        "~3-5x slower than fetch_page but more reliable for protected sites.", {
         "type": "object",
         "properties": {
             "url": {"type": "string", "description": "URL to fetch"},
-            "max_tokens": {"type": "integer", "default": 3000, "minimum": 500, "maximum": 8000},
+            "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000},
         },
         "required": ["url"],
     }),
     "parallel_search": (tool_parallel_search,
-        "Run multiple searches in parallel, each scraping the search engine independently.", {
+        "Run multiple searches in parallel. "
+        "BEST FOR: Getting multiple perspectives fast (e.g., 'Python vs Go', 'Python tutorial', 'Python performance'). "
+        "Faster than calling web_search multiple times sequentially.", {
         "type": "object",
         "properties": {
             "queries": {"type": "array", "items": {"type": "string"},

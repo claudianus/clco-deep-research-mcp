@@ -1,6 +1,6 @@
 [project]
 name = "clco-deep-research-mcp"
-version = "0.3.7"
+version = "0.4.0"
 description = "Free deep research MCP for coding agents — 4-engine web scraping + content extraction + code analysis. Zero API keys. One-line install."
 readme = "README.md"
 license = { text = "MIT" }

@@ -664,7 +664,7 @@
         <div class="hero-bg"></div>
         <div class="hero-grid"></div>
         <div class="hero-content">
-            <div class="hero-badge animate-in">v0.3.7 Now Available</div>
+            <div class="hero-badge animate-in">v0.4.0 Now Available</div>
             <h1 class="hero-title animate-in delay-1">
                 Deep Research MCP for<br><span>Coding Agents</span>
             </h1>
@@ -690,7 +690,7 @@
                     <div class="stat-label">Languages</div>
                 </div>
                 <div class="stat">
-                    <div class="stat-value">68</div>
+                    <div class="stat-value">113</div>
                     <div class="stat-label">Tests</div>
                 </div>
                 <div class="stat">
@@ -738,10 +738,29 @@
             <div class="feature-card">
                 <div class="feature-icon">🧠</div>
                 <h3 class="feature-title">deep_research</h3>
-                <p class="feature-desc">Full pipeline: query expansion → parallel search → relevance scoring → multi-pass crawling → content synthesis.</p>
+                <p class="feature-desc">Full pipeline: query expansion → parallel search → relevance scoring → multi-pass crawling → content synthesis. Smart token management with dynamic allocation.</p>
                 <div class="feature-meta">
                     <span class="feature-badge">Query Expansion</span>
-                    <span class="feature-badge">BFS Crawler</span>
+                    <span class="feature-badge">Smart Tokens</span>
+                    <span class="feature-badge">Summarize</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3 class="feature-title">AI Agent Guidance</h3>
+                <p class="feature-desc">Built-in MCP prompts guide agents on tool selection, anti-bot strategy, and research workflow. Enhanced descriptions with BEST FOR / NOT FOR labels.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">3 Prompts</span>
+                    <span class="feature-badge">Decision Tree</span>
+                </div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🇰🇷</div>
+                <h3 class="feature-title">Korean Support</h3>
+                <p class="feature-desc">Auto-detects Korean queries and expands with Korean-specific angles. Recognizes Korean developer communities: velog, tistory, naver, brunch, okky.</p>
+                <div class="feature-meta">
+                    <span class="feature-badge">Auto-detect</span>
+                    <span class="feature-badge">Korean Domains</span>
                 </div>
             </div>
             <div class="feature-card">
@@ -810,6 +829,13 @@
                 </div>
                 <div class="pipeline-step">
                     <div class="step-number">6</div>
+                    <div class="step-content">
+                        <h3>Smart Token Management</h3>
+                        <p>Dynamic allocation: HIGH quality gets 100% budget, medium 70%, low 40%. Optional extractive summarization for over-budget scenarios.</p>
+                    </div>
+                </div>
+                <div class="pipeline-step">
+                    <div class="step-number">7</div>
                     <div class="step-content">
                         <h3>Synthesis & Formatting</h3>
                         <p>Aggregate by topic with confidence scores. Format into token-efficient markdown with quality badges and relevance scores.</p>

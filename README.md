@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/MCP-native-blue" alt="MCP Native">
   <img src="https://img.shields.io/badge/engines-4-orange" alt="4 Search Engines">
   <img src="https://img.shields.io/badge/cost-free-brightgreen" alt="Free">
+  <img src="https://img.shields.io/badge/tests-113%20passing-success" alt="Tests">
 </p>
 
 <h1 align="center">clco-deep-research-mcp</h1>
@@ -130,6 +131,37 @@ claude mcp add clco-deep-research pip:clco-deep-research-mcp
 | `stealthy_fetch` | 완전한 안티봇 우회 | Full anti-bot bypass | Cloudflare Turnstile, DataDome |
 | `parallel_search` | 병렬 다중 쿼리 검색 | Multiple queries in parallel | Multi-engine scatter-gather |
 
+### 🎯 Tool Selection Guide for AI Agents | AI 에이전트용 툴 선택 가이드
+
+```
+What do you need? | 무엇이 필요한가?
+├── Find information? | 정보를 찾아야 하나?
+│   ├── Single angle → web_search
+│   └── Multiple angles → parallel_search
+│
+├── Read specific URLs? | 특정 URL을 읽어야 하나?
+│   ├── One URL → fetch_page (try first | 먼저 시도)
+│   │   └── Blocked? → fetch_page with stealth=True
+│   │       └── Still blocked? → stealthy_fetch (last resort | 최후의 수단)
+│   └── Multiple URLs → fetch_bulk
+│
+└── Deep research? | 심층 리서치가 필요한가?
+    └── deep_research
+        └── Too much output? → Use summarize=True
+```
+
+**Performance Ranking | 성능 순위**:
+1. 🚀 **Fastest**: web_search, fetch_page
+2. ⚡ **Medium**: parallel_search, fetch_bulk
+3. 🐢 **Slow**: deep_research
+4. 🐌 **Slowest**: stealthy_fetch (~3-5x slower)
+
+**Common Mistakes to Avoid | 피해야 할 실수**:
+- ❌ Using stealthy_fetch for every URL (wastes time | 시간 낭비)
+- ❌ Using deep_research when you only need one page
+- ❌ Not checking quality badges ([HIGH], [BLOCKED], etc.)
+- ❌ Ignoring follow-up links in fetch_page results
+
 ---
 
 ## 🔄 Deep Research Pipeline | 딥리서치 처리 과정
@@ -160,9 +192,9 @@ Query | 쿼리
 
 ```
 src/clco_deep_research/
-├── server.py              # MCP server (stdio) | MCP 서버
+├── server.py              # MCP server + prompts | MCP 서버 + 프롬프트
 ├── exceptions.py          # Structured error hierarchy | 구조화된 예외 계층
-├── tools.py               # 6 MCP tools | 6개 MCP 도구
+├── tools.py               # 6 MCP tools + guidance | 6개 MCP 도구 + 가이드
 ├── engines/
 │   ├── base.py            # Abstract engine interface | 추상 엔진 인터페이스
 │   └── duckduckgo.py      # DuckDuckGo (improved selectors) | 개선된 선택자
@@ -176,6 +208,41 @@ src/clco_deep_research/
     ├── retry.py           # Exponential backoff | 지수 백오프
     └── url.py             # URL normalization/filtering | URL 정규화/필터링
 ```
+
+---
+
+## 🎁 MCP Prompts | MCP 프롬프트
+
+In addition to tools, this MCP server provides **3 guidance prompts** that help AI agents use the tools effectively:
+
+| Prompt | Purpose | When to Use |
+|--------|---------|-------------|
+| `tool_selection_guide` | Complete tool selection guide with decision tree | When unsure which tool to use |
+| `anti_bot_strategy` | Step-by-step anti-bot escalation ladder | When fetch fails with [BLOCKED] |
+| `research_workflow` | Recommended 3-phase research workflow | For comprehensive research tasks |
+
+These prompts are accessible via the MCP protocol and provide context-aware guidance to maximize tool effectiveness.
+
+---
+
+## ✨ What's New in v0.4.0 | v0.4.0 신규 기능
+
+### 🧠 Smart Token Management
+- **Dynamic allocation**: High-quality sources get 100% budget, medium 70%, low 40%
+- **Total output budget**: `max_total_tokens` parameter (default 20,000)
+- **Extractive summarization**: `summarize=True` reduces output while preserving key points
+- **Increased defaults**: fetch_page 3000→6000, fetch_bulk 1500→3000
+
+### 🇰🇷 Enhanced Korean Support
+- **Korean query detection**: Auto-detects 한국어 queries and expands with Korean-specific angles
+- **Korean authority domains**: velog.io, tistory.com, naver.com, brunch.co.kr, okky.kr
+- **Korean content type**: Properly classifies Korean developer blog content
+
+### 🎯 AI Agent Tool Guidance
+- **Enhanced descriptions**: Every tool now includes "BEST FOR", "NOT FOR", "TRY FIRST", "LAST RESORT"
+- **MCP Prompts**: 3 built-in prompts for tool selection, anti-bot strategy, and research workflow
+- **Decision tree**: Visual guide for choosing the right tool
+- **Performance ranking**: Clear speed indicators (🚀 Fastest → 🐌 Slowest)
 
 ---
 
@@ -214,7 +281,7 @@ pytest tests/ -v
 pytest tests/test_query_expansion.py -v
 ```
 
-**Current coverage | 현재 커버리지**: 68 tests, all passing | 68개 테스트, 모두 통과
+**Current coverage | 현재 커버리지**: 113 tests, all passing | 113개 테스트, 모두 통과
 
 ---
 

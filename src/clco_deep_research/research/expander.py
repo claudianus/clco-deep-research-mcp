@@ -48,6 +48,18 @@ _QUERY_TEMPLATES = {
         "{query} reddit community",
         "{query} forum discussion",
     ],
+    "korean_community": [
+        "{query} 한국 개발자 커뮤니티",
+        "{query} 국내 개발 블로그",
+        "{query} 한국어 튜토리얼",
+        "{query} 네이버 블로그",
+        "{query} 티스토리",
+    ],
+    "korean_docs": [
+        "{query} 한국어 문서",
+        "{query} 한글 설명서",
+        "{query} 국내 번역",
+    ],
 }
 
 
@@ -85,6 +97,15 @@ def _select_angles(query: str) -> list[str]:
     """Select relevant expansion angles based on query content."""
     lower = query.lower()
     angles = []
+
+    # Check for Korean language indicators
+    has_korean = any('\uac00' <= char <= '\ud7a3' for char in query)
+    korean_keywords = ["한국", "국내", "korean", "한글", "한국어"]
+    is_korean_query = has_korean or any(kw in lower for kw in korean_keywords)
+    
+    if is_korean_query:
+        angles.extend(["korean_community", "korean_docs", "recent"])
+        return angles
 
     # Always include recent
     angles.append("recent")

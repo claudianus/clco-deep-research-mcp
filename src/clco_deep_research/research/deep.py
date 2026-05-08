@@ -65,6 +65,11 @@ class ResearchResult:
     blocked_count: int = 0
     # Query expansion info
     subqueries: list[str] = field(default_factory=list)
+    # Token management metadata
+    total_tokens_used: int = 0
+    tokens_allocated: int = 0
+    sources_summarized: int = 0
+    sources_dropped: int = 0
 
 
 async def deep_research(
@@ -74,6 +79,9 @@ async def deep_research(
     follow_links: bool = False,
     stealth: bool = False,
     expand_queries: bool = True,
+    max_tokens_per_source: int = 2500,
+    max_total_tokens: int = 20000,
+    summarize: bool = False,
 ) -> ResearchResult:
     """End-to-end deep research pipeline with query expansion and multi-pass crawling.
 
@@ -91,6 +99,9 @@ async def deep_research(
         follow_links: If True, follow one level of external links.
         stealth: Use StealthyFetcher for anti-bot bypass.
         expand_queries: If True, generate subqueries for broader coverage.
+        max_tokens_per_source: Token budget per source.
+        max_total_tokens: Total output token budget.
+        summarize: Enable extractive summarization for over-budget scenarios.
     """
     t0 = time.monotonic()
 
@@ -251,16 +262,133 @@ async def deep_research(
                     ))
 
     elapsed = (time.monotonic() - t0) * 1000
+    
+    # Smart token allocation
+    allocations, sources_summarized, sources_dropped = _allocate_tokens(
+        sources[:max_sources],
+        max_tokens_per_source,
+        max_total_tokens,
+        summarize,
+    )
+    
+    # Apply allocations to sources
+    allocated_sources = []
+    for src, budget in allocations:
+        src.markdown = _extractive_summarize(src.markdown, budget) if summarize and len(src.markdown) > budget * 4 else src.markdown
+        allocated_sources.append(src)
+    
     return ResearchResult(
         query=query,
         engine=engine,
-        total_sources=len(sources),
-        sources=sources[:max_sources],
+        total_sources=len(allocated_sources),
+        sources=allocated_sources,
         elapsed_ms=elapsed,
         high_quality_count=high_quality,
         blocked_count=blocked,
         subqueries=subqueries,
+        tokens_allocated=sum(budget for _, budget in allocations),
+        sources_summarized=sources_summarized,
+        sources_dropped=sources_dropped,
     )
+
+
+def _allocate_tokens(
+    sources: list[Source],
+    max_tokens_per_source: int,
+    max_total_tokens: int,
+    summarize: bool,
+) -> tuple[list[tuple[Source, int]], int, int]:
+    """Allocate tokens to sources based on quality scores.
+    
+    Returns:
+        (source_allocation, sources_summarized, sources_dropped)
+        where source_allocation is list of (source, token_budget) tuples
+    """
+    if not sources:
+        return [], 0, 0
+    
+    # Sort by quality and relevance
+    quality_weights = {"high": 1.0, "medium": 0.7, "low": 0.4, "empty": 0.2, "blocked": 0.0}
+    scored_sources = [
+        (src, quality_weights.get(src.quality, 0.5) * (1 + src.relevance_score))
+        for src in sources
+    ]
+    scored_sources.sort(key=lambda x: x[1], reverse=True)
+    
+    allocations = []
+    total_allocated = 0
+    sources_summarized = 0
+    sources_dropped = 0
+    
+    for src, score in scored_sources:
+        if src.quality == "blocked":
+            continue
+            
+        # Calculate token budget based on quality
+        quality_mult = quality_weights.get(src.quality, 0.5)
+        budget = int(max_tokens_per_source * quality_mult)
+        
+        # Check if we'd exceed total budget
+        if total_allocated + budget > max_total_tokens:
+            # Try with summarization if enabled
+            if summarize and src.quality in ("medium", "low"):
+                budget = int(budget * 0.5)  # Half for summarized
+                if total_allocated + budget <= max_total_tokens:
+                    allocations.append((src, budget))
+                    total_allocated += budget
+                    sources_summarized += 1
+                    continue
+            
+            # Drop source if still over budget
+            sources_dropped += 1
+            continue
+        
+        allocations.append((src, budget))
+        total_allocated += budget
+    
+    return allocations, sources_summarized, sources_dropped
+
+
+def _extractive_summarize(markdown: str, max_tokens: int) -> str:
+    """Create extractive summary using headings and key paragraphs."""
+    from ..extraction.content import extract_headings, estimate_token_count
+    
+    if estimate_token_count(markdown) <= max_tokens:
+        return markdown
+    
+    # Extract headings
+    headings = extract_headings(markdown)
+    
+    # Build summary from headings + first paragraph after each heading
+    summary_parts = []
+    lines = markdown.split('\n')
+    current_section = []
+    in_section = False
+    
+    for line in lines:
+        if line.startswith('#'):
+            # Save previous section
+            if current_section:
+                summary_parts.extend(current_section[:2])  # Heading + first paragraph
+                current_section = []
+            in_section = True
+            current_section.append(line)
+        elif in_section and line.strip() and not line.startswith('#'):
+            current_section.append(line)
+            if len(current_section) >= 3:  # Heading + 2 paragraphs max
+                in_section = False
+    
+    # Add last section
+    if current_section:
+        summary_parts.extend(current_section[:2])
+    
+    summary = '\n\n'.join(summary_parts)
+    
+    # Ensure we don't exceed token limit
+    if estimate_token_count(summary) > max_tokens:
+        summary = truncate_for_llm(summary, max_tokens)
+    
+    return summary + "\n\n_[Content summarized for brevity]_"
 
 
 def _score_result(result: SearchResult, query: str) -> float:
@@ -317,7 +445,7 @@ async def _fetch_pages(
     return await asyncio.gather(*(_one(u) for u in urls))
 
 
-def format_for_llm(result: ResearchResult, max_tokens_per_source: int = 1500) -> str:
+def format_for_llm(result: ResearchResult, max_tokens_per_source: int = 2500) -> str:
     """Format research results into token-efficient markdown for LLM consumption.
 
     Includes quality metadata so the host LLM can prioritize which sources to

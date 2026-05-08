@@ -38,6 +38,9 @@ _AUTHORITY_DOMAINS = {
     "arxiv.org", "pubmed.ncbi.nlm.nih.gov", "scholar.google.com",
     "pypi.org", "npmjs.com", "crates.io", "pkg.go.dev",
     "realpython.com", "dev.to", "medium.com",
+    # Korean developer communities
+    "velog.io", "tistory.com", "naver.com", "daum.net",
+    "brunch.co.kr", "okky.kr", "hashnode.dev",
 }
 
 

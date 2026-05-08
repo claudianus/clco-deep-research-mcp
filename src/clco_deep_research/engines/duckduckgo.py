@@ -88,6 +88,13 @@ def _guess_content_type(url: str, snippet: str = "") -> ContentType:
     lower = (url + " " + snippet).lower()
     domain = urlparse(url).netloc.lower()
 
+    # Korean-specific detection
+    korean_indicators = ["velog.io", "tistory.com", "naver.com/blog", "brunch.co.kr", "okky.kr"]
+    if any(ind in domain for ind in korean_indicators):
+        if "github.com" in domain:
+            return ContentType.CODE
+        return ContentType.ARTICLE
+
     for d in _DOCS_DOMAINS:
         if d in domain:
             return ContentType.DOCUMENTATION
