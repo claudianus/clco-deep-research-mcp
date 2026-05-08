@@ -1,0 +1,56 @@
+src/clco_deep_research/utils/url.py
+  s_0a52b2ee00b31f::t_9d30ee9ebcf0f1 1-130
+tests/test_exceptions.py
+  s_0a52b2ee00b31f::t_e27ce9da27f028 1-49
+README.md
+  s_0a52b2ee00b31f::t_6b25ed1c275535 14,16,18-23,52,55,59,62-78,81,84-99,107,109-111,117,121,123,135-154,156
+src/clco_deep_research/utils/__init__.py
+  s_0a52b2ee00b31f::t_cc513b76c536db 1
+src/clco_deep_research/extraction/content.py
+  s_0a52b2ee00b31f::t_495a4012924905 1-62
+src/clco_deep_research/engines/base.py
+  s_0a52b2ee00b31f::t_8096d97b5897f3 1-108
+src/clco_deep_research/utils/retry.py
+  s_0a52b2ee00b31f::t_5204f8c8c14916 1-64
+src/clco_deep_research/exceptions.py
+  s_0a52b2ee00b31f::t_6dc4ce38577861 1-11,14,16,20-24,26-30,32-36,39-43,46-50,52-56
+  s_0a52b2ee00b31f::t_700be80f757893 12-13,15,17-19,25,31,37-38,44-45,51,57
+src/clco_deep_research/server.py
+  s_0a52b2ee00b31f::t_2a85e7423eff91 4,11-13,22-27,33,42,44-47,50,53,55-56,60
+pyproject.toml
+  s_0a52b2ee00b31f::t_2b8a2f6df772e1 3
+tests/test_url_utils.py
+  s_0a52b2ee00b31f::t_cf0da6af66285f 1-87
+src/clco_deep_research/research/expander.py
+  s_0a52b2ee00b31f::t_094d6777c4df01 1-142
+src/clco_deep_research/engines/duckduckgo.py
+  s_0a52b2ee00b31f::t_0c392c2e85ab16 1,6,11-16,20,28-29,32-40,44-52,68-75,77-83,87,106-227,229,231-232,234-236,238-244,246-253,255-256,258-259,261-262,264-266,268,270-273,275,282-286,289-290,297,300-308,310-339,343,351-352,405,422,441,448,460-463
+src/clco_deep_research/research/deep.py
+  s_0a52b2ee00b31f::t_c107e5376907dc 1,11,16-24,44,51-53,66-67,76,78,80-85,89,91-93,97-154,159-163,171,186,193-194,197,204-205,208,212,216,220,223,228,242,249-250,262,266-319,339,342-346,361,375,384-387,390-393,401-409
+src/clco_deep_research/__init__.py
+  s_0a52b2ee00b31f::t_916827071b1e98 3
+src/clco_deep_research/tools.py
+  s_0a52b2ee00b31f::t_cfa5187f355868 7-8,10-11,14,16-20,22,53-68,76-80,93,98-99,104,117,124-126,139,171-178,210,212-223,233,309,317-318
+tests/test_query_expansion.py
+  s_0a52b2ee00b31f::t_f7fef4b2e89070 1-50
+src/clco_deep_research/extraction/__init__.py
+  s_0a52b2ee00b31f::t_1013d8c419bb44 1
+src/clco_deep_research/extraction/code.py
+  s_0a52b2ee00b31f::t_d1e67d47e9d6b8 1-214
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "70f8bd32e63242b9da3835e025ec7d922d22272a",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
