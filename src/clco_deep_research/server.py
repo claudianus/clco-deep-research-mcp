@@ -11,6 +11,7 @@ Run:
 from __future__ import annotations
 
 import logging
+import sys
 from typing import Any
 
 from mcp.server import Server
@@ -25,7 +26,7 @@ from .tools import TOOLS
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.StreamHandler()],
+    handlers=[logging.StreamHandler(sys.stderr)],
 )
 
 server = Server("clco-deep-research")
