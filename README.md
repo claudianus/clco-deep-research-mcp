@@ -1,4 +1,10 @@
 <p align="center">
+  <a href="https://claudianus.github.io/clco-deep-research-mcp/">🌐 Website</a> •
+  <a href="https://pypi.org/project/clco-deep-research-mcp/">📦 PyPI</a> •
+  <a href="https://github.com/claudianus/clco-deep-research-mcp">⭐ GitHub</a>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/pypi/v/clco-deep-research-mcp?color=blue&label=PyPI" alt="PyPI">
   <img src="https://img.shields.io/pypi/pyversions/clco-deep-research-mcp?color=green" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-purple" alt="License">
