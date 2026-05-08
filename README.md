@@ -39,7 +39,44 @@ pip install clco-deep-research-mcp
 clco-deep-research
 ```
 
-**Claude Code config** (`~/.claude.json`):
+**Claude Code** (`~/.claude.json`):
+```json
+{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}
+```
+
+**Cursor** (`.cursor/mcp.json`):
+```json
+{
+  "mcpServers": {
+    "clco-deep-research": {
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}
+```
+
+**VS Code** (`.vscode/mcp.json`):
+```json
+{
+  "servers": {
+    "clco-deep-research": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["clco-deep-research-mcp"]
+    }
+  }
+}
+```
+
+**Windsurf** (`.windsurf/mcp_config.json`):
 ```json
 {
   "mcpServers": {
