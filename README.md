@@ -31,12 +31,11 @@
 ## Quick Start
 
 ```bash
-# One-shot (no install needed)
-uvx clco-deep-research-mcp
-
-# Or install globally
+# Install globally (recommended)
 pip install clco-deep-research-mcp
-clco-deep-research
+
+# Run directly
+python3 -m clco_deep_research.server
 ```
 
 **Claude Code** (`~/.claude.json`):
@@ -44,8 +43,8 @@ clco-deep-research
 {
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }
@@ -56,8 +55,8 @@ clco-deep-research
 {
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }
@@ -69,8 +68,8 @@ clco-deep-research
   "servers": {
     "clco-deep-research": {
       "type": "stdio",
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }
@@ -81,8 +80,8 @@ clco-deep-research
 {
   "mcpServers": {
     "clco-deep-research": {
-      "command": "uvx",
-      "args": ["clco-deep-research-mcp"]
+      "command": "python3",
+      "args": ["-m", "clco_deep_research.server"]
     }
   }
 }

@@ -50,6 +50,10 @@ Issues = "https://github.com/claudianus/clco-deep-research-mcp/issues"
 clco-deep-research = "clco_deep_research.server:run"
 clco-deep-research-mcp = "clco_deep_research.server:run"
 
+[tool.uvx]
+python = "3.12"
+quiet = true
+
 [build-system]
 requires = ["setuptools>=69.0"]
 build-backend = "setuptools.build_meta"

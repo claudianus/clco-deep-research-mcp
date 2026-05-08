@@ -22,7 +22,6 @@ from mcp.types import Tool, TextContent
 
 from .tools import TOOLS
 
-# Configure structured logging - use stderr only
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
