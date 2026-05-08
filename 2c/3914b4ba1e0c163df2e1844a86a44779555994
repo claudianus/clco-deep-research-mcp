@@ -1,0 +1,22 @@
+uv.lock
+  ai_agent 275
+src/clco_deep_research/server.py
+  s_0a52b2ee00b31f::t_cd34293209f3f9 10-15,17,84
+  s_0a52b2ee00b31f::t_e9ae866ad37be3 6,8,18-81,85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "2c3914b4ba1e0c163df2e1844a86a44779555994",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
