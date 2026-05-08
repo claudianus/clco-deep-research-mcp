@@ -1,0 +1,19 @@
+AGENTS.md
+  s_66aa218c8bef6b::t_d5626646f45443 1-90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "e9dc8578a3fcb9c8b380e66d7e9d96f21d6969a8",
+  "prompts": {},
+  "sessions": {
+    "s_66aa218c8bef6b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1f804b027ffeLb1mymHWbvuPQk",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
