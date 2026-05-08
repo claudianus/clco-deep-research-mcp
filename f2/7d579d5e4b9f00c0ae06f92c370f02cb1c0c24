@@ -1,0 +1,21 @@
+docs/index.html
+  s_0a52b2ee00b31f::t_2fb54781670d71 667
+docs/ko/index.html
+  s_0a52b2ee00b31f::t_54fe60db3e4a10 1-1118
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "f27d579d5e4b9f00c0ae06f92c370f02cb1c0c24",
+  "prompts": {},
+  "sessions": {
+    "s_0a52b2ee00b31f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ses_1faeff4f1ffeu20YapOfPfg0jK",
+        "model": "unknown"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
