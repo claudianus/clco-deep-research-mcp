@@ -4,21 +4,26 @@ Every tool response includes rich metadata (quality scores, content types,
 link maps) so the host LLM can make informed decisions about which sources
 to deep-read, which to skim, and what to pursue next."""
 
+from __future__ import annotations
+
 import asyncio
-import os
-from datetime import datetime, timezone
+import json
+import logging
 from typing import Optional
 
-from .engines.duckduckgo import scrape_serp, fetch_page, fetch_many
+from .engines.duckduckgo import DuckDuckGoEngine
 from .research.deep import deep_research, format_for_llm
-from .research.extractor import truncate_for_llm
+from .extraction.content import truncate_for_llm
+from .exceptions import ResearchError
+from .utils.retry import with_retry
 
-SEARCH_ENGINES = ["duckduckgo", "duckduckgo_lite", "google", "bing"]
+logger = logging.getLogger(__name__)
+
+SEARCH_ENGINES = ["duckduckgo", "duckduckgo_lite"]
 
 
 def _clean_urls(raw: str) -> list[str]:
     """Parse URLs from a string (newline-separated or JSON array)."""
-    import json
     raw = raw.strip()
     if raw.startswith("["):
         try:
@@ -30,7 +35,6 @@ def _clean_urls(raw: str) -> list[str]:
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: web_search
-# Scrape a search engine SERP directly via Scrapling.
 # ═══════════════════════════════════════════════════════════════
 
 async def tool_web_search(
@@ -46,7 +50,22 @@ async def tool_web_search(
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
-    results = await scrape_serp(query, engine=engine, max_results=max_results)
+    try:
+        search_engine = DuckDuckGoEngine(variant=engine)
+        results = await with_retry(
+            search_engine.search,
+            query,
+            max_results=max_results,
+            max_attempts=3,
+        )
+    except ResearchError as e:
+        if e.suggested_engine and e.suggested_engine != engine:
+            # Fallback to suggested engine
+            logger.info("Falling back to %s", e.suggested_engine)
+            search_engine = DuckDuckGoEngine(variant=e.suggested_engine)
+            results = await search_engine.search(query, max_results=max_results)
+        else:
+            raise
 
     if not results:
         return f"No results found for: {query}"
@@ -54,7 +73,11 @@ async def tool_web_search(
     lines = [f"Search: **{query}**  _engine={engine}_\n"]
     for r in results:
         type_badge = f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
-        lines.append(f"{r.position}. **{r.title}**{type_badge}")
+        auth_badge = " [AUTHORITY]" if any(d in r.domain for d in [
+            "docs.python.org", "developer.mozilla.org", "github.com",
+            "stackoverflow.com", "arxiv.org"
+        ]) else ""
+        lines.append(f"{r.position}. **{r.title}**{type_badge}{auth_badge}")
         lines.append(f"   {r.url}")
         if r.snippet:
             lines.append(f"   > {r.snippet[:300]}")
@@ -64,21 +87,21 @@ async def tool_web_search(
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: fetch_page
-# Scrapling-fetch a URL and extract clean content for LLM.
 # ═══════════════════════════════════════════════════════════════
 
 async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 3000) -> str:
-    """Fetch a page via Scrapling and extract LLM-optimized content.
+    """Fetch a page via Scrapling and extract clean, LLM-optimized content.
 
     Strips nav, footer, ads, scripts. Returns structured markdown with
     quality signals, content type, and link suggestions for follow-up.
     """
-    page = await fetch_page(url, stealth=stealth)
+    engine = DuckDuckGoEngine()
+    page = await engine.fetch(url, stealth=stealth)
 
     if page.quality.value == "blocked":
         return (
             f"## [BLOCKED] {url}\n"
-            f"_anti-bot wall hit, needs stealth upgrade_\n"
+            f"_anti-bot wall hit, try stealthy_fetch_\n"
             f"Error: {page.error_message}"
         )
 
@@ -91,13 +114,16 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 300
     # Quality header
     quality_line = f"_quality: {page.quality.value} | type: {page.content_type.value} | {page.content_length} chars | {page.fetch_duration_ms:.0f}ms_"
 
-    # Code-aware metadata for coding agent consumption
+    # Code-aware metadata
     code_meta = ""
     if page.code_languages:
         code_meta += f"\n_languages: {', '.join(page.code_languages)}_"
     if page.api_signatures:
         sigs = "; ".join(s["signature"][:80] for s in page.api_signatures[:5])
         code_meta += f"\n_API signatures: {sigs}_"
+    if getattr(page, 'package_refs', []):
+        pkgs = ", ".join(f"{p['package']} ({p['language']})" for p in page.package_refs[:5])
+        code_meta += f"\n_Packages: {pkgs}_"
     if page.code_to_text_ratio > 0.1:
         code_meta += f"\n_code-to-text ratio: {page.code_to_text_ratio:.0%}_"
     if page.published_date:
@@ -110,7 +136,7 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 300
     elif page.is_error_solution:
         code_meta += "\n_type: error/solution_"
 
-    # Link suggestions for LLM-guided follow-up
+    # Link suggestions
     link_section = ""
     if page.external_links:
         links_preview = "\n".join(
@@ -130,7 +156,6 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 300
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: fetch_bulk
-# Parallel Scrapling fetch of multiple URLs.
 # ═══════════════════════════════════════════════════════════════
 
 async def tool_fetch_bulk(
@@ -143,7 +168,14 @@ async def tool_fetch_bulk(
 
     Each result includes quality signals so the LLM can prioritize reading.
     """
-    pages = await fetch_many(urls, stealth=stealth, max_concurrent=max_concurrent)
+    engine = DuckDuckGoEngine()
+    sem = asyncio.Semaphore(max_concurrent)
+
+    async def _fetch_one(u: str):
+        async with sem:
+            return await engine.fetch(u, stealth=stealth)
+
+    pages = await asyncio.gather(*(_fetch_one(u) for u in urls))
 
     lines: list[str] = []
     for i, page in enumerate(pages, 1):
@@ -168,7 +200,6 @@ async def tool_fetch_bulk(
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: deep_research
-# Full pipeline: search → crawl → extract → structure.
 # ═══════════════════════════════════════════════════════════════
 
 async def tool_deep_research(
@@ -176,18 +207,20 @@ async def tool_deep_research(
     engine: str = "duckduckgo_lite",
     max_sources: int = 8,
     follow_links: bool = False,
+    expand_queries: bool = True,
 ) -> str:
-    """End-to-end deep research pipeline.
+    """End-to-end deep research pipeline with query expansion.
 
-    1. Scrape search engine SERP for result URLs
-    2. Concurrently crawl each result page with Scrapling
-    3. Extract clean, structured content (markdown when possible)
-    4. Optionally follow external links from crawled pages
-    5. Format into token-efficient markdown for LLM consumption
+    1. Expand query into orthogonal subqueries for broader coverage
+    2. Search each subquery and collect results
+    3. Deduplicate and score by relevance and authority
+    4. Concurrently crawl top pages with quality assessment
+    5. Optionally follow external links for deeper coverage
+    6. Format into token-efficient markdown for LLM consumption
 
-    Every source includes quality scores, content types, and link maps.
-    The host LLM uses this metadata to decide which sources to deep-read,
-    which to skim, and what to pursue for follow-up research.
+    Every source includes quality scores, content types, code metadata,
+    and link maps. The host LLM uses this to decide which sources to
+    deep-read, which to skim, and what to pursue next.
     """
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
@@ -197,14 +230,13 @@ async def tool_deep_research(
         engine=engine,
         max_sources=max_sources,
         follow_links=follow_links,
-        stealth=(engine == "google"),
+        expand_queries=expand_queries,
     )
     return format_for_llm(result)
 
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: stealthy_fetch
-# Fetch with full anti-bot bypass (Cloudflare, DataDome, etc).
 # ═══════════════════════════════════════════════════════════════
 
 async def tool_stealthy_fetch(url: str, max_tokens: int = 3000) -> str:
@@ -218,7 +250,6 @@ async def tool_stealthy_fetch(url: str, max_tokens: int = 3000) -> str:
 
 # ═══════════════════════════════════════════════════════════════
 # Tool: parallel_search
-# Run multiple searches in parallel across engines.
 # ═══════════════════════════════════════════════════════════════
 
 async def tool_parallel_search(
@@ -275,7 +306,7 @@ TOOLS = {
         "required": ["urls"],
     }),
     "deep_research": (tool_deep_research,
-        "Full pipeline: scrape SERP → crawl pages → extract content → structure for LLM. Every source includes quality scores, content types, and link maps so the host LLM can intelligently decide what to deep-read, skim, or pursue next.", {
+        "Full pipeline: expand query → search → crawl → extract → structure for LLM. Includes query expansion, relevance scoring, and code-aware metadata.", {
         "type": "object",
         "properties": {
             "query": {"type": "string", "description": "Research question or topic"},
@@ -283,6 +314,8 @@ TOOLS = {
             "max_sources": {"type": "integer", "default": 8, "minimum": 1, "maximum": 15},
             "follow_links": {"type": "boolean", "default": False,
                              "description": "Also crawl external links found on result pages"},
+            "expand_queries": {"type": "boolean", "default": True,
+                               "description": "Generate subqueries for broader coverage"},
         },
         "required": ["query"],
     }),
