@@ -3,6 +3,11 @@
 </h1>
 
 <p align="center">
+  <a href="./README.md">🇺🇸 English</a> ·
+  <a href="./README.ko.md">🇰🇷 한국어</a>
+</p>
+
+<p align="center">
   <strong>Universal AI Search MCP Server</strong><br>
   Zero API keys · Direct scraping · Perplexity-level cited answers
 </p>
