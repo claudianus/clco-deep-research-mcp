@@ -1,1171 +1,140 @@
 <!DOCTYPE html>
-<html lang="ko" class="scroll-smooth">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>maru-search — 코딩 에이전트를 위한 무료 딥리서치 MCP</title>
-    <meta name="description" content="코딩 에이전트 최적화 무료 딥리서치 MCP. 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.">
+    <title>maru-search — 범용 AI 검색 MCP</title>
+    <meta name="description" content="API 키 없이 검색엔진을 직접 스크래핑하고 인출 기반 답변을 제공하는 MCP 서버.">
     <link rel="alternate" hreflang="en" href="https://claudianus.github.io/maru-search/">
     <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/maru-search/ko/">
-    <link rel="alternate" hreflang="x-default" href="https://claudianus.github.io/maru-search/">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #12121a;
-            --bg-tertiary: #1a1a2e;
-            --bg-card: #16162a;
-            --text-primary: #f0f0f5;
-            --text-secondary: #a0a0b0;
-            --text-muted: #6b6b7b;
-            --accent-primary: #6366f1;
-            --accent-secondary: #8b5cf6;
-            --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            --success: #22c55e;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --border: rgba(255,255,255,0.08);
-            --shadow-glow: 0 0 40px rgba(99, 102, 241, 0.15);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Inter', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--bg-primary);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--accent-primary);
-            border-radius: 4px;
-        }
-
-        .nav {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1000;
-            background: rgba(10, 10, 15, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
-            padding: 1rem 0;
-        }
-
-        .nav-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-logo {
-            font-size: 1.25rem;
-            font-weight: 700;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 2rem;
-            list-style: none;
-            align-items: center;
-        }
-
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.875rem;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--text-primary);
-        }
-
-        .lang-switch {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .lang-switch a {
-            padding: 0.25rem 0.75rem;
-            border-radius: 0.25rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .lang-switch a.active {
-            background: var(--accent-gradient);
-            color: white;
-        }
-
-        .lang-switch a:not(.active) {
-            color: var(--text-secondary);
-        }
-
-        .lang-switch a:not(.active):hover {
-            color: var(--text-primary);
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .nav-cta {
-            background: var(--accent-gradient);
-            color: white;
-            padding: 0.5rem 1.25rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-decoration: none;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .nav-cta:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-glow);
-        }
-
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            padding: 8rem 2rem 4rem;
-            overflow: hidden;
-        }
-
-        .hero-bg {
-            position: absolute;
-            inset: 0;
-            background: 
-                radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent),
-                radial-gradient(ellipse 60% 40% at 80% 50%, rgba(139, 92, 246, 0.1), transparent);
-        }
-
-        .hero-grid {
-            position: absolute;
-            inset: 0;
-            background-image: 
-                linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
-            background-size: 60px 60px;
-            mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black, transparent);
-        }
-
-        .hero-content {
-            position: relative;
-            z-index: 1;
-            text-align: center;
-            max-width: 900px;
-        }
-
-        .hero-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.875rem;
-            color: var(--accent-primary);
-            margin-bottom: 2rem;
-        }
-
-        .hero-badge::before {
-            content: '';
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .hero-title {
-            font-size: clamp(2.5rem, 6vw, 4.5rem);
-            font-weight: 800;
-            line-height: 1.1;
-            margin-bottom: 1.5rem;
-            letter-spacing: -0.02em;
-        }
-
-        .hero-title span {
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-subtitle {
-            font-size: 1.25rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 2.5rem;
-            line-height: 1.7;
-        }
-
-        .hero-install {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 1.25rem 1.5rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9375rem;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .hero-install code {
-            color: var(--text-primary);
-        }
-
-        .hero-install .comment {
-            color: var(--text-muted);
-        }
-
-        .copy-btn {
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            color: var(--accent-primary);
-            padding: 0.375rem 0.75rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .copy-btn:hover {
-            background: rgba(99, 102, 241, 0.2);
-        }
-
-        .hero-stats {
-            display: flex;
-            justify-content: center;
-            gap: 3rem;
-            margin-top: 3rem;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            background: var(--accent-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            font-size: 0.875rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
-
-        .section {
-            padding: 6rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 4rem;
-        }
-
-        .section-tag {
-            display: inline-block;
-            background: rgba(99, 102, 241, 0.1);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            padding: 0.375rem 1rem;
-            border-radius: 2rem;
-            font-size: 0.875rem;
-            color: var(--accent-primary);
-            font-weight: 600;
-            margin-bottom: 1rem;
-        }
-
-        .section-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            letter-spacing: -0.02em;
-        }
-
-        .section-desc {
-            font-size: 1.125rem;
-            color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 1rem;
-            padding: 2rem;
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-2px);
-            border-color: rgba(99, 102, 241, 0.3);
-            box-shadow: var(--shadow-glow);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--accent-gradient);
-            border-radius: 0.75rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .feature-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .feature-desc {
-            font-size: 0.9375rem;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        .feature-meta {
-            display: flex;
-            gap: 0.75rem;
-            margin-top: 1rem;
-        }
-
-        .feature-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.625rem;
-            border-radius: 0.25rem;
-            background: rgba(99, 102, 241, 0.1);
-            color: var(--accent-primary);
-            font-weight: 500;
-        }
-
-        .pipeline {
-            background: var(--bg-secondary);
-            border-radius: 1.5rem;
-            padding: 3rem;
-            border: 1px solid var(--border);
-        }
-
-        .pipeline-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-
-        .pipeline-step {
-            display: flex;
-            align-items: flex-start;
-            gap: 1.5rem;
-            padding: 1.5rem;
-            position: relative;
-        }
-
-        .pipeline-step:not(:last-child)::after {
-            content: '';
-            position: absolute;
-            left: 2.25rem;
-            top: 4rem;
-            bottom: -1rem;
-            width: 2px;
-            background: var(--accent-gradient);
-            opacity: 0.3;
-        }
-
-        .step-number {
-            width: 40px;
-            height: 40px;
-            background: var(--accent-gradient);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.875rem;
-            flex-shrink: 0;
-        }
-
-        .step-content h3 {
-            font-size: 1.125rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-        }
-
-        .step-content p {
-            color: var(--text-secondary);
-            font-size: 0.9375rem;
-        }
-
-        .code-block {
-            background: var(--bg-primary);
-            border: 1px solid var(--border);
-            border-radius: 0.75rem;
-            overflow: hidden;
-            margin: 1.5rem 0;
-        }
-
-        .code-header {
-            background: var(--bg-tertiary);
-            padding: 0.75rem 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .code-lang {
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            text-transform: uppercase;
-        }
-
-        .code-body {
-            padding: 1.25rem;
-            overflow-x: auto;
-        }
-
-        .code-body pre {
-            margin: 0;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.875rem;
-            line-height: 1.7;
-            color: var(--text-primary);
-        }
-
-        .code-body .keyword { color: #c678dd; }
-        .code-body .string { color: #98c379; }
-        .code-body .comment { color: #5c6370; font-style: italic; }
-        .code-body .function { color: #61afef; }
-
-        .benchmark-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 2rem;
-        }
-
-        .benchmark-table th,
-        .benchmark-table td {
-            padding: 1rem 1.25rem;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .benchmark-table th {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.05em;
-        }
-
-        .benchmark-table td {
-            font-size: 0.9375rem;
-        }
-
-        .benchmark-table tr:hover td {
-            background: rgba(99, 102, 241, 0.03);
-        }
-
-        .check {
-            color: var(--success);
-            font-weight: 700;
-        }
-
-        .cross {
-            color: var(--error);
-        }
-
-        .install-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .install-tab {
-            padding: 0.625rem 1.25rem;
-            border-radius: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-secondary);
-            transition: all 0.2s;
-        }
-
-        .install-tab.active {
-            background: var(--accent-gradient);
-            border-color: transparent;
-            color: white;
-        }
-
-        .install-tab:hover:not(.active) {
-            border-color: rgba(99, 102, 241, 0.3);
-            color: var(--text-primary);
-        }
-
-        .install-panel {
-            display: none;
-        }
-
-        .install-panel.active {
-            display: block;
-        }
-
-        .footer {
-            border-top: 1px solid var(--border);
-            padding: 4rem 2rem;
-            text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.875rem;
-            transition: color 0.2s;
-        }
-
-        .footer-links a:hover {
-            color: var(--accent-primary);
-        }
-
-        .footer-copy {
-            color: var(--text-muted);
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 768px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero-stats {
-                flex-direction: column;
-                gap: 1.5rem;
-            }
-
-            .features-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .pipeline-step:not(:last-child)::after {
-                left: 1.75rem;
-            }
-
-            .section {
-                padding: 4rem 1.5rem;
-            }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .animate-in {
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .delay-1 { animation-delay: 0.1s; }
-        .delay-2 { animation-delay: 0.2s; }
-        .delay-3 { animation-delay: 0.3s; }
+        :root { --bg: #0a0a0f; --bg2: #12121a; --text: #e0e0e5; --muted: #888; --accent: #6366f1; --border: #222; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+        a { color: var(--accent); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        header { margin-bottom: 2.5rem; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.3rem; }
+        .tagline { color: var(--muted); font-size: 0.95rem; }
+        .links { margin-top: 0.8rem; font-size: 0.9rem; }
+        h2 { font-size: 1.2rem; margin: 2rem 0 0.8rem; border-bottom: 1px solid var(--border); padding-bottom: 0.3rem; }
+        h3 { font-size: 1rem; margin: 1.5rem 0 0.5rem; color: var(--accent); }
+        pre { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.85rem; margin: 0.6rem 0; }
+        code { font-family: "JetBrains Mono", "Fira Code", monospace; }
+        table { width: 100%; border-collapse: collapse; margin: 0.8rem 0; font-size: 0.9rem; }
+        th, td { text-align: left; padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-weight: 500; }
+        ul { margin: 0.5rem 0 0.5rem 1.2rem; }
+        li { margin: 0.2rem 0; }
+        .lang-switch { position: absolute; top: 1.5rem; right: 1.5rem; font-size: 0.85rem; }
+        footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--border); color: var(--muted); font-size: 0.85rem; }
     </style>
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-container">
-            <div class="nav-logo">maru-search</div>
-            <ul class="nav-links">
-                <li><a href="#features">기능</a></li>
-                <li><a href="#pipeline">파이프라인</a></li>
-                <li><a href="#benchmarks">비교</a></li>
-                <li><a href="#install">설치</a></li>
-                <li>
-                    <div class="lang-switch">
-                        <a href="/maru-search/">EN</a>
-                        <a href="/maru-search/ko/" class="active">KO</a>
-                    </div>
-                </li>
-            </ul>
-            <a href="https://github.com/claudianus/maru-search" class="nav-cta" target="_blank">GitHub</a>
-        </div>
-    </nav>
+    <div class="lang-switch"><a href="/maru-search/">EN</a></div>
 
-    <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="hero-grid"></div>
-        <div class="hero-content">
-            <div class="hero-badge animate-in">v0.3.7 출시</div>
-            <h1 class="hero-title animate-in delay-1">
-                코딩 에이전트를 위한<br><span>딥리서치 MCP</span>
-            </h1>
-            <p class="hero-subtitle animate-in delay-2">
-                Claude Code의 내장 web_search를 완전히 대체하는 무료 딥리서치 MCP.
-                4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.
-            </p>
-            <div class="hero-install animate-in delay-3">
-                <code><span class="comment"># 한 줄 설치 (pip이 있는 경우)</span><br>pip install maru-search</code>
-                <button class="copy-btn" onclick="copyToClipboard('pip install maru-search')">복사</button>
-            </div>
-            <div class="hero-install animate-in delay-3" style="margin-top: 1rem;">
-                <code><span class="comment"># pip이 없는 경우 (Python 내장 모듈 사용)</span><br>python3 -m pip install maru-search</code>
-                <button class="copy-btn" onclick="copyToClipboard('python3 -m pip install maru-search')">복사</button>
-            </div>
-            <div class="hero-stats animate-in delay-3">
-                <div class="stat">
-                    <div class="stat-value">6</div>
-                    <div class="stat-label">도구</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">21</div>
-                    <div class="stat-label">언어</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">68</div>
-                    <div class="stat-label">테스트</div>
-                </div>
-                <div class="stat">
-                    <div class="stat-value">0</div>
-                    <div class="stat-label">API 키</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="features">
-        <div class="section-header">
-            <div class="section-tag">기능</div>
-            <h2 class="section-title">딥리서치에 필요한 모든 것</h2>
-            <p class="section-desc">정보를 수집, 분석, 종합하기 위해 코딩 에이전트에 특화된 6가지 강력한 도구.</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">🔍</div>
-                <h3 class="feature-title">web_search</h3>
-                <p class="feature-desc">Scrapling으로 검색엔진 SERP를 직접 스크래핑. API 키 불필요. 결과마다 콘텐츠 유형 힌트와 권위 배지 제공.</p>
-                <div class="feature-meta">
-                    <span class="feature-badge">4개 엔진</span>
-                    <span class="feature-badge">안티봇</span>
-                </div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📄</div>
-                <h3 class="feature-title">fetch_page</h3>
-                <p class="feature-desc">모든 URL에서 깨끗하고 LLM 최적화된 콘텐츠 추출. 네비게이션, 푸터, 광고 제거. 품질 신호가 포함된 구조화된 마크다운 반환.</p>
-                <div class="feature-meta">
-                    <span class="feature-badge">trafilatura</span>
-                    <span class="feature-badge">마크다운</span>
-                </div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">⚡</div>
-                <h3 class="feature-title">fetch_bulk</h3>
-                <p class="feature-desc">설정 가능한 동시성으로 여러 URL을 병렬로 가져오기. 각 결과는 LLM 우선순위 지정을 위한 품질 신호 포함.</p>
-                <div class="feature-meta">
-                    <span class="feature-badge">병렬</span>
-                    <span class="feature-badge">5 동시</span>
-                </div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🧠</div>
-                <h3 class="feature-title">deep_research</h3>
-                <p class="feature-desc">전체 처리 과정: 쿼리 확장 → 병렬 검색 → 관련성 점수 매기기 → 다중 패스 크롤링 → 콘텐츠 종합.</p>
-                <div class="feature-meta">
-                    <span class="feature-badge">쿼리 확장</span>
-                    <span class="feature-badge">너비 우선 탐색 크롤러</span>
-                </div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🥷</div>
-                <h3 class="feature-title">stealthy_fetch</h3>
-                <p class="feature-desc">Cloudflare Turnstile, DataDome 등의 완전한 안티봇 우회. 브라우저 지문을 자동으로 적응.</p>
-                <div class="feature-meta">
-                    <span class="feature-badge">Cloudflare</span>
-                    <span class="feature-badge">DataDome</span>
-                </div>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🚀</div>
-                <h3 class="feature-title">parallel_search</h3>
-                <p class="feature-desc">여러 검색을 엔진 전체에서 병렬로 실행. 각 쿼리는 최대 커버리지를 위해 독립적으로 스크래핑.</p>
-                <div class="feature-meta">
-                    <span class="feature-badge">다중 쿼리</span>
-                    <span class="feature-badge">Scatter-gather</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="pipeline">
-        <div class="section-header">
-            <div class="section-tag">아키텍처</div>
-            <h2 class="section-title">딥리서치 처리 과정</h2>
-            <p class="section-desc">간단한 쿼리를 포괄적이고 구조화된 연구 결과로 변환하는 다단계 파이프라인.</p>
-        </div>
-        <div class="pipeline">
-            <div class="pipeline-steps">
-                <div class="pipeline-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h3>쿼리 확장</h3>
-                        <p>최신 개발, 튜토리얼, API 문서, 문제 해결, 비교를 커버하는 3-5개의 서로 다른 관점의 하위 쿼리 생성.</p>
-                    </div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h3>병렬 검색</h3>
-                        <p>모든 하위 쿼리를 여러 검색엔진에서 동시에 실행하여 최대 커버리지 달성.</p>
-                    </div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h3>중복 제거 및 점수 매기기</h3>
-                        <p>URL 정규화 + 콘텐츠 해싱. 권위 도메인, 콘텐츠 유형, 최신성, 위치로 점수화.</p>
-                    </div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-number">4</div>
-                    <div class="step-content">
-                        <h3>다중 패스 크롤링</h3>
-                        <p>깊이 제한 너비 우선 탐색. 동일 도메인 링크 우선순위. 더 깊은 커버리지를 위한 선택적 외부 링크 추적.</p>
-                    </div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-number">5</div>
-                    <div class="step-content">
-                        <h3>콘텐츠 추출</h3>
-                        <p>깨끗한 콘텐츠를 위한 trafilatura + 코드 인식 분석(21개 언어) + API 시그니처 추출 + 패키지 감지.</p>
-                    </div>
-                </div>
-                <div class="pipeline-step">
-                    <div class="step-number">6</div>
-                    <div class="step-content">
-                        <h3>종합 및 포맷팅</h3>
-                        <p>신뢰도 점수로 주제별 집계. 품질 배지와 관련성 점수가 포함된 토큰 효율적 마크다운으로 포맷.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="section-header">
-            <div class="section-tag">코드 인식</div>
-            <h2 class="section-title">코딩 에이전트를 위해 설계됨</h2>
-            <p class="section-desc">가져온 모든 페이지는 풍부한 메타데이터로 코딩 에이전트 관련성을 위해 분석됩니다.</p>
-        </div>
-        <div class="code-block">
-            <div class="code-header">
-                <span class="code-lang">출력 예시</span>
-            </div>
-            <div class="code-body">
-                <pre>### [1] Async Context Managers in Python <span class="string">[HIGH]</span> <span class="string">[API-REF]</span> <span class="string">[python]</span> <span class="string">[code-heavy 32%]</span> <span class="string">[293d ago]</span> <span class="string">[AUTHORITY]</span>
-URL: https://dev.to/...
-<span class="comment">_relevance: 5.3_</span>
-<span class="comment">_APIs: async def __aenter__(self):; async def __aexit__(...):_</span>
-<span class="comment">_Packages: aiohttp (python), fastapi (python)_</span>
-
-<span class="comment"># 콘텐츠...</span></pre>
-            </div>
-        </div>
-        <div class="features-grid" style="margin-top: 2rem;">
-            <div class="feature-card">
-                <div class="feature-icon">🌐</div>
-                <h3 class="feature-title">21개 언어 감지</h3>
-                <p class="feature-desc">Python, Rust, Go, TypeScript, Kotlin, Swift 및 15개 이상 언어를 위한 빠른 정규식 기반 감지.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🔧</div>
-                <h3 class="feature-title">API 시그니처 추출</h3>
-                <p class="feature-desc">코드 블록에서 함수 정의, 클래스 정의, 임포트, 데코레이터를 자동으로 추출.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📦</div>
-                <h3 class="feature-title">패키지 감지</h3>
-                <p class="feature-desc">문서와 코드에서 참조된 pip, npm, cargo, go 패키지를 식별.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">📊</div>
-                <h3 class="feature-title">콘텐츠 분류</h3>
-                <p class="feature-desc">구조와 키워드를 기반으로 API 참조, 튜토리얼, 오류 해결로 자동 분류.</p>
-            </div>
-        </div>
-    </section>
-
-    <section class="section" id="benchmarks">
-        <div class="section-header">
-            <div class="section-tag">비교</div>
-            <h2 class="section-title">다른 솔루션과 비교</h2>
-            <p class="section-desc">maru-search가 다른 웹 검색 MCP와 어떻게 다른지 확인하세요.</p>
-        </div>
-        <table class="benchmark-table">
-            <thead>
-                <tr>
-                    <th>기능</th>
-                    <th>maru-search</th>
-                    <th>duckduckgo-websearch</th>
-                    <th>Brave Search API</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>검색 엔진</td>
-                    <td><span class="check">✓</span> 4개 (DDG, DDG Lite, Google, Bing)</td>
-                    <td>1개 (DDG API)</td>
-                    <td>1개 (Brave)</td>
-                </tr>
-                <tr>
-                    <td>콘텐츠 추출</td>
-                    <td><span class="check">✓</span> trafilatura (최신 기술)</td>
-                    <td>cheerio (기본)</td>
-                    <td>기본</td>
-                </tr>
-                <tr>
-                    <td>코드 감지</td>
-                    <td><span class="check">✓</span> 21개 언어</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-                <tr>
-                    <td>API 시그니처</td>
-                    <td><span class="check">✓</span> 자동 추출</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-                <tr>
-                    <td>날짜 추출</td>
-                    <td><span class="check">✓</span> htmldate (95% 정확도)</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-                <tr>
-                    <td>쿼리 확장</td>
-                    <td><span class="check">✓</span> 3-5개 하위 쿼리</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-                <tr>
-                    <td>안티봇 우회</td>
-                    <td><span class="check">✓</span> StealthyFetcher</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-                <tr>
-                    <td>API 키 필요</td>
-                    <td><span class="check">✓</span> 불필요</td>
-                    <td>불필요</td>
-                    <td>필요</td>
-                </tr>
-                <tr>
-                    <td>딥리서치 처리 과정</td>
-                    <td><span class="check">✓</span> 전체 처리 과정</td>
-                    <td><span class="cross">✗</span></td>
-                    <td><span class="cross">✗</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </section>
-
-    <section class="section" id="install">
-        <div class="section-header">
-            <div class="section-tag">설치</div>
-            <h2 class="section-title">몇 초 만에 시작하기</h2>
-            <p class="section-desc">선호하는 코딩 에이전트에 maru-search를 설치하세요.</p>
-        </div>
-        <div class="install-tabs">
-            <button class="install-tab active" onclick="switchTab('claude-code')">Claude Code</button>
-            <button class="install-tab" onclick="switchTab('claude-desktop')">Claude Desktop</button>
-            <button class="install-tab" onclick="switchTab('cursor')">Cursor</button>
-            <button class="install-tab" onclick="switchTab('vscode')">VS Code</button>
-            <button class="install-tab" onclick="switchTab('windsurf')">Windsurf</button>
-        </div>
-        <div id="claude-code" class="install-panel active">
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-code-config').innerText)">복사</button>
-                </div>
-                <div class="code-body">
-                    <pre id="claude-code-config">{
-  "mcpServers": {
-    "maru-search": {
-      "command": "python3",
-      "args": ["-m", "maru_search.server"]
-    }
-  }
-}</pre>
-                </div>
-            </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;"><code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/.claude.json</code>에 추가</p>
-        </div>
-        <div id="claude-desktop" class="install-panel">
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('claude-desktop-config').innerText)">복사</button>
-                </div>
-                <div class="code-body">
-                    <pre id="claude-desktop-config">{
-  "mcpServers": {
-    "maru-search": {
-      "command": "python3",
-      "args": ["-m", "maru_search.server"]
-    }
-  }
-}</pre>
-                </div>
-            </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;"><code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">~/Library/Application Support/Claude/claude_desktop_config.json</code>에 추가 (macOS)</p>
-        </div>
-        <div id="cursor" class="install-panel">
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('cursor-config').innerText)">복사</button>
-                </div>
-                <div class="code-body">
-                    <pre id="cursor-config">{
-  "mcpServers": {
-    "maru-search": {
-      "command": "python3",
-      "args": ["-m", "maru_search.server"]
-    }
-  }
-}</pre>
-                </div>
-            </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;"><code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.cursor/mcp.json</code>에 추가 또는 Cursor 설정 → MCP</p>
-        </div>
-        <div id="vscode" class="install-panel">
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('vscode-config').innerText)">복사</button>
-                </div>
-                <div class="code-body">
-                    <pre id="vscode-config">{
-  "servers": {
-    "maru-search": {
-      "type": "stdio",
-      "command": "python3",
-      "args": ["-m", "maru_search.server"]
-    }
-  }
-}</pre>
-                </div>
-            </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">VS Code <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.vscode/mcp.json</code>에 추가</p>
-        </div>
-        <div id="windsurf" class="install-panel">
-            <div class="code-block">
-                <div class="code-header">
-                    <span class="code-lang">JSON</span>
-                    <button class="copy-btn" onclick="copyToClipboard(document.getElementById('windsurf-config').innerText)">복사</button>
-                </div>
-                <div class="code-body">
-                    <pre id="windsurf-config">{
-  "mcpServers": {
-    "maru-search": {
-      "command": "python3",
-      "args": ["-m", "maru_search.server"]
-    }
-  }
-}</pre>
-                </div>
-            </div>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">Windsurf <code style="background: var(--bg-tertiary); padding: 0.25rem 0.5rem; border-radius: 0.25rem;">.windsurf/mcp_config.json</code>에 추가</p>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="section-header">
-            <div class="section-tag">데모</div>
-            <h2 class="section-title">실제 사용 예시</h2>
-            <p class="section-desc">Claude Code에서 maru-search를 사용하는 예시.</p>
-        </div>
-        <div class="code-block">
-            <div class="code-header">
-                <span class="code-lang">Claude Code</span>
-            </div>
-            <div class="code-body">
-                <pre><span class="comment"># 간단한 웹 검색</span>
-$ /web_search python asyncio best practices
-
-<span class="comment"># 쿼리 확장이 있는 딥리서치</span>
-$ /deep_research rust error handling patterns
-→ 5개 하위 쿼리로 확장, 8개 소스 크롤링, 결과 종합
-
-<span class="comment"># 특정 페이지 가져오기</span>
-$ /fetch_page https://docs.python.org/3/library/asyncio.html
-
-<span class="comment"># 비교를 위한 병렬 검색</span>
-$ /parallel_search ["python vs go concurrency", "python vs rust performance"]</pre>
-            </div>
-        </div>
-    </section>
-
-    <section class="section">
-        <div class="section-header">
-            <div class="section-tag">에이전트 설치</div>
-            <h2 class="section-title">코딩 에이전트에 바로 연결</h2>
-            <p class="section-desc">Claude Code, Cursor, VS Code 등에서 한 줄로 설치하고 바로 사용하세요.</p>
-        </div>
-        <div class="code-block">
-            <div class="code-header">
-                <span class="code-lang">Claude Code</span>
-                <button class="copy-btn" onclick="copyToClipboard('claude mcp add maru-search pip:maru-search')">복사</button>
-            </div>
-            <div class="code-body">
-                <pre># Claude Code에 한 줄로 추가
-claude mcp add maru-search pip:maru-search</pre>
-            </div>
-        </div>
-        <div class="code-block" style="margin-top: 1.5rem;">
-            <div class="code-header">
-                <span class="code-lang">Cursor / VS Code / Windsurf</span>
-                <button class="copy-btn" onclick="copyToClipboard('pip install maru-search')">복사</button>
-            </div>
-            <div class="code-body">
-                <pre># 1. 먼저 설치
-pip install maru-search
-
-# 2. 설정 파일에 추가 (각 에이전트의 MCP 설정에 붙여넣기)
-{
-  "mcpServers": {
-    "maru-search": {
-      "command": "python3",
-      "args": ["-m", "maru_search.server"]
-    }
-  }
-}</pre>
-            </div>
-        </div>
-        <div style="margin-top: 2rem; padding: 1.5rem; background: var(--bg-tertiary); border-radius: 1rem; border: 1px solid var(--border);">
-            <h4 style="margin-bottom: 1rem; color: var(--accent-primary);">💡 pip이 설치되어 있지 않다면?</h4>
-            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Python을 설치하면 기본으로 포함됩니다. 다음 명령어로 확인하세요:</p>
-            <code style="display: block; padding: 1rem; background: var(--bg-primary); border-radius: 0.5rem; font-family: 'JetBrains Mono', monospace;">
-python3 --version  # Python 버전 확인
-python3 -m pip --version  # pip 버전 확인
-            </code>
-            <p style="color: var(--text-secondary); margin-top: 1rem;">
-                pip이 없다면 <a href="https://pip.pypa.io/en/stable/installation/" target="_blank" style="color: var(--accent-primary);">pip 설치 가이드</a>를 참고하세요.
-            </p>
-        </div>
-    </section>
-
-    <footer class="footer">
-        <div class="footer-links">
-            <a href="https://github.com/claudianus/maru-search" target="_blank">GitHub</a>
-            <a href="https://pypi.org/project/maru-search/" target="_blank">PyPI</a>
-            <a href="https://github.com/claudianus/maru-search/issues" target="_blank">Issues</a>
-            <a href="https://github.com/claudianus/maru-search/blob/main/LICENSE" target="_blank">라이선스</a>
-        </div>
-        <p class="footer-copy">
-            MIT License — 코딩 에이전트 시대를 위해 만들어졌습니다.
-            <a href="https://github.com/claudianus" style="color: var(--accent-primary); text-decoration: none;">claudianus</a>가 💜으로 제작
+    <header>
+        <h1>maru-search</h1>
+        <p class="tagline">API 키 없이 검색엔진을 직접 스크래핑하고 인출 기반 답변을 제공하는 범용 AI 검색 MCP 서버.</p>
+        <p class="links">
+            <a href="https://pypi.org/project/maru-search/">PyPI</a> ·
+            <a href="https://github.com/claudianus/maru-search">GitHub</a> ·
+            <a href="https://github.com/claudianus/maru-search/blob/main/README.md">README</a>
         </p>
+    </header>
+
+    <h2>설치</h2>
+    <pre><code>pip install maru-search</code></pre>
+
+    <h2>연결</h2>
+    <p><strong>Claude Code:</strong></p>
+    <pre><code>claude mcp add maru-search pip:maru-search</code></pre>
+
+    <p><strong>Cursor / VS Code / Windsurf:</strong></p>
+    <pre><code>{
+  "mcpServers": {
+    "maru-search": {
+      "command": "python3",
+      "args": ["-m", "maru_search.server"]
+    }
+  }
+}</code></pre>
+
+    <h2>도구</h2>
+    <table>
+        <tr><th>도구</th><th>용도</th></tr>
+        <tr><td><code>answer</code></td><td>질문에 대한 인출이 포함된 직접 답변</td></tr>
+        <tr><td><code>web_search</code></td><td>검색엔진 스크래핑, 순위 결과와 인출 ID 반환</td></tr>
+        <tr><td><code>search_with_citations</code></td><td>학술/기술 문서 작성용 사전 번호 인출 검색</td></tr>
+        <tr><td><code>fetch_page</code></td><td>단일 URL에서 깨끗한 콘텐츠 추출</td></tr>
+        <tr><td><code>fetch_bulk</code></td><td>다중 URL 병렬 페치</td></tr>
+        <tr><td><code>deep_research</code></td><td>쿼리 자동 확장, 상위 결과 크롤링, 인출 기반 종합</td></tr>
+        <tr><td><code>stealthy_fetch</code></td><td>보호된 사이트용 전체 안티봇 우회</td></tr>
+        <tr><td><code>parallel_search</code></td><td>다중 검색 동시 실행</td></tr>
+    </table>
+
+    <h3>도구 선택 기준</h3>
+    <ul>
+        <li>빠른 답변이 필요한가? → <code>answer</code></li>
+        <li>출처가 필요한가? → <code>web_search</code> 또는 <code>search_with_citations</code></li>
+        <li>URL이 이미 있는가? → <code>fetch_page</code> 또는 <code>fetch_bulk</code></li>
+        <li>차단되었는가? → <code>fetch_page</code>에 <code>stealth=True</code>, 그래도 안 되면 <code>stealthy_fetch</code></li>
+        <li>심층 분석이 필요한가? → <code>deep_research</code></li>
+    </ul>
+
+    <h2>차별점</h2>
+    <ul>
+        <li><strong>100% 묣은</strong> — OpenAI, Google API, Bing API 없음. 직접 스크래핑만 사용.</li>
+        <li><strong>인출(Citation)</strong> — 모든 결과에 <code>[1]</code>, <code>[2]</code> ID 부여. LLM이 정확히 출처를 인용할 수 있음.</li>
+        <li><strong>다중 엔진</strong> — <code>SearchEngineRegistry</code>로 새 스크래퍼 추가가 간단함.</li>
+        <li><strong>BM25 순위</strong> — 로컬 관련성 점수 + 권위도/최신성 메타데이터.</li>
+        <li><strong>코드 인식</strong> — 21개 언어 감지, API 시그니처 추출, 코드-텍스트 비율 측정.</li>
+    </ul>
+
+    <h2>설정</h2>
+    <p>선택적 환경 변수:</p>
+    <table>
+        <tr><th>변수</th><th>기본값</th><th>설명</th></tr>
+        <tr><td><code>MARU_SEARCH_ENGINE</code></td><td><code>duckduckgo_lite</code></td><td>기본 검색 엔진</td></tr>
+        <tr><td><code>MARU_SEARCH_MAX_RESULTS</code></td><td><code>10</code></td><td>쿼리당 최대 결과 수</td></tr>
+        <tr><td><code>MARU_SEARCH_MAX_CONCURRENT</code></td><td><code>5</code></td><td>병렬 페치 제한</td></tr>
+        <tr><td><code>MARU_SEARCH_MAX_TOKENS_SOURCE</code></td><td><code>2500</code></td><td>소스당 토큰 예산</td></tr>
+        <tr><td><code>MARU_SEARCH_MAX_TOKENS_TOTAL</code></td><td><code>20000</code></td><td>총 출력 토큰 예산</td></tr>
+        <tr><td><code>MARU_SEARCH_TIMEOUT</code></td><td><code>30.0</code></td><td>페치 타임아웃 (초)</td></tr>
+        <tr><td><code>MARU_SEARCH_RETRIES</code></td><td><code>3</code></td><td>재시도 횟수</td></tr>
+    </table>
+
+    <h2>아키텍처</h2>
+    <pre><code>src/maru_search/
+├── server.py        # MCP 서버 (8개 도구, 3개 프롬프트)
+├── config.py        # 환경 변수 기반 런타임 설정
+├── tools.py         # 도구 구현 + 레지스트리
+├── engines/
+│   ├── registry.py  # SearchEngineRegistry (팩토리)
+│   ├── base.py      # SearchEngine ABC
+│   └── duckduckgo.py
+├── research/
+│   ├── deep.py      # 딥리서치 + 답변 합성
+│   ├── ranker.py    # BM25 + 메타데이터 순위
+│   └── expander.py  # 쿼리 확장
+├── extraction/
+│   ├── code.py      # 21개 언어 감지
+│   └── content.py   # 토큰 인식 자르기
+└── utils/
+    ├── url.py       # URL 정규화 / 필터 / 중복 제거
+    └── retry.py     # 지수 백오프</code></pre>
+
+    <h2>의존성</h2>
+    <ul>
+        <li><a href="https://github.com/D4Vinci/Scrapling">Scrapling</a> — 브라우저/HTTP 페치</li>
+        <li><a href="https://trafilatura.readthedocs.io/">trafilatura</a> — 콘텐츠 추출</li>
+        <li><a href="https://htmldate.readthedocs.io/">htmldate</a> — 게시 날짜 추출</li>
+        <li><a href="https://github.com/dorianbrown/rank_bm25">rank-bm25</a> — 로컬 관련성 점수</li>
+        <li><a href="https://github.com/modelcontextprotocol/python-sdk">MCP SDK</a> — MCP 프로토콜</li>
+    </ul>
+
+    <footer>
+        MIT License · <a href="https://github.com/claudianus/maru-search">claudianus/maru-search</a>
     </footer>
-
-    <script>
-        function copyToClipboard(text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = event.target;
-                const original = btn.textContent;
-                btn.textContent = '복사됨!';
-                setTimeout(() => btn.textContent = original, 2000);
-            });
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.install-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            document.querySelectorAll('.install-panel').forEach(panel => {
-                panel.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-        }
-
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
-    </script>
 </body>
 </html>
