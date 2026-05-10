@@ -110,6 +110,57 @@ def _score_metadata(result: SearchResult) -> float:
     return score
 
 
+def _normalize_text(text: str) -> set[str]:
+    """Normalize text for fuzzy comparison."""
+    if not text:
+        return set()
+    # Lowercase, remove punctuation, split into words
+    cleaned = "".join(c if c.isalnum() or c.isspace() else " " for c in text.lower())
+    return set(w for w in cleaned.split() if len(w) > 2)
+
+
+def _jaccard_similarity(a: str, b: str) -> float:
+    """Compute Jaccard similarity between two texts."""
+    set_a = _normalize_text(a)
+    set_b = _normalize_text(b)
+    if not set_a or not set_b:
+        return 0.0
+    intersection = set_a & set_b
+    union = set_a | set_b
+    return len(intersection) / len(union) if union else 0.0
+
+
+def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[SearchResult]:
+    """Remove results with highly similar titles or snippets even if URLs differ.
+
+    This catches Medium mirrors, StackOverflow copy-paste blogs, and
+    aggregator sites that repost the same content.
+    """
+    unique: list[SearchResult] = []
+
+    for r in results:
+        is_dup = False
+        for u in unique:
+            # Title similarity (high weight — same title = likely duplicate)
+            title_sim = _jaccard_similarity(r.title, u.title)
+            # Snippet similarity (check first 200 chars)
+            snippet_sim = _jaccard_similarity(r.snippet[:200], u.snippet[:200])
+
+            # Duplicates: very similar title OR very similar snippet
+            if title_sim > threshold or snippet_sim > threshold:
+                is_dup = True
+                # Merge engine metadata: keep the one with more engine confirmations
+                if len(r.engines_found) > len(u.engines_found):
+                    u.engines_found = list(set(u.engines_found) | set(r.engines_found))
+                break
+
+        if not is_dup:
+            unique.append(r)
+
+    logger.debug("Fuzzy dedupe: %d -> %d results", len(results), len(unique))
+    return unique
+
+
 def merge_results(
     engine_results: dict[str, list[SearchResult]],
     query: str,
@@ -123,7 +174,7 @@ def merge_results(
     Returns:
         List of RankedResult sorted by final_score descending.
     """
-    # Deduplicate and track which engines found each URL
+    # Phase 1: URL-level deduplicate and track which engines found each URL
     url_to_result: dict[str, SearchResult] = {}
     url_to_engines: dict[str, list[str]] = {}
 
@@ -142,10 +193,17 @@ def merge_results(
         r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
         merged.append(r)
 
-    # Compute BM25 scores
+    # Phase 2: Fuzzy dedupe — catch same content on different URLs
+    merged = _fuzzy_dedupe(merged)
+
+    # Recompute cross-engine scores after fuzzy merge
+    for r in merged:
+        r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
+
+    # Phase 3: Compute BM25 scores
     bm25_scores = _compute_bm25_scores(query, merged)
 
-    # Build ranked results
+    # Phase 4: Build ranked results
     ranked: list[RankedResult] = []
     for r in merged:
         bm25 = bm25_scores.get(normalize_url(r.url), 0.0)

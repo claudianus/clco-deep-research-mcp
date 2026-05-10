@@ -67,6 +67,35 @@ class TestMergeResults:
         ranked = merge_results({}, "test")
         assert ranked == []
 
+    def test_fuzzy_dedupe_by_title(self):
+        """Same content on different URLs should be deduped by title similarity."""
+        results = [
+            SearchResult(title="Python Asyncio Complete Guide", url="https://realpython.com/asyncio", snippet="Learn asyncio...", engine="ddg"),
+            SearchResult(title="Python Asyncio Complete Guide", url="https://medium.com/mirror/asyncio", snippet="Learn asyncio...", engine="bing"),
+            SearchResult(title="Different Approach to Async", url="https://other.com/async", snippet="Alternative...", engine="ddg"),
+        ]
+        ranked = merge_results({"ddg": results[:2], "bing": results[2:]}, "python asyncio")
+        # Should dedupe the two identical titles, keep the distinct one
+        assert len(ranked) == 2
+
+    def test_fuzzy_dedupe_by_snippet(self):
+        """Same snippet on different URLs should be deduped."""
+        results = [
+            SearchResult(title="Guide A", url="https://a.com", snippet="This is the exact same tutorial content about python asyncio for beginners", engine="ddg"),
+            SearchResult(title="Guide B", url="https://b.com", snippet="This is the exact same tutorial content about python asyncio for beginners", engine="searxng"),
+        ]
+        ranked = merge_results({"ddg": [results[0]], "searxng": [results[1]]}, "python asyncio")
+        assert len(ranked) == 1
+
+    def test_fuzzy_dedupe_keeps_distinct(self):
+        """Truly different results should NOT be deduped."""
+        results = [
+            SearchResult(title="FastAPI Tutorial", url="https://fastapi.tiangolo.com", snippet="Build APIs with FastAPI...", engine="ddg"),
+            SearchResult(title="Django REST Framework", url="https://django-rest-framework.org", snippet="Build APIs with DRF...", engine="bing"),
+        ]
+        ranked = merge_results({"ddg": [results[0]], "bing": [results[1]]}, "python web framework")
+        assert len(ranked) == 2
+
 
 class TestRankPages:
     def test_empty_list(self):
