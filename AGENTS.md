@@ -1,4 +1,4 @@
-# Agent Instructions for clco-deep-research-mcp
+# Agent Instructions for maru-search
 
 > **CRITICAL REMINDER**: PyPI deployment is handled **automatically by GitHub Actions**. Do NOT attempt manual PyPI uploads via `twine`.
 
@@ -8,7 +8,7 @@
 
 The project uses **GitHub Actions** with **trusted publishing** to deploy to PyPI automatically:
 
-- **Trigger**: Push a git tag starting with `v` (e.g., `v0.4.0`)
+- **Trigger**: Push a git tag starting with `v` (e.g., `v0.5.0`)
 - **Workflow**: `.github/workflows/publish.yml`
 - **Method**: Trusted publishing (no API tokens needed)
 
@@ -18,19 +18,19 @@ The project uses **GitHub Actions** with **trusted publishing** to deploy to PyP
 # 1. Update version in pyproject.toml
 # 2. Update CHANGELOG.md
 # 3. Commit and push to main
-git add -A && git commit -m "feat: v0.4.0 - description"
+git add -A && git commit -m "feat: v0.5.0 - description"
 git push origin main
 
 # 4. Create and push a version tag (this triggers PyPI deployment)
-git tag v0.4.0
-git push origin v0.4.0
+git tag v0.5.0
+git push origin v0.5.0
 ```
 
 **What happens next:**
 1. GitHub Actions workflow `publish.yml` triggers automatically
 2. Builds sdist and wheel with `uv build`
 3. Publishes to PyPI with `uv publish --trusted-publishing always`
-4. Package appears on https://pypi.org/project/clco-deep-research-mcp/
+4. Package appears on https://pypi.org/project/maru-search/
 
 ### DO NOT
 
@@ -62,13 +62,26 @@ Before creating a new release tag:
 ## Project Structure Reminders
 
 ```
-src/clco_deep_research/
-├── server.py              # MCP server + prompts
-├── tools.py               # 6 MCP tools + TOOL_GUIDANCE
-├── engines/               # Search engine implementations
+src/maru_search/
+├── __init__.py            # Version info
+├── server.py              # MCP server + prompts (8 tools)
+├── tools.py               # 8 MCP tools + TOOL_GUIDANCE + TOOLS registry
+├── config.py              # Runtime configuration
+├── exceptions.py          # Structured exception hierarchy
+├── engines/               # Search engine implementations + registry
+│   ├── base.py            # SearchEngine ABC, SearchResult/PageContent
+│   ├── registry.py        # SearchEngineRegistry (factory pattern)
+│   └── duckduckgo.py      # DuckDuckGoEngine (SERP + fetch)
 ├── extraction/            # Content extraction utilities
+│   ├── code.py            # 21-language detection, API extraction
+│   └── content.py         # truncate_for_llm, headings, token estimation
 ├── research/              # Deep research pipeline
+│   ├── deep.py            # Deep research + answer synthesis + citations
+│   ├── expander.py        # Query expansion (template-based)
+│   └── ranker.py          # BM25 + metadata cross-engine ranking
 └── utils/                 # URL, retry utilities
+    ├── retry.py           # Exponential backoff with jitter
+    └── url.py             # URL normalization, filtering, deduplication
 ```
 
 ## Testing
@@ -80,11 +93,15 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 113 tests, all passing.
+**Current requirement**: 124 tests, all passing.
 
 ## Key Architecture Decisions
 
-1. **No manual PyPI uploads** — GitHub Actions handles this
-2. **Trusted publishing** — Modern secure PyPI authentication (no tokens)
-3. **uv for build/publish** — Fast, reliable Python packaging
-4. **Tag-based releases** — Semantic versioning via git tags
+1. **100% FREE — No external paid APIs ever** — This is the core principle. All search, ranking, extraction, and synthesis must work with zero API keys. No OpenAI, no Anthropic, no Google Search API, no Bing API. Only direct scraping and local computation.
+2. **No manual PyPI uploads** — GitHub Actions handles this
+3. **Trusted publishing** — Modern secure PyPI authentication (no tokens)
+4. **uv for build/publish** — Fast, reliable Python packaging
+5. **Tag-based releases** — Semantic versioning via git tags
+6. **Engine registry pattern** — `SearchEngineRegistry` enables multi-engine support (all free scrapers)
+7. **BM25 + metadata ranking** — Perplexity-level result quality using only local computation
+8. **Citation-native output** — All results include citation IDs [1], [2] without external services

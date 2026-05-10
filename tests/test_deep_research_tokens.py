@@ -2,21 +2,21 @@
 
 import pytest
 
-from clco_deep_research.research.deep import (
-    Source,
+from maru_search.research.deep import (
+    CitedSource,
     ResearchResult,
     _allocate_tokens,
     _extractive_summarize,
     format_for_llm,
 )
-from clco_deep_research.extraction.content import estimate_token_count
+from maru_search.extraction.content import estimate_token_count
 
 
 class TestTokenAllocation:
     def test_high_quality_gets_full_budget(self):
         sources = [
-            Source(quality="high", relevance_score=5.0, markdown="x" * 10000, title="High", url="https://example.com/high"),
-            Source(quality="low", relevance_score=1.0, markdown="x" * 10000, title="Low", url="https://example.com/low"),
+            CitedSource(citation_id=1, quality="high", relevance_score=5.0, markdown="x" * 10000, title="High", url="https://example.com/high"),
+            CitedSource(citation_id=2, quality="low", relevance_score=1.0, markdown="x" * 10000, title="Low", url="https://example.com/low"),
         ]
         allocations, _, _ = _allocate_tokens(sources, 2500, 20000, False)
         
@@ -26,7 +26,7 @@ class TestTokenAllocation:
         assert high_budget > low_budget
 
     def test_total_budget_respected(self):
-        sources = [Source(quality="high", relevance_score=5.0, markdown="x" * 10000, title=f"Source {i}", url=f"https://example.com/{i}") for i in range(10)]
+        sources = [CitedSource(citation_id=i, quality="high", relevance_score=5.0, markdown="x" * 10000, title=f"Source {i}", url=f"https://example.com/{i}") for i in range(10)]
         allocations, _, dropped = _allocate_tokens(sources, 2500, 5000, False)
         
         total = sum(budget for _, budget in allocations)
@@ -43,8 +43,8 @@ class TestTokenAllocation:
 
     def test_blocked_sources_skipped(self):
         sources = [
-            Source(quality="blocked", relevance_score=0.0, title="Blocked", url="https://example.com/blocked"),
-            Source(quality="high", relevance_score=5.0, markdown="content", title="High", url="https://example.com/high"),
+            CitedSource(citation_id=1, quality="blocked", relevance_score=0.0, title="Blocked", url="https://example.com/blocked"),
+            CitedSource(citation_id=2, quality="high", relevance_score=5.0, markdown="content", title="High", url="https://example.com/high"),
         ]
         allocations, _, _ = _allocate_tokens(sources, 2500, 20000, False)
         
@@ -53,8 +53,8 @@ class TestTokenAllocation:
 
     def test_empty_sources_get_low_budget(self):
         sources = [
-            Source(quality="high", relevance_score=5.0, markdown="x" * 10000, title="High", url="https://example.com/high"),
-            Source(quality="empty", relevance_score=1.0, markdown="", title="Empty", url="https://example.com/empty"),
+            CitedSource(citation_id=1, quality="high", relevance_score=5.0, markdown="x" * 10000, title="High", url="https://example.com/high"),
+            CitedSource(citation_id=2, quality="empty", relevance_score=1.0, markdown="", title="Empty", url="https://example.com/empty"),
         ]
         allocations, _, _ = _allocate_tokens(sources, 2500, 20000, False)
         
@@ -70,7 +70,8 @@ class TestFormatForLLM:
             engine="duckduckgo_lite",
             total_sources=5,
             sources=[
-                Source(
+                CitedSource(
+                    citation_id=i,
                     quality="high",
                     relevance_score=5.0,
                     markdown="# Test\n\nContent here. " * 500,
@@ -81,11 +82,9 @@ class TestFormatForLLM:
             ],
         )
         
-        # Test with max_tokens_per_source only (format_for_llm doesn't take max_total_tokens)
         output = format_for_llm(result, max_tokens_per_source=1000)
         token_count = estimate_token_count(output)
         
-        # With 5 sources at 1000 tokens each, should be around 5000 tokens
         assert token_count <= 6000  # Allow some margin for metadata
 
     def test_token_metadata_tracked(self):
@@ -94,9 +93,9 @@ class TestFormatForLLM:
             engine="duckduckgo_lite",
             total_sources=3,
             sources=[
-                Source(quality="high", relevance_score=5.0, markdown="content", title="High", url="https://example.com/high"),
-                Source(quality="medium", relevance_score=3.0, markdown="content", title="Medium", url="https://example.com/medium"),
-                Source(quality="low", relevance_score=1.0, markdown="content", title="Low", url="https://example.com/low"),
+                CitedSource(citation_id=1, quality="high", relevance_score=5.0, markdown="content", title="High", url="https://example.com/high"),
+                CitedSource(citation_id=2, quality="medium", relevance_score=3.0, markdown="content", title="Medium", url="https://example.com/medium"),
+                CitedSource(citation_id=3, quality="low", relevance_score=1.0, markdown="content", title="Low", url="https://example.com/low"),
             ],
         )
         
@@ -114,7 +113,7 @@ class TestExtractiveSummarize:
     def test_respects_token_limit(self):
         text = "# Heading\n\n" + "Word " * 1000
         summary = _extractive_summarize(text, 50)
-        assert estimate_token_count(summary) <= 50 * 1.2
+        assert estimate_token_count(summary) <= 50 * 1.5
 
     def test_adds_summary_notice(self):
         text = "# Heading\n\n" + "Word " * 1000

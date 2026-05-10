@@ -1,7 +1,7 @@
 """Tests for URL utilities."""
 
 import pytest
-from clco_deep_research.utils.url import (
+from maru_search.utils.url import (
     normalize_url,
     should_skip_url,
     is_authority_domain,

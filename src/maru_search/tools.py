@@ -1,8 +1,7 @@
-"""MCP tool definitions — all backed by Scrapling-native crawling.
+"""MCP tool definitions — universal AI search with Perplexity-level quality.
 
 Every tool response includes rich metadata (quality scores, content types,
-link maps) so the host LLM can make informed decisions about which sources
-to deep-read, which to skim, and what to pursue next."""
+citations, link maps) so the host LLM can make informed decisions."""
 
 from __future__ import annotations
 
@@ -11,15 +10,18 @@ import json
 import logging
 from typing import Optional
 
+from .engines.registry import SearchEngineRegistry
 from .engines.duckduckgo import DuckDuckGoEngine
-from .research.deep import deep_research, format_for_llm
+from .research.deep import deep_research, format_for_llm, AnswerResult
+from .research.ranker import merge_results
 from .extraction.content import truncate_for_llm
-from .exceptions import ResearchError
+from .exceptions import MaruSearchError
 from .utils.retry import with_retry
 
 logger = logging.getLogger(__name__)
 
-SEARCH_ENGINES = ["duckduckgo", "duckduckgo_lite"]
+# All registered engines
+SEARCH_ENGINES = SearchEngineRegistry.list_engines()
 
 
 def _clean_urls(raw: str) -> list[str]:
@@ -45,30 +47,34 @@ async def tool_web_search(
     """Search by scraping a search engine's HTML results page directly.
 
     No API keys, no rate limits. Scrapling handles anti-bot bypass.
-    Returns content type hints per result so the LLM can prioritize.
+    Returns content type hints and citation IDs per result so the LLM
+    can prioritize and cite sources.
     """
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
     try:
-        search_engine = DuckDuckGoEngine(variant=engine)
+        search_engine = SearchEngineRegistry.create(engine)
         results = await with_retry(
             search_engine.search,
             query,
             max_results=max_results,
             max_attempts=3,
         )
-    except ResearchError as e:
+    except MaruSearchError as e:
         if e.suggested_engine and e.suggested_engine != engine:
-            # Fallback to suggested engine
             logger.info("Falling back to %s", e.suggested_engine)
-            search_engine = DuckDuckGoEngine(variant=e.suggested_engine)
+            search_engine = SearchEngineRegistry.create(e.suggested_engine)
             results = await search_engine.search(query, max_results=max_results)
         else:
             raise
 
     if not results:
         return f"No results found for: {query}"
+
+    # Assign citation IDs
+    for i, r in enumerate(results, 1):
+        r.citation_id = i
 
     lines = [f"Search: **{query}**  _engine={engine}_\n"]
     for r in results:
@@ -77,7 +83,8 @@ async def tool_web_search(
             "docs.python.org", "developer.mozilla.org", "github.com",
             "stackoverflow.com", "arxiv.org"
         ]) else ""
-        lines.append(f"{r.position}. **{r.title}**{type_badge}{auth_badge}")
+        cite = f" [{r.citation_id}]"
+        lines.append(f"{r.position}. **{r.title}**{cite}{type_badge}{auth_badge}")
         lines.append(f"   {r.url}")
         if r.snippet:
             lines.append(f"   > {r.snippet[:300]}")
@@ -126,10 +133,8 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     content = page.markdown if page.markdown else page.text
     content = truncate_for_llm(content, max_tokens)
 
-    # Quality header
     quality_line = f"_quality: {page.quality.value} | type: {page.content_type.value} | {page.content_length} chars | {page.fetch_duration_ms:.0f}ms_"
 
-    # Code-aware metadata
     code_meta = ""
     if page.code_languages:
         code_meta += f"\n_languages: {', '.join(page.code_languages)}_"
@@ -151,7 +156,6 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     elif page.is_error_solution:
         code_meta += "\n_type: error/solution_"
 
-    # Link suggestions
     link_section = ""
     if page.external_links:
         links_preview = "\n".join(
@@ -227,14 +231,15 @@ async def tool_deep_research(
     max_total_tokens: int = 20000,
     summarize: bool = False,
 ) -> str:
-    """End-to-end deep research pipeline with query expansion.
+    """End-to-end deep research pipeline with query expansion and citations.
 
     1. Expand query into orthogonal subqueries for broader coverage
     2. Search each subquery and collect results
-    3. Deduplicate and score by relevance and authority
+    3. Deduplicate, rank by relevance and authority (BM25 + metadata)
     4. Concurrently crawl top pages with quality assessment
     5. Optionally follow external links for deeper coverage
-    6. Format into token-efficient markdown for LLM consumption
+    6. Synthesize answer with inline citations [1], [2]
+    7. Format into token-efficient markdown for LLM consumption
 
     Token Management:
     - max_tokens_per_source: Budget per source (default: 2500)
@@ -255,6 +260,7 @@ async def tool_deep_research(
         max_tokens_per_source=max_tokens_per_source,
         max_total_tokens=max_total_tokens,
         summarize=summarize,
+        synthesize_answer=True,
     )
     return format_for_llm(
         result,
@@ -262,6 +268,133 @@ async def tool_deep_research(
         max_total_tokens=max_total_tokens,
         summarize=summarize,
     )
+
+
+# ═══════════════════════════════════════════════════════════════
+# Tool: answer (NEW — Perplexity-style direct answer)
+# ═══════════════════════════════════════════════════════════════
+
+async def tool_answer(
+    query: str,
+    engine: str = "duckduckgo_lite",
+    max_sources: int = 5,
+    max_tokens: int = 8000,
+) -> str:
+    """Get a direct, citation-backed answer to a question.
+
+    Like Perplexity: searches the web, extracts top sources,
+    and synthesizes a concise answer with inline citations [1], [2].
+
+    BEST FOR:
+    - Factual questions ("What is X?")
+    - How-to questions ("How do I do Y?")
+    - Comparison questions ("X vs Y?")
+
+    NOT FOR:
+    - Creative writing
+    - Reading specific known URLs (use fetch_page)
+    """
+    if engine not in SEARCH_ENGINES:
+        engine = "duckduckgo_lite"
+
+    result = await deep_research(
+        query=query,
+        engine=engine,
+        max_sources=max_sources,
+        follow_links=False,
+        expand_queries=True,
+        max_tokens_per_source=max_tokens // max_sources,
+        max_total_tokens=max_tokens,
+        summarize=True,
+        synthesize_answer=True,
+    )
+
+    if not result.sources:
+        return f"I couldn't find any sources for: **{query}**"
+
+    # Build concise answer output
+    lines = [
+        f"## {query}",
+        "",
+    ]
+
+    if result.synthesized_answer:
+        lines.append(result.synthesized_answer)
+        lines.append("")
+
+    # Citations section
+    lines.append("**Sources:**")
+    for src in result.sources:
+        freshness = ""
+        if src.freshness_days is not None:
+            freshness = f" ({src.freshness_days}d ago)"
+        elif src.published_date:
+            freshness = f" ({src.published_date})"
+        lines.append(f"[{src.citation_id}] {src.title} — {src.url}{freshness}")
+
+    return "\n".join(lines)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Tool: search_with_citations
+# ═══════════════════════════════════════════════════════════════
+
+async def tool_search_with_citations(
+    query: str,
+    engine: str = "duckduckgo_lite",
+    max_results: int = 10,
+) -> str:
+    """Search the web and return citation-ready results.
+
+    Each result includes a citation ID [1], [2] that can be referenced
+    in follow-up fetch_page or fetch_bulk calls.
+
+    BEST FOR:
+    - When you need to cite specific sources in your answer
+    - Academic or technical writing with source attribution
+    - Building a bibliography before deep reading
+    """
+    if engine not in SEARCH_ENGINES:
+        engine = "duckduckgo_lite"
+
+    try:
+        search_engine = SearchEngineRegistry.create(engine)
+        results = await with_retry(
+            search_engine.search,
+            query,
+            max_results=max_results,
+            max_attempts=3,
+        )
+    except MaruSearchError as e:
+        if e.suggested_engine and e.suggested_engine != engine:
+            search_engine = SearchEngineRegistry.create(e.suggested_engine)
+            results = await search_engine.search(query, max_results=max_results)
+        else:
+            raise
+
+    if not results:
+        return f"No results found for: {query}"
+
+    # Assign citation IDs
+    for i, r in enumerate(results, 1):
+        r.citation_id = i
+
+    lines = [f"## Citation Search: {query}\n"]
+    for r in results:
+        type_badge = f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        auth_badge = " [AUTHORITY]" if any(d in r.domain for d in [
+            "docs.python.org", "developer.mozilla.org", "github.com",
+            "stackoverflow.com", "arxiv.org"
+        ]) else ""
+        lines.append(f"[{r.citation_id}] **{r.title}**{type_badge}{auth_badge}")
+        lines.append(f"    URL: {r.url}")
+        if r.snippet:
+            lines.append(f"    > {r.snippet[:300]}")
+        lines.append("")
+
+    lines.append("---")
+    lines.append("Use `fetch_page(url)` or `fetch_bulk(urls)` to read full content.")
+    return "\n".join(lines)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -283,9 +416,6 @@ async def tool_stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
 
     Recommendation: Try fetch_page first, fall back to stealthy_fetch
     only if needed.
-
-    Automatically adapts browser fingerprint per site for maximum
-    compatibility.
     """
     return await tool_fetch_page(url, stealth=True, max_tokens=max_tokens)
 
@@ -311,11 +441,7 @@ async def tool_parallel_search(
 
 
 # ═══════════════════════════════════════════════════════════════
-# Tool registry
-# ═══════════════════════════════════════════════════════════════
-
-# ═══════════════════════════════════════════════════════════════
-# Tool Guidance — How Agents Should Choose Tools
+# Tool Guidance
 # ═══════════════════════════════════════════════════════════════
 
 TOOL_GUIDANCE = """
@@ -323,32 +449,41 @@ TOOL_GUIDANCE = """
 
 When deciding which tool to use, follow this priority order:
 
-### 1. Need to search for information?
+### 1. Need a direct answer with citations?
+**→ Use `answer`**
+
+Like Perplexity: searches the web and returns a synthesized answer
+with inline citations [1], [2]. Best for factual questions.
+
+### 2. Need to search for information?
 **→ Use `web_search`** (single query) or **`parallel_search`** (multiple queries)
 
-- **web_search**: Best for single-topic exploration. Returns ranked results with content type hints.
-- **parallel_search**: Best when you need multiple angles simultaneously (e.g., "Python async" + "Python threading" + "Python concurrency").
+- **web_search**: Best for single-topic exploration. Returns ranked results with content type hints and citation IDs.
+- **parallel_search**: Best when you need multiple angles simultaneously.
 
-**When NOT to use**: When you already have specific URLs to read.
+### 3. Need citation-ready sources?
+**→ Use `search_with_citations`**
 
-### 2. Have specific URLs to read?
+Returns search results pre-tagged with citation IDs [1], [2] for
+academic or technical writing.
+
+### 4. Have specific URLs to read?
 **→ Use `fetch_page`** (single URL) or **`fetch_bulk`** (multiple URLs)
 
-- **fetch_page**: Best for reading one specific page. Fast, lightweight. Try this first.
-- **fetch_bulk**: Best when you have 2-10 URLs from search results and want to read them all in parallel.
+- **fetch_page**: Best for reading one specific page quickly. Try this first.
+- **fetch_bulk**: Best when you have 2-10 URLs from search results.
 
 **Anti-bot handling**:
-- If fetch_page returns [BLOCKED] or incomplete content, retry with `stealth=True` parameter
+- If fetch_page returns [BLOCKED], retry with `stealth=True` parameter
 - If still blocked, use `stealthy_fetch` as last resort
-- **stealthy_fetch**: Slower but bypasses Cloudflare/DataDome. Use only when regular fetch fails.
 
-### 3. Need comprehensive research on a topic?
+### 5. Need comprehensive research on a topic?
 **→ Use `deep_research`**
 
 Best for:
 - Exploring a topic you know little about
 - Need multiple perspectives and sources
-- Want synthesized results with quality scoring
+- Want synthesized results with quality scoring and inline citations
 
 **Parameters**:
 - `max_sources`: How many pages to crawl (default 8, max 15)
@@ -356,32 +491,37 @@ Best for:
 - `summarize=True`: If output is too large, enables smart summarization
 - `follow_links=True`: Crawl external links for deeper coverage (slower)
 
-**When NOT to use**: When you already know exactly which URLs to read (use fetch_bulk instead).
-
-### 4. Quick Decision Tree
+### Quick Decision Tree
 
 ```
+Need a quick answer?
+├── Yes → answer
+│   └── Need deeper detail? → deep_research
+│
 Need to find sources?
-├── Yes → web_search or parallel_search
+├── Yes → web_search or search_with_citations
+│   ├── Need multiple angles? → parallel_search
 │   └── Got URLs? → fetch_page or fetch_bulk
 │       └── Blocked? → stealthy_fetch
+│
 └── No → deep_research (comprehensive)
-    └── Too much output? → Use summarize=True
+    └── Too much output? → summarize=True
 ```
 
-### 5. Performance Tips
+### Performance Tips
 
-- **Fastest**: web_search, fetch_page (DynamicFetcher)
+- **Fastest**: web_search, fetch_page, answer
 - **Slowest**: stealthy_fetch (StealthyFetcher, ~3-5x slower)
 - **Most comprehensive**: deep_research with follow_links=True
 - **Token efficient**: deep_research with summarize=True
 
-### 6. Common Mistakes to Avoid
+### Common Mistakes to Avoid
 
 - ❌ Using stealthy_fetch for every URL (wastes time)
 - ❌ Using deep_research when you only need one page
 - ❌ Not checking quality badges in results ([HIGH], [BLOCKED], etc.)
 - ❌ Ignoring follow-up links in fetch_page results
+- ❌ Not using citations when the user asks for sources
 """
 
 # ═══════════════════════════════════════════════════════════════
@@ -389,95 +529,139 @@ Need to find sources?
 # ═══════════════════════════════════════════════════════════════
 
 TOOLS = {
-    "web_search": (tool_web_search, 
+    "answer": (
+        tool_answer,
+        "Get a direct, citation-backed answer to any question. "
+        "BEST FOR: Factual questions, how-to queries, comparisons. "
+        "Returns synthesized answer with inline citations [1], [2] like Perplexity. "
+        "NOT FOR: Creative writing or reading known URLs.",
+        {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Question or topic to answer"},
+                "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
+                "max_sources": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+                "max_tokens": {"type": "integer", "default": 8000, "minimum": 1000, "maximum": 15000},
+            },
+            "required": ["query"],
+        },
+    ),
+    "web_search": (
+        tool_web_search,
         "Search the web by scraping search engine results. "
         "BEST FOR: Finding sources on a single topic. "
         "NOT FOR: Reading known URLs (use fetch_page instead). "
-        "Returns ranked results with [AUTHORITY] badges and content type hints.", {
-        "type": "object",
-        "properties": {
-            "query": {"type": "string", "description": "Search query"},
-            "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite",
-                       "description": "Search engine to scrape. duckduckgo_lite is fastest."},
-            "max_results": {"type": "integer", "default": 10, "minimum": 1, "maximum": 20},
+        "Returns ranked results with [AUTHORITY] badges and citation IDs.",
+        {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query"},
+                "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
+                "max_results": {"type": "integer", "default": 10, "minimum": 1, "maximum": 20},
+            },
+            "required": ["query"],
         },
-        "required": ["query"],
-    }),
-    "fetch_page": (tool_fetch_page, 
+    ),
+    "search_with_citations": (
+        tool_search_with_citations,
+        "Search the web and return citation-ready results with IDs [1], [2]. "
+        "BEST FOR: Academic writing, technical documentation, any task requiring source attribution. "
+        "Each result includes a citation ID for referencing in answers.",
+        {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Search query"},
+                "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
+                "max_results": {"type": "integer", "default": 10, "minimum": 1, "maximum": 20},
+            },
+            "required": ["query"],
+        },
+    ),
+    "fetch_page": (
+        tool_fetch_page,
         "Extract clean, readable content from a single URL. "
         "BEST FOR: Reading one specific page quickly. "
         "TRY FIRST before stealthy_fetch. "
-        "If blocked, retry with stealth=True or use stealthy_fetch.", {
-        "type": "object",
-        "properties": {
-            "url": {"type": "string", "description": "URL to fetch"},
-            "stealth": {"type": "boolean", "default": False,
-                        "description": "Use anti-bot bypass. Try this if first attempt is blocked."},
-            "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000,
-                           "description": "Approximate max output tokens"},
+        "If blocked, retry with stealth=True or use stealthy_fetch.",
+        {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "URL to fetch"},
+                "stealth": {"type": "boolean", "default": False,
+                            "description": "Use anti-bot bypass. Try this if first attempt is blocked."},
+                "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000},
+            },
+            "required": ["url"],
         },
-        "required": ["url"],
-    }),
-    "fetch_bulk": (tool_fetch_bulk, 
+    ),
+    "fetch_bulk": (
+        tool_fetch_bulk,
         "Fetch multiple URLs in parallel. "
         "BEST FOR: Reading 2-10 known URLs simultaneously. "
-        "Each result includes quality signals ([HIGH], [BLOCKED]) for prioritization.", {
-        "type": "object",
-        "properties": {
-            "urls": {"type": "array", "items": {"type": "string"},
-                     "description": "List of URLs to fetch"},
-            "stealth": {"type": "boolean", "default": False},
-            "max_concurrent": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
-            "max_tokens": {"type": "integer", "default": 3000, "minimum": 300, "maximum": 5000},
+        "Each result includes quality signals ([HIGH], [BLOCKED]) for prioritization.",
+        {
+            "type": "object",
+            "properties": {
+                "urls": {"type": "array", "items": {"type": "string"},
+                         "description": "List of URLs to fetch"},
+                "stealth": {"type": "boolean", "default": False},
+                "max_concurrent": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+                "max_tokens": {"type": "integer", "default": 3000, "minimum": 300, "maximum": 5000},
+            },
+            "required": ["urls"],
         },
-        "required": ["urls"],
-    }),
-    "deep_research": (tool_deep_research,
-        "Comprehensive research: auto-expands query, searches multiple angles, crawls top results, and synthesizes findings. "
+    ),
+    "deep_research": (
+        tool_deep_research,
+        "Comprehensive research: auto-expands query, searches multiple angles, crawls top results, synthesizes answer with citations. "
         "BEST FOR: Exploring topics you don't know well. "
         "NOT FOR: When you already have specific URLs (use fetch_bulk instead). "
-        "Smart token management keeps output manageable. Use summarize=True if too large.", {
-        "type": "object",
-        "properties": {
-            "query": {"type": "string", "description": "Research question or topic"},
-            "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
-            "max_sources": {"type": "integer", "default": 8, "minimum": 1, "maximum": 15},
-            "follow_links": {"type": "boolean", "default": False,
-                             "description": "Also crawl external links found on result pages"},
-            "expand_queries": {"type": "boolean", "default": True,
-                               "description": "Generate subqueries for broader coverage"},
-            "max_tokens_per_source": {"type": "integer", "default": 2500, "minimum": 500, "maximum": 5000,
-                                       "description": "Token budget per source"},
-            "max_total_tokens": {"type": "integer", "default": 20000, "minimum": 2000, "maximum": 50000,
-                                  "description": "Total output token budget"},
-            "summarize": {"type": "boolean", "default": False,
-                           "description": "Enable extractive summarization for over-budget scenarios"},
+        "Smart token management keeps output manageable. Use summarize=True if too large.",
+        {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string", "description": "Research question or topic"},
+                "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
+                "max_sources": {"type": "integer", "default": 8, "minimum": 1, "maximum": 15},
+                "follow_links": {"type": "boolean", "default": False,
+                                 "description": "Also crawl external links found on result pages"},
+                "expand_queries": {"type": "boolean", "default": True},
+                "max_tokens_per_source": {"type": "integer", "default": 2500, "minimum": 500, "maximum": 5000},
+                "max_total_tokens": {"type": "integer", "default": 20000, "minimum": 2000, "maximum": 50000},
+                "summarize": {"type": "boolean", "default": False},
+            },
+            "required": ["query"],
         },
-        "required": ["query"],
-    }),
-    "stealthy_fetch": (tool_stealthy_fetch,
+    ),
+    "stealthy_fetch": (
+        tool_stealthy_fetch,
         "Fetch a URL with full anti-bot bypass. "
         "BEST FOR: Sites that block regular fetching (Cloudflare, DataDome). "
         "USE AS LAST RESORT: Try fetch_page first, then fetch_page with stealth=True, then this. "
-        "~3-5x slower than fetch_page but more reliable for protected sites.", {
-        "type": "object",
-        "properties": {
-            "url": {"type": "string", "description": "URL to fetch"},
-            "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000},
+        "~3-5x slower than fetch_page but more reliable for protected sites.",
+        {
+            "type": "object",
+            "properties": {
+                "url": {"type": "string", "description": "URL to fetch"},
+                "max_tokens": {"type": "integer", "default": 6000, "minimum": 500, "maximum": 8000},
+            },
+            "required": ["url"],
         },
-        "required": ["url"],
-    }),
-    "parallel_search": (tool_parallel_search,
+    ),
+    "parallel_search": (
+        tool_parallel_search,
         "Run multiple searches in parallel. "
-        "BEST FOR: Getting multiple perspectives fast (e.g., 'Python vs Go', 'Python tutorial', 'Python performance'). "
-        "Faster than calling web_search multiple times sequentially.", {
-        "type": "object",
-        "properties": {
-            "queries": {"type": "array", "items": {"type": "string"},
-                        "description": "Search queries to run in parallel"},
-            "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
-            "max_results": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+        "BEST FOR: Getting multiple perspectives fast. "
+        "Faster than calling web_search multiple times sequentially.",
+        {
+            "type": "object",
+            "properties": {
+                "queries": {"type": "array", "items": {"type": "string"},
+                            "description": "Search queries to run in parallel"},
+                "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
+                "max_results": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+            },
+            "required": ["queries"],
         },
-        "required": ["queries"],
-    }),
+    ),
 }

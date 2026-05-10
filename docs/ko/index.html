@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>clco-deep-research-mcp — 코딩 에이전트를 위한 무료 딥리서치 MCP</title>
+    <title>maru-search — 코딩 에이전트를 위한 무료 딥리서치 MCP</title>
     <meta name="description" content="코딩 에이전트 최적화 무료 딥리서치 MCP. 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.">
-    <link rel="alternate" hreflang="en" href="https://claudianus.github.io/clco-deep-research-mcp/">
-    <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/clco-deep-research-mcp/ko/">
-    <link rel="alternate" hreflang="x-default" href="https://claudianus.github.io/clco-deep-research-mcp/">
+    <link rel="alternate" hreflang="en" href="https://claudianus.github.io/maru-search/">
+    <link rel="alternate" hreflang="ko" href="https://claudianus.github.io/maru-search/ko/">
+    <link rel="alternate" hreflang="x-default" href="https://claudianus.github.io/maru-search/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -643,7 +643,7 @@
 <body>
     <nav class="nav">
         <div class="nav-container">
-            <div class="nav-logo">clco-deep-research</div>
+            <div class="nav-logo">maru-search</div>
             <ul class="nav-links">
                 <li><a href="#features">기능</a></li>
                 <li><a href="#pipeline">파이프라인</a></li>
@@ -651,12 +651,12 @@
                 <li><a href="#install">설치</a></li>
                 <li>
                     <div class="lang-switch">
-                        <a href="/clco-deep-research-mcp/">EN</a>
-                        <a href="/clco-deep-research-mcp/ko/" class="active">KO</a>
+                        <a href="/maru-search/">EN</a>
+                        <a href="/maru-search/ko/" class="active">KO</a>
                     </div>
                 </li>
             </ul>
-            <a href="https://github.com/claudianus/clco-deep-research-mcp" class="nav-cta" target="_blank">GitHub</a>
+            <a href="https://github.com/claudianus/maru-search" class="nav-cta" target="_blank">GitHub</a>
         </div>
     </nav>
 
@@ -673,12 +673,12 @@
                 4엔진 SERP 스크래핑 + trafilatura 추출 + 코드 인식 분석. API 키 불필요.
             </p>
             <div class="hero-install animate-in delay-3">
-                <code><span class="comment"># 한 줄 설치 (pip이 있는 경우)</span><br>pip install clco-deep-research-mcp</code>
-                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">복사</button>
+                <code><span class="comment"># 한 줄 설치 (pip이 있는 경우)</span><br>pip install maru-search</code>
+                <button class="copy-btn" onclick="copyToClipboard('pip install maru-search')">복사</button>
             </div>
             <div class="hero-install animate-in delay-3" style="margin-top: 1rem;">
-                <code><span class="comment"># pip이 없는 경우 (Python 내장 모듈 사용)</span><br>python3 -m pip install clco-deep-research-mcp</code>
-                <button class="copy-btn" onclick="copyToClipboard('python3 -m pip install clco-deep-research-mcp')">복사</button>
+                <code><span class="comment"># pip이 없는 경우 (Python 내장 모듈 사용)</span><br>python3 -m pip install maru-search</code>
+                <button class="copy-btn" onclick="copyToClipboard('python3 -m pip install maru-search')">복사</button>
             </div>
             <div class="hero-stats animate-in delay-3">
                 <div class="stat">
@@ -867,13 +867,13 @@ URL: https://dev.to/...
         <div class="section-header">
             <div class="section-tag">비교</div>
             <h2 class="section-title">다른 솔루션과 비교</h2>
-            <p class="section-desc">clco-deep-research가 다른 웹 검색 MCP와 어떻게 다른지 확인하세요.</p>
+            <p class="section-desc">maru-search가 다른 웹 검색 MCP와 어떻게 다른지 확인하세요.</p>
         </div>
         <table class="benchmark-table">
             <thead>
                 <tr>
                     <th>기능</th>
-                    <th>clco-deep-research</th>
+                    <th>maru-search</th>
                     <th>duckduckgo-websearch</th>
                     <th>Brave Search API</th>
                 </tr>
@@ -941,7 +941,7 @@ URL: https://dev.to/...
         <div class="section-header">
             <div class="section-tag">설치</div>
             <h2 class="section-title">몇 초 만에 시작하기</h2>
-            <p class="section-desc">선호하는 코딩 에이전트에 clco-deep-research를 설치하세요.</p>
+            <p class="section-desc">선호하는 코딩 에이전트에 maru-search를 설치하세요.</p>
         </div>
         <div class="install-tabs">
             <button class="install-tab active" onclick="switchTab('claude-code')">Claude Code</button>
@@ -959,9 +959,9 @@ URL: https://dev.to/...
                 <div class="code-body">
                     <pre id="claude-code-config">{
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }</pre>
@@ -978,9 +978,9 @@ URL: https://dev.to/...
                 <div class="code-body">
                     <pre id="claude-desktop-config">{
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }</pre>
@@ -997,9 +997,9 @@ URL: https://dev.to/...
                 <div class="code-body">
                     <pre id="cursor-config">{
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }</pre>
@@ -1016,10 +1016,10 @@ URL: https://dev.to/...
                 <div class="code-body">
                     <pre id="vscode-config">{
   "servers": {
-    "clco-deep-research": {
+    "maru-search": {
       "type": "stdio",
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }</pre>
@@ -1036,9 +1036,9 @@ URL: https://dev.to/...
                 <div class="code-body">
                     <pre id="windsurf-config">{
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }</pre>
@@ -1052,7 +1052,7 @@ URL: https://dev.to/...
         <div class="section-header">
             <div class="section-tag">데모</div>
             <h2 class="section-title">실제 사용 예시</h2>
-            <p class="section-desc">Claude Code에서 clco-deep-research를 사용하는 예시.</p>
+            <p class="section-desc">Claude Code에서 maru-search를 사용하는 예시.</p>
         </div>
         <div class="code-block">
             <div class="code-header">
@@ -1084,28 +1084,28 @@ $ /parallel_search ["python vs go concurrency", "python vs rust performance"]</p
         <div class="code-block">
             <div class="code-header">
                 <span class="code-lang">Claude Code</span>
-                <button class="copy-btn" onclick="copyToClipboard('claude mcp add clco-deep-research pip:clco-deep-research-mcp')">복사</button>
+                <button class="copy-btn" onclick="copyToClipboard('claude mcp add maru-search pip:maru-search')">복사</button>
             </div>
             <div class="code-body">
                 <pre># Claude Code에 한 줄로 추가
-claude mcp add clco-deep-research pip:clco-deep-research-mcp</pre>
+claude mcp add maru-search pip:maru-search</pre>
             </div>
         </div>
         <div class="code-block" style="margin-top: 1.5rem;">
             <div class="code-header">
                 <span class="code-lang">Cursor / VS Code / Windsurf</span>
-                <button class="copy-btn" onclick="copyToClipboard('pip install clco-deep-research-mcp')">복사</button>
+                <button class="copy-btn" onclick="copyToClipboard('pip install maru-search')">복사</button>
             </div>
             <div class="code-body">
                 <pre># 1. 먼저 설치
-pip install clco-deep-research-mcp
+pip install maru-search
 
 # 2. 설정 파일에 추가 (각 에이전트의 MCP 설정에 붙여넣기)
 {
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }</pre>
@@ -1126,10 +1126,10 @@ python3 -m pip --version  # pip 버전 확인
 
     <footer class="footer">
         <div class="footer-links">
-            <a href="https://github.com/claudianus/clco-deep-research-mcp" target="_blank">GitHub</a>
-            <a href="https://pypi.org/project/clco-deep-research-mcp/" target="_blank">PyPI</a>
-            <a href="https://github.com/claudianus/clco-deep-research-mcp/issues" target="_blank">Issues</a>
-            <a href="https://github.com/claudianus/clco-deep-research-mcp/blob/main/LICENSE" target="_blank">라이선스</a>
+            <a href="https://github.com/claudianus/maru-search" target="_blank">GitHub</a>
+            <a href="https://pypi.org/project/maru-search/" target="_blank">PyPI</a>
+            <a href="https://github.com/claudianus/maru-search/issues" target="_blank">Issues</a>
+            <a href="https://github.com/claudianus/maru-search/blob/main/LICENSE" target="_blank">라이선스</a>
         </div>
         <p class="footer-copy">
             MIT License — 코딩 에이전트 시대를 위해 만들어졌습니다.

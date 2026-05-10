@@ -1,7 +1,7 @@
 """Tests for code-aware content analysis."""
 
 import pytest
-from clco_deep_research.engines.code_aware import (
+from maru_search.extraction.code import (
     detect_language,
     extract_api_signatures,
     analyze_code_content,

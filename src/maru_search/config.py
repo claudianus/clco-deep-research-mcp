@@ -1,0 +1,44 @@
+"""Configuration management for maru-search.
+
+Supports environment variables and sensible defaults.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass, field
+
+
+@dataclass
+class SearchConfig:
+    """Runtime search configuration."""
+
+    default_engine: str = "duckduckgo_lite"
+    max_results_per_query: int = 10
+    max_concurrent_fetches: int = 5
+    default_max_tokens_per_source: int = 2500
+    default_max_total_tokens: int = 20000
+    fetch_timeout_seconds: float = 30.0
+    retry_attempts: int = 3
+    # Quality weights for ranking
+    authority_weight: float = 2.0
+    freshness_weight: float = 1.0
+    snippet_weight: float = 1.0
+    position_weight: float = 0.5
+
+    @classmethod
+    def from_env(cls) -> "SearchConfig":
+        """Load configuration from environment variables."""
+        return cls(
+            default_engine=os.getenv("MARU_SEARCH_ENGINE", "duckduckgo_lite"),
+            max_results_per_query=int(os.getenv("MARU_SEARCH_MAX_RESULTS", "10")),
+            max_concurrent_fetches=int(os.getenv("MARU_SEARCH_MAX_CONCURRENT", "5")),
+            default_max_tokens_per_source=int(os.getenv("MARU_SEARCH_MAX_TOKENS_SOURCE", "2500")),
+            default_max_total_tokens=int(os.getenv("MARU_SEARCH_MAX_TOKENS_TOTAL", "20000")),
+            fetch_timeout_seconds=float(os.getenv("MARU_SEARCH_TIMEOUT", "30.0")),
+            retry_attempts=int(os.getenv("MARU_SEARCH_RETRIES", "3")),
+        )
+
+
+# Global default instance
+DEFAULT_CONFIG = SearchConfig.from_env()

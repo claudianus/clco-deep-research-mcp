@@ -1,8 +1,8 @@
 """Tests for exception hierarchy."""
 
 import pytest
-from clco_deep_research.exceptions import (
-    ResearchError,
+from maru_search.exceptions import (
+    MaruSearchError,
     NetworkError,
     RateLimitError,
     BlockedError,
@@ -12,18 +12,18 @@ from clco_deep_research.exceptions import (
 )
 
 
-class TestResearchError:
+class TestMaruSearchError:
     def test_base_error(self):
-        err = ResearchError("test error")
+        err = MaruSearchError("test error")
         assert str(err) == "test error"
         assert err.retryable is False
 
     def test_retryable_error(self):
-        err = ResearchError("retry me", retryable=True)
+        err = MaruSearchError("retry me", retryable=True)
         assert err.retryable is True
 
     def test_suggested_engine(self):
-        err = ResearchError("failed", suggested_engine="duckduckgo_lite")
+        err = MaruSearchError("failed", suggested_engine="duckduckgo_lite")
         assert err.suggested_engine == "duckduckgo_lite"
 
 
@@ -40,7 +40,7 @@ class TestBlockedError:
 
     def test_has_fallback(self):
         err = BlockedError("blocked")
-        assert err.suggested_engine == "duckduckgo_lite"
+        assert err.suggested_engine == "duckduckgo"
 
 
 class TestNoResultsError:

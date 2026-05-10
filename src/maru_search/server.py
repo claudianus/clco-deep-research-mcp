@@ -5,9 +5,9 @@ import sys
 
 from mcp.server.fastmcp import FastMCP
 
-mcp = FastMCP("clco-deep-research")
+mcp = FastMCP("maru-search")
 
-_logger = logging.getLogger("clco_deep_research")
+_logger = logging.getLogger("maru_search")
 _logger.setLevel(logging.INFO)
 
 _stderr_handler = logging.StreamHandler(sys.stderr)
@@ -19,21 +19,28 @@ _logger.propagate = False
 
 
 # ═══════════════════════════════════════════════════════════════
-# MCP Prompts — Tool Selection Guidance for AI Agents
+# MCP Prompts — Universal Tool Selection Guidance
 # ═══════════════════════════════════════════════════════════════
 
 @mcp.prompt()
 def tool_selection_guide() -> str:
     """Comprehensive guide for choosing the right research tool."""
-    return """# clco-deep-research Tool Selection Guide
+    return """# Maru Search Tool Selection Guide
 
 ## Quick Decision Tree
 
 ```
 What do you need?
+├── Quick answer with sources?
+│   └── answer (Perplexity-style)
+│       └── Need deeper detail? → deep_research
+│
 ├── Find information on a topic?
 │   ├── Single angle → web_search
 │   └── Multiple angles → parallel_search
+│
+├── Need citation-ready sources?
+│   └── search_with_citations
 │
 ├── Read specific URLs?
 │   ├── One URL → fetch_page (try first)
@@ -48,17 +55,27 @@ What do you need?
 
 ## Tool Details
 
+### answer
+**When to use**: You want a direct, cited answer like Perplexity.
+**Example**: "What is quantum computing?"
+**Returns**: Synthesized answer with inline citations [1], [2].
+**NOT for**: Reading known URLs.
+
 ### web_search
 **When to use**: You need to find sources on a single topic.
 **Example**: "Python asyncio best practices"
-**Returns**: Ranked results with [AUTHORITY] badges and content type hints.
+**Returns**: Ranked results with [AUTHORITY] badges and citation IDs.
 **NOT for**: Reading known URLs.
+
+### search_with_citations
+**When to use**: You need sources for academic/technical writing.
+**Example**: Research paper background
+**Returns**: Results pre-tagged with citation IDs [1], [2].
 
 ### parallel_search
 **When to use**: You need multiple perspectives simultaneously.
-**Example**: ["Python vs Go performance", "Python concurrency tutorial", "Python async pitfalls"]
+**Example**: ["Python vs Go performance", "Python concurrency tutorial"]
 **Returns**: Separate result sets for each query, merged output.
-**NOT for**: Single simple queries (use web_search instead).
 
 ### fetch_page
 **When to use**: You have a specific URL to read.
@@ -68,18 +85,12 @@ What do you need?
 
 ### fetch_bulk
 **When to use**: You have 2-10 URLs from search results.
-**Example**: ["url1", "url2", "url3"] from web_search results
 **Returns**: All pages in parallel with quality badges.
-**NOT for**: Single URLs (use fetch_page instead).
 
 ### deep_research
 **When to use**: You need comprehensive research on an unfamiliar topic.
 **Example**: "Explain Kubernetes networking to me"
-**Returns**: Synthesized findings from multiple sources with quality scoring.
-**Parameters**:
-- max_sources: How many pages to crawl (default 8)
-- summarize=True: Enable if output is too large
-- follow_links=True: For deeper coverage (slower)
+**Returns**: Synthesized findings with citations and quality scoring.
 
 ### stealthy_fetch
 **When to use**: fetch_page failed even with stealth=True.
@@ -88,8 +99,8 @@ What do you need?
 **Warning**: ~3-5x slower. Use as last resort.
 
 ## Performance Ranking
-1. **Fastest**: web_search, fetch_page
-2. **Medium**: parallel_search, fetch_bulk
+1. **Fastest**: answer, web_search, fetch_page
+2. **Medium**: parallel_search, fetch_bulk, search_with_citations
 3. **Slow**: deep_research
 4. **Slowest**: stealthy_fetch
 
@@ -98,6 +109,7 @@ What do you need?
 - ❌ Using deep_research for single-page reads
 - ❌ Not checking quality badges ([HIGH], [BLOCKED])
 - ❌ Ignoring follow-up links in results
+- ❌ Not using citations when user asks for sources
 """
 
 
@@ -130,7 +142,7 @@ Use `stealthy_fetch(url)`
 If all steps fail:
 - The site may require JavaScript execution
 - Try searching for the content on alternative sites
-- Use web_search to find mirrors or cached versions
+- Use `web_search` to find mirrors or cached versions
 
 ## When to Skip Steps
 
@@ -156,12 +168,16 @@ def research_workflow() -> str:
 ## Phase 1: Discovery
 **Goal**: Find relevant sources
 
-1. Start with `deep_research(query)` for broad exploration
+1. Start with `answer(query)` for quick, cited overview
+   - Review inline citations [1], [2]
+   - Note promising URLs
+
+2. OR use `deep_research(query)` for broad exploration
    - Let it auto-expand queries
    - Review quality badges ([HIGH] = prioritize)
    - Note promising URLs
 
-2. OR use `parallel_search` for targeted angles:
+3. OR use `parallel_search` for targeted angles:
    ```
    [
      "{topic} tutorial beginner",
@@ -184,11 +200,12 @@ def research_workflow() -> str:
    - Or `stealthy_fetch(url)` as last resort
 
 ## Phase 3: Synthesis
-**Goal**: Combine findings
+**Goal**: Combine findings with proper citations
 
 1. Review all fetched content
-2. Use follow-up links from results for additional sources
+2. Use `search_with_citations` to find additional sources if needed
 3. Cross-reference information across sources
+4. Always cite sources using [1], [2] format when answering
 
 ## Token Management Tips
 
@@ -200,19 +217,33 @@ def research_workflow() -> str:
 ## Example: Researching "Rust Async"
 
 ```
-1. deep_research("Rust async runtime comparison")
-   → Gets 8 sources with quality scores
+1. answer("Rust async runtime comparison")
+   → Gets cited overview with 5 sources
 
-2. fetch_bulk([url1, url2, url3])  # Top 3 [HIGH] sources
+2. deep_research("Rust async runtime comparison")
+   → Gets 8 sources with quality scores and citations
+
+3. fetch_bulk([url1, url2, url3])  # Top 3 [HIGH] sources
    → Reads them in parallel
 
-3. web_search("tokio vs async-std 2025")
-   → Finds recent comparisons
+4. search_with_citations("tokio vs async-std 2025")
+   → Finds recent comparisons with citation IDs
 
-4. fetch_page(new_url, stealth=True)
+5. fetch_page(new_url, stealth=True)
    → If any are blocked
 ```
 """
+
+
+@mcp.tool()
+async def answer(
+    query: str,
+    engine: str = "duckduckgo_lite",
+    max_sources: int = 5,
+    max_tokens: int = 8000,
+) -> str:
+    from .tools import tool_answer
+    return await tool_answer(query, engine, max_sources, max_tokens)
 
 
 @mcp.tool()
@@ -222,14 +253,22 @@ async def web_search(
     max_results: int = 10,
 ) -> str:
     from .tools import tool_web_search
-
     return await tool_web_search(query, engine, max_results)
+
+
+@mcp.tool()
+async def search_with_citations(
+    query: str,
+    engine: str = "duckduckgo_lite",
+    max_results: int = 10,
+) -> str:
+    from .tools import tool_search_with_citations
+    return await tool_search_with_citations(query, engine, max_results)
 
 
 @mcp.tool()
 async def fetch_page(url: str, stealth: bool = False, max_tokens: int = 6000) -> str:
     from .tools import tool_fetch_page
-
     return await tool_fetch_page(url, stealth, max_tokens)
 
 
@@ -241,7 +280,6 @@ async def fetch_bulk(
     max_tokens: int = 3000,
 ) -> str:
     from .tools import tool_fetch_bulk
-
     return await tool_fetch_bulk(urls, stealth, max_concurrent, max_tokens)
 
 
@@ -257,7 +295,6 @@ async def deep_research(
     summarize: bool = False,
 ) -> str:
     from .tools import tool_deep_research
-
     return await tool_deep_research(
         query, engine, max_sources, follow_links, expand_queries,
         max_tokens_per_source, max_total_tokens, summarize,
@@ -267,7 +304,6 @@ async def deep_research(
 @mcp.tool()
 async def stealthy_fetch(url: str, max_tokens: int = 6000) -> str:
     from .tools import tool_stealthy_fetch
-
     return await tool_stealthy_fetch(url, max_tokens)
 
 
@@ -278,7 +314,6 @@ async def parallel_search(
     max_results: int = 5,
 ) -> str:
     from .tools import tool_parallel_search
-
     return await tool_parallel_search(queries, engine, max_results)
 
 

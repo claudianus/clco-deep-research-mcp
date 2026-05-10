@@ -1,7 +1,4 @@
-"""Abstract base class for search engines.
-
-All search engines implement the same interface so the research pipeline
-can switch between them transparently."""
+"""Abstract base classes and data models for search engines."""
 
 from __future__ import annotations
 
@@ -40,6 +37,11 @@ class SearchResult:
     domain: str = ""
     url_suggests_docs: bool = False
     engine: str = ""
+    # Citation support
+    citation_id: int = 0
+    # Cross-engine metadata
+    engines_found: list[str] = field(default_factory=list)
+    cross_engine_score: float = 0.0
 
 
 @dataclass
@@ -68,11 +70,15 @@ class PageContent:
     published_date: str = ""
     code_languages: list[str] = field(default_factory=list)
     api_signatures: list[dict] = field(default_factory=list)
+    package_refs: list[dict] = field(default_factory=list)
     code_to_text_ratio: float = 0.0
     freshness_days: int | None = None
     is_api_reference: bool = False
     is_tutorial: bool = False
     is_error_solution: bool = False
+
+    # Citation support for answer synthesis
+    citation_id: int = 0
 
 
 class SearchEngine(ABC):
@@ -83,26 +89,10 @@ class SearchEngine(ABC):
 
     @abstractmethod
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
-        """Search and return results.
-
-        Args:
-            query: Search query string.
-            max_results: Maximum number of results to return.
-
-        Returns:
-            List of SearchResult objects.
-        """
+        """Search and return results."""
         ...
 
     @abstractmethod
     async def fetch(self, url: str, stealth: bool = False) -> PageContent:
-        """Fetch and extract content from a URL.
-
-        Args:
-            url: URL to fetch.
-            stealth: Whether to use anti-bot bypass.
-
-        Returns:
-            PageContent with extracted content and metadata.
-        """
+        """Fetch and extract content from a URL."""
         ...

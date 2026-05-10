@@ -1,7 +1,7 @@
 """Tests for query expansion module."""
 
 import pytest
-from clco_deep_research.research.expander import expand_query, extract_keywords
+from maru_search.research.expander import expand_query, extract_keywords
 
 
 class TestExpandQuery:

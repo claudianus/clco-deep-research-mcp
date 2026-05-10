@@ -1,6 +1,6 @@
 """Tests for tool guidance and MCP prompts."""
 
-from clco_deep_research.tools import TOOLS, TOOL_GUIDANCE
+from maru_search.tools import TOOLS, TOOL_GUIDANCE
 
 
 class TestToolGuidance:

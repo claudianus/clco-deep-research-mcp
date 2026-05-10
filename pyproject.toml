@@ -1,24 +1,24 @@
 [project]
-name = "clco-deep-research-mcp"
-version = "0.4.0"
-description = "Free deep research MCP for coding agents — 4-engine web scraping + content extraction + code analysis. Zero API keys. One-line install."
+name = "maru-search"
+version = "0.5.0"
+description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 authors = [
-    { name = "clco", email = "ryan.h.park@me.com" },
+    { name = "maru", email = "ryan.h.park@me.com" },
 ]
 keywords = [
     "mcp",
     "model-context-protocol",
     "web-search",
     "deep-research",
+    "perplexity",
+    "ai-search",
     "scraping",
-    "coding-agent",
     "llm-tools",
-    "scrapling",
     "trafilatura",
-    "claude-code",
+    "citations",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -39,17 +39,18 @@ dependencies = [
     "pygments>=2.20.0",
     "scrapling[fetchers]>=0.2.0",
     "trafilatura>=2.0.0",
+    "rank-bm25>=0.2.2",
 ]
 
 [project.urls]
-Homepage = "https://claudianus.github.io/clco-deep-research-mcp/"
-Documentation = "https://claudianus.github.io/clco-deep-research-mcp/"
-Repository = "https://github.com/claudianus/clco-deep-research-mcp"
-Issues = "https://github.com/claudianus/clco-deep-research-mcp/issues"
+Homepage = "https://claudianus.github.io/maru-search/"
+Documentation = "https://claudianus.github.io/maru-search/"
+Repository = "https://github.com/claudianus/maru-search"
+Issues = "https://github.com/claudianus/maru-search/issues"
 
 [project.scripts]
-clco-deep-research = "clco_deep_research.server:run"
-clco-deep-research-mcp = "clco_deep_research.server:run"
+maru-search = "maru_search.server:run"
+maru-search-mcp = "maru_search.server:run"
 
 [tool.uvx]
 python = "3.12"

@@ -7,14 +7,16 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Optional
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
+
+_CURRENT_YEAR = datetime.now().year
 
 # Template-based query expansion angles
 _QUERY_TEMPLATES = {
     "recent": [
-        "{query} latest 2025 2026",
+        f"{{query}} latest {_CURRENT_YEAR} {_CURRENT_YEAR + 1}",
         "{query} new features updates",
         "{query} recent developments",
     ],
@@ -102,7 +104,7 @@ def _select_angles(query: str) -> list[str]:
     has_korean = any('\uac00' <= char <= '\ud7a3' for char in query)
     korean_keywords = ["한국", "국내", "korean", "한글", "한국어"]
     is_korean_query = has_korean or any(kw in lower for kw in korean_keywords)
-    
+
     if is_korean_query:
         angles.extend(["korean_community", "korean_docs", "recent"])
         return angles

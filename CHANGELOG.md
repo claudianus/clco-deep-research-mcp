@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0] - 2026-05-10
+
+### Added
+- **Universal AI Search MCP**: Rebranded from clco-deep-research-mcp to maru-search
+- **Perplexity-Level Quality**:
+  - `answer` tool: Direct cited answers like Perplexity with inline [1], [2] citations
+  - `search_with_citations` tool: Citation-ready search results for academic/technical writing
+  - BM25 + metadata cross-engine ranking via `research/ranker.py`
+  - Answer synthesis: Rule-based summary generation from fetched sources
+- **Multi-Engine Architecture**:
+  - `SearchEngineRegistry`: Factory pattern for plug-and-play search engines
+  - `SearchEngine` ABC with cross-engine metadata (`engines_found`, `cross_engine_score`)
+  - Ready for Brave, SearXNG, and other engine additions
+- **Configuration System**:
+  - `config.py`: Environment-variable based configuration
+  - `SearchConfig.from_env()`: `MARU_SEARCH_ENGINE`, `MARU_SEARCH_MAX_RESULTS`, etc.
+- **Citation-Native Output**:
+  - All search results include citation IDs
+  - `CitedSource` dataclass for structured source attribution
+  - `format_for_llm()` renders Perplexity-style markdown with citations
+
+### Changed
+- **Brand**: clco-deep-research-mcp → maru-search (package, module, CLI, MCP server name)
+- **Architecture**: DuckDuckGo hard-coding removed from tools.py; uses `SearchEngineRegistry`
+- **Deep Research**: Now uses intelligent ranker for result ordering
+- **Query Expansion**: Year templates auto-update to current year
+- **Code Quality**: Removed duplicate `research/extractor.py`, `engines/code_aware.py`
+- **Tests**: 113 → 124 tests (added ranker, config tests)
+
 ## [0.4.0] - 2026-05-08
 
 ### Added

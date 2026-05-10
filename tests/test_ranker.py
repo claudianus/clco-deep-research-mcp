@@ -1,0 +1,83 @@
+"""Tests for intelligent ranking engine."""
+
+import pytest
+
+from maru_search.engines.base import SearchResult, ContentType
+from maru_search.research.ranker import (
+    merge_results,
+    rank_pages,
+    _score_metadata,
+    RankedResult,
+)
+
+
+class TestScoreMetadata:
+    def test_authority_boost(self):
+        r = SearchResult(title="Test", url="https://docs.python.org/3/tutorial", engine="ddg")
+        score = _score_metadata(r)
+        assert score > 0
+
+    def test_docs_type_boost(self):
+        r = SearchResult(
+            title="Test", url="https://example.com/docs", engine="ddg",
+            likely_content_type=ContentType.DOCUMENTATION,
+        )
+        r2 = SearchResult(
+            title="Test", url="https://example.com/blog", engine="ddg",
+            likely_content_type=ContentType.ARTICLE,
+        )
+        assert _score_metadata(r) > _score_metadata(r2)
+
+    def test_cross_engine_boost(self):
+        r = SearchResult(title="Test", url="https://example.com", engine="ddg")
+        r.engines_found = ["ddg", "brave"]
+        r.cross_engine_score = 1.0
+        score_multi = _score_metadata(r)
+
+        r2 = SearchResult(title="Test", url="https://example.com", engine="ddg")
+        r2.engines_found = ["ddg"]
+        score_single = _score_metadata(r2)
+
+        assert score_multi > score_single
+
+
+class TestMergeResults:
+    def test_single_engine_ranking(self):
+        results = [
+            SearchResult(title="A", url="https://a.com", snippet="python asyncio guide", engine="ddg", position=1),
+            SearchResult(title="B", url="https://b.com", snippet="python threading docs", engine="ddg", position=2),
+        ]
+        ranked = merge_results({"ddg": results}, "python asyncio")
+        assert len(ranked) == 2
+        assert ranked[0].citation_id == 1
+        assert ranked[1].citation_id == 2
+
+    def test_deduplication(self):
+        results1 = [
+            SearchResult(title="A", url="https://a.com", engine="ddg"),
+        ]
+        results2 = [
+            SearchResult(title="A", url="https://a.com/", engine="brave"),
+        ]
+        ranked = merge_results({"ddg": results1, "brave": results2}, "test")
+        assert len(ranked) == 1
+        assert len(ranked[0].result.engines_found) == 2
+
+    def test_empty_results(self):
+        ranked = merge_results({}, "test")
+        assert ranked == []
+
+
+class TestRankPages:
+    def test_empty_list(self):
+        assert rank_pages([], "test") == []
+
+    def test_quality_preference(self):
+        from maru_search.engines.base import PageContent, ExtractionQuality
+
+        pages = [
+            PageContent(url="https://low.com", text="some text", quality=ExtractionQuality.LOW, title="Low"),
+            PageContent(url="https://high.com", text="some text", quality=ExtractionQuality.HIGH, title="High"),
+        ]
+        ranked = rank_pages(pages, "test")
+        assert ranked[0].quality == ExtractionQuality.HIGH

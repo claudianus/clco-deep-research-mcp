@@ -1,29 +1,29 @@
 <p align="center">
-  <a href="https://claudianus.github.io/clco-deep-research-mcp/">🌐 Website</a> •
-  <a href="https://claudianus.github.io/clco-deep-research-mcp/ko/">🇰🇷 한국어</a> •
-  <a href="https://pypi.org/project/clco-deep-research-mcp/">📦 PyPI</a> •
-  <a href="https://github.com/claudianus/clco-deep-research-mcp">⭐ GitHub</a>
+  <a href="https://claudianus.github.io/maru-search/">🌐 Website</a> •
+  <a href="https://claudianus.github.io/maru-search/ko/">🇰🇷 한국어</a> •
+  <a href="https://pypi.org/project/maru-search/">📦 PyPI</a> •
+  <a href="https://github.com/claudianus/maru-search">⭐ GitHub</a>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/pypi/v/clco-deep-research-mcp?color=blue&label=PyPI" alt="PyPI">
-  <img src="https://img.shields.io/pypi/pyversions/clco-deep-research-mcp?color=green" alt="Python">
+  <img src="https://img.shields.io/pypi/v/maru-search?color=blue&label=PyPI" alt="PyPI">
+  <img src="https://img.shields.io/pypi/pyversions/maru-search?color=green" alt="Python">
   <img src="https://img.shields.io/badge/license-MIT-purple" alt="License">
   <img src="https://img.shields.io/badge/MCP-native-blue" alt="MCP Native">
-  <img src="https://img.shields.io/badge/engines-4-orange" alt="4 Search Engines">
+  <img src="https://img.shields.io/badge/engines-multi-orange" alt="Multi Engine">
   <img src="https://img.shields.io/badge/cost-free-brightgreen" alt="Free">
-  <img src="https://img.shields.io/badge/tests-113%20passing-success" alt="Tests">
+  <img src="https://img.shields.io/badge/tests-124%20passing-success" alt="Tests">
 </p>
 
-<h1 align="center">clco-deep-research-mcp</h1>
+<h1 align="center">maru-search</h1>
 
 <p align="center">
-  <strong>🇰🇷 코딩 에이전트를 위한 묣은 딥리서치 MCP</strong> | <strong>🇺🇸 Free Deep Research MCP for Coding Agents</strong>
+  <strong>🇰🇷 Perplexity 수준의 범용 AI 검색 MCP</strong> | <strong>🇺🇸 Universal AI Search MCP — Perplexity-level Quality</strong>
 </p>
 
 <p align="center">
-  Claude Code의 <code>web_search</code>를 완전히 대체합니다 | Replaces Claude Code's built-in <code>web_search</code><br>
-  API 키 불필요, 완전 묣은 | Zero API keys required, completely free
+  Zero API keys. Multi-engine scraping. Citation-native answers.<br>
+  API 키 불필요, 다중 엔진 스크래핑, 인출 기반 답변
 </p>
 
 ---
@@ -34,26 +34,26 @@
 
 ```bash
 # Install with pip | pip으로 설치
-pip install clco-deep-research-mcp
+pip install maru-search
 
 # Or if pip is not available | pip이 없는 경우
-python3 -m pip install clco-deep-research-mcp
+python3 -m pip install maru-search
 ```
 
 ### Connect to Your Agent | 에이전트에 연결
 
 **Claude Code** — One line | 한 줄로 추가:
 ```bash
-claude mcp add clco-deep-research pip:clco-deep-research-mcp
+claude mcp add maru-search pip:maru-search
 ```
 
 **Cursor / VS Code / Windsurf** — Add to MCP settings | MCP 설정에 추가:
 ```json
 {
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }
@@ -70,9 +70,9 @@ claude mcp add clco-deep-research pip:clco-deep-research-mcp
 ```json
 {
   "mcpServers": {
-    "clco-deep-research": {
+    "maru-search": {
       "command": "python3",
-      "args": ["-m", "clco_deep_research.server"]
+      "args": ["-m", "maru_search.server"]
     }
   }
 }
