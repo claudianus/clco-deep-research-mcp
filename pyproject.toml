@@ -45,8 +45,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://claudianus.github.io/maru-search/"
 Documentation = "https://claudianus.github.io/maru-search/"
-Repository = "https://github.com/claudianus/maru-search"
-Issues = "https://github.com/claudianus/maru-search/issues"
+Repository = "https://github.com/claudianus/maru-deep-pro-search"
+Issues = "https://github.com/claudianus/maru-deep-pro-search/issues"
 
 [project.scripts]
 maru-deep-pro-search = "maru_deep_pro_search.server:run"

@@ -10,19 +10,19 @@
 <p align="center">
   <a href="https://pypi.org/project/maru-search/"><img src="https://img.shields.io/pypi/v/maru-search?style=flat-square&color=blue" alt="PyPI"></a>
   <a href="https://pypi.org/project/maru-search/"><img src="https://img.shields.io/pypi/dm/maru-search?style=flat-square&color=blue" alt="Downloads"></a>
-  <a href="https://github.com/claudianus/maru-search/actions"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-search/publish.yml?style=flat-square&label=CI" alt="CI"></a>
-  <a href="https://github.com/claudianus/maru-search/blob/main/tests/"><img src="https://img.shields.io/badge/tests-134%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/publish.yml?style=flat-square&label=CI" alt="CI"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/tests/"><img src="https://img.shields.io/badge/tests-134%20passing-brightgreen?style=flat-square" alt="Tests"></a>
   <a href="https://pypi.org/project/maru-search/"><img src="https://img.shields.io/pypi/pyversions/maru-search?style=flat-square" alt="Python"></a>
-  <a href="https://github.com/claudianus/maru-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
-  <a href="https://github.com/claudianus/maru-search"><img src="https://img.shields.io/github/stars/claudianus/maru-search?style=flat-square&color=yellow" alt="Stars"></a>
-  <a href="https://github.com/claudianus/maru-search"><img src="https://img.shields.io/github/forks/claudianus/maru-search?style=flat-square&color=orange" alt="Forks"></a>
-  <a href="https://github.com/claudianus/maru-search/issues"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search"><img src="https://img.shields.io/github/stars/claudianus/maru-deep-pro-search?style=flat-square&color=yellow" alt="Stars"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search"><img src="https://img.shields.io/github/forks/claudianus/maru-deep-pro-search?style=flat-square&color=orange" alt="Forks"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/issues"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="PRs Welcome"></a>
 </p>
 
 <p align="center">
   <a href="https://claudianus.github.io/maru-search/">🌐 Website</a> ·
   <a href="https://pypi.org/project/maru-search/">📦 PyPI</a> ·
-  <a href="https://github.com/claudianus/maru-search">💻 GitHub</a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search">💻 GitHub</a>
 </p>
 
 ---
