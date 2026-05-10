@@ -17,6 +17,7 @@ from .research.ranker import merge_results
 from .extraction.content import truncate_for_llm
 from .exceptions import MaruSearchError
 from .utils.retry import with_retry
+from .utils.cache import get_search_cache, get_fetch_cache, cache_key
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,14 @@ async def tool_web_search(
     """
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
+
+    # Check cache
+    cache = get_search_cache()
+    key = cache_key("web_search", engine, max_results, query)
+    cached = cache.get(key)
+    if cached is not None:
+        logger.debug("Cache hit for web_search: %s", query)
+        return cached
 
     try:
         search_engine = SearchEngineRegistry.create(engine)
@@ -89,7 +98,9 @@ async def tool_web_search(
         if r.snippet:
             lines.append(f"   > {r.snippet[:300]}")
         lines.append("")
-    return "\n".join(lines)
+    result_text = "\n".join(lines)
+    cache.set(key, result_text)
+    return result_text
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -117,6 +128,14 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     Returns structured markdown with quality signals, content type,
     and link suggestions for follow-up.
     """
+    # Check cache
+    cache = get_fetch_cache()
+    key = cache_key("fetch", url, stealth)
+    cached = cache.get(key)
+    if cached is not None:
+        logger.debug("Cache hit for fetch: %s", url)
+        return cached
+
     engine = DuckDuckGoEngine()
     page = await engine.fetch(url, stealth=stealth)
 
@@ -164,13 +183,15 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
         )
         link_section = f"\n\n**Follow-up links:**\n{links_preview}"
 
-    return (
+    result_text = (
         f"## {page.title}\n"
         f"URL: {page.final_url or url}\n"
         f"{quality_line}{code_meta}\n\n"
         f"{content}"
         f"{link_section}"
     )
+    cache.set(key, result_text)
+    return result_text
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -251,6 +272,14 @@ async def tool_deep_research(
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
+    # Check cache
+    cache = get_search_cache()
+    key = cache_key("deep_research", engine, max_sources, follow_links, expand_queries, max_tokens_per_source, max_total_tokens, summarize, query)
+    cached = cache.get(key)
+    if cached is not None:
+        logger.debug("Cache hit for deep_research: %s", query)
+        return cached
+
     result = await deep_research(
         query=query,
         engine=engine,
@@ -262,12 +291,14 @@ async def tool_deep_research(
         summarize=summarize,
         synthesize_answer=True,
     )
-    return format_for_llm(
+    result_text = format_for_llm(
         result,
         max_tokens_per_source=max_tokens_per_source,
         max_total_tokens=max_total_tokens,
         summarize=summarize,
     )
+    cache.set(key, result_text)
+    return result_text
 
 
 # ═══════════════════════════════════════════════════════════════
