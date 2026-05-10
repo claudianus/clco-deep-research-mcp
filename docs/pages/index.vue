@@ -1,7 +1,12 @@
 <template>
   <HeroSection />
+  <StatsSection />
+  <ComparisonSection />
+  <PipelineSection />
+  <RankingDemoSection />
   <FeaturesSection />
   <ToolsSection />
-  <InstallSection />
-  <ArchitectureSection />
+  <CodeShowcaseSection />
+  <InstallSection id="install" />
+  <ArchitectureDiagramSection />
 </template>

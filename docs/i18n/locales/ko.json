@@ -5,12 +5,84 @@
   },
   "hero": {
     "title": "범용 AI 검색 MCP",
-    "subtitle": "API 키 없이 검색엔진을 직접 스크래핑하고 인출 기반 답변을 반환합니다. 모든 MCP 클라이언트를 지원합니다.",
+    "subtitle": "API 키 0개. 직접 스크래핑. 인출 기반 Perplexity급 답변. 모든 MCP 클라이언트 지원.",
     "install": "pip install maru-search",
     "copy": "복사",
     "copied": "복사 완료!",
     "github": "GitHub",
-    "pypi": "PyPI"
+    "pypi": "PyPI",
+    "typing1": "API 키 없음",
+    "typing2": "Perplexity급 답변",
+    "typing3": "21개 언어 지원",
+    "typing4": "BM25 + 메타데이터 랭킹",
+    "ctaInstall": "지금 설치",
+    "ctaDemo": "딥 리서치 보기"
+  },
+  "stats": {
+    "apiKeys": "필요한 API 키",
+    "tools": "전문 도구",
+    "languages": "감지 언어",
+    "tests": "통과 테스트",
+    "subtitle": "모든 기능이 로컬에서 동작합니다. 클라우드 LLM 없음. 유료 검색 API 없음."
+  },
+  "comparison": {
+    "title": "maru-search가 압도하는 이유",
+    "subtitle": "검색 래퍼가 아닌, 완전한 리서치 엔진입니다.",
+    "feature": "기능",
+    "us": "maru-search",
+    "brave": "Brave Search MCP",
+    "perplexity": "Perplexity MCP",
+    "others": "기본 스크래퍼",
+    "noApiKeys": "API 키 0개",
+    "deepResearch": "딥 리서치 파이프라인",
+    "citations": "네이티브 인출",
+    "bm25": "BM25 + 메타데이터 랭킹",
+    "codeAware": "코드 인식 (21개 언어)",
+    "antiBot": "3단계 안티봇",
+    "korean": "한국어 지원",
+    "multiEngine": "멀티엔진 레지스트리",
+    "tokenMgmt": "스마트 토큰 관리",
+    "freshness": "신선도 점수",
+    "yes": "지원",
+    "no": "미지원",
+    "partial": "부분",
+    "paid": "유료 전용"
+  },
+  "pipeline": {
+    "title": "7단계 딥 리서치 파이프라인",
+    "subtitle": "검색 래퍼가 아닌, 리서치 엔진입니다.",
+    "step1": "쿼리 확장",
+    "step1Desc": "템플릿 기반 자동 서브쿼리 생성",
+    "step2": "멀티엔진 검색",
+    "step2Desc": "여러 엔진 병렬 스크래핑",
+    "step3": "중복 제거",
+    "step3Desc": "URL 정규화 및 콘텐츠 해싱",
+    "step4": "BM25 랭킹",
+    "step4Desc": "로컬 관련성 + 권위도 + 신선도",
+    "step5": "병렬 크롤링",
+    "step5Desc": "상위 결과 병렬 페치",
+    "step6": "링크 추적",
+    "step6Desc": "선택적 딥링크 순회",
+    "step7": "종합",
+    "step7Desc": "토큰 예산 내 인출 기반 답변"
+  },
+  "ranking": {
+    "title": "BM25가 원시 검색 순위를 이깁니다",
+    "subtitle": "검색엔진은 광고와 SEO로 정렬합니다. 우리는 관련성으로 정렬합니다.",
+    "before": "원시 검색 순위",
+    "after": "BM25 재랭킹",
+    "result1": "얇은 콘텐츠의 SEO 최적화 블로그",
+    "result2": "공식 문서 페이지",
+    "result3": "Stack Overflow 채택 답변",
+    "result4": "3년 된 Medium 튜토리얼",
+    "result5": "실제 해결책이 있는 GitHub 이슈",
+    "badgeSeo": "SEO 스팸",
+    "badgeOfficial": "공식",
+    "badgeSolved": "해결됨",
+    "badgeStale": "오래됨",
+    "badgeCode": "코드",
+    "why": "왜 이게 중요한가",
+    "whyDesc": "BM25는 콘텐츠 밀도를 점수화하고, 권위 도메인은 +2.0, 신선한 페이지는 +1.5, 코드 중심 페이지는 +1.0을 부여합니다. 검색엔진은 페이지 콘텐츠에 접근할 수 없어 이를 할 수 없습니다."
   },
   "features": {
     "title": "왜 maru-search인가?",
@@ -19,7 +91,7 @@
       "desc": "OpenAI, Google API, Bing API 없음. 오직 직접 스크래핑만 사용."
     },
     "citations": {
-      "title": "인출 기반",
+      "title": "인출 네이티브",
       "desc": "모든 결과에 [1], [2] ID 부여. LLM이 정확히 출처를 인용할 수 있음."
     },
     "multi": {
@@ -33,6 +105,10 @@
     "code": {
       "title": "코드 인식",
       "desc": "21개 언어 감지, API 시그니처 추출, 코드-텍스트 비율 측정."
+    },
+    "freshness": {
+      "title": "신선도 점수",
+      "desc": "htmldate 추출, 오래된 콘텐츠 경고, 자동 연도 주입."
     }
   },
   "tools": {
@@ -47,6 +123,16 @@
     "stealthy_fetch": "보호된 사이트용 안티봇 우회",
     "parallel_search": "다중 검색 동시 실행"
   },
+  "codeShowcase": {
+    "title": "Perplexity급 답변, API 비용 0원",
+    "subtitle": "Python 한 줄. OpenAI 청구서 없음.",
+    "tab1": "빠른 답변",
+    "tab2": "딥 리서치",
+    "tab3": "인출 검색",
+    "code1": "from maru_search.tools import answer\n\nresult = answer('양자 오류 수정이 뭔가요?')\nprint(result)\n# => [1], [2] 인출이 포함된 답변",
+    "code2": "from maru_search.research.deep import deep_research\n\nreport = deep_research('전고체 배터리 2024')\n# 쿼리 자동 확장, 상위 결과 크롤링,\n# 토큰 예산 내 인출 기반 보고서 종합",
+    "code3": "from maru_search.tools import search_with_citations\n\nsources = search_with_citations('LLM 컨텍스트 윈도우 확장')\n# 미리 번호 매겨진 [1]-[N] 소스 반환\n# 학술 논문 삽입 준비 완료"
+  },
   "install": {
     "title": "시작하기",
     "pip": "pip install maru-search",
@@ -57,5 +143,9 @@
   "arch": {
     "title": "아키텍처",
     "desc": "깔끔하고, 모듈화되어 있으며, 확장 가능합니다."
+  },
+  "footer": {
+    "built": "100% 오픈소스로 빌드, 0% API 키",
+    "changelog": "변경 이력"
   }
 }

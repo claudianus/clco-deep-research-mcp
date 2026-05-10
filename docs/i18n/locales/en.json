@@ -5,22 +5,94 @@
   },
   "hero": {
     "title": "Universal AI Search MCP",
-    "subtitle": "Zero API keys. Scrapes search engines directly and returns cited answers. Built for any MCP client.",
+    "subtitle": "Zero API keys. Direct scraping. Perplexity-level answers with inline citations. All MCP clients supported.",
     "install": "pip install maru-search",
     "copy": "Copy",
     "copied": "Copied!",
     "github": "GitHub",
-    "pypi": "PyPI"
+    "pypi": "PyPI",
+    "typing1": "Zero API keys",
+    "typing2": "Perplexity-grade answers",
+    "typing3": "21 languages supported",
+    "typing4": "BM25 + metadata ranking",
+    "ctaInstall": "Install Now",
+    "ctaDemo": "See Deep Research"
+  },
+  "stats": {
+    "apiKeys": "API Keys Required",
+    "tools": "Specialized Tools",
+    "languages": "Languages Detected",
+    "tests": "Passing Tests",
+    "subtitle": "Everything runs locally. No cloud LLM. No paid search API."
+  },
+  "comparison": {
+    "title": "Why maru-search dominates",
+    "subtitle": "Not just another search wrapper. A full research engine.",
+    "feature": "Feature",
+    "us": "maru-search",
+    "brave": "Brave Search MCP",
+    "perplexity": "Perplexity MCP",
+    "others": "Basic Scrapers",
+    "noApiKeys": "Zero API keys",
+    "deepResearch": "Deep Research Pipeline",
+    "citations": "Native Citations",
+    "bm25": "BM25 + Metadata Ranking",
+    "codeAware": "Code-Aware (21 langs)",
+    "antiBot": "3-Tier Anti-Bot",
+    "korean": "Korean Language Support",
+    "multiEngine": "Multi-Engine Registry",
+    "tokenMgmt": "Smart Token Management",
+    "freshness": "Freshness Scoring",
+    "yes": "Yes",
+    "no": "No",
+    "partial": "Partial",
+    "paid": "Paid only"
+  },
+  "pipeline": {
+    "title": "7-Phase Deep Research Pipeline",
+    "subtitle": "Not a search wrapper. A research engine.",
+    "step1": "Query Expansion",
+    "step1Desc": "Auto-generates sub-queries from templates",
+    "step2": "Multi-Engine Search",
+    "step2Desc": "Parallel scraping across engines",
+    "step3": "Deduplication",
+    "step3Desc": "URL normalization & content hashing",
+    "step4": "BM25 Ranking",
+    "step4Desc": "Local relevance + authority + freshness",
+    "step5": "Concurrent Crawl",
+    "step5Desc": "Fetch top results in parallel",
+    "step6": "Link Following",
+    "step6Desc": "Optional deep-link traversal",
+    "step7": "Synthesis",
+    "step7Desc": "Cited answer with token budget"
+  },
+  "ranking": {
+    "title": "BM25 beats raw search ranking",
+    "subtitle": "Search engines sort by ads & SEO. We sort by relevance.",
+    "before": "Raw Search Order",
+    "after": "BM25 Re-Ranked",
+    "result1": "SEO-optimized blog with thin content",
+    "result2": "Official documentation page",
+    "result3": "Stack Overflow accepted answer",
+    "result4": "3-year-old Medium tutorial",
+    "result5": "GitHub issue with working solution",
+    "badgeSeo": "SEO spam",
+    "badgeOfficial": "Official",
+    "badgeSolved": "Solved",
+    "badgeStale": "Stale",
+    "badgeCode": "Code",
+    "why": "Why this matters",
+    "whyDesc": "BM25 scores content density, authority domains get +2.0, fresh pages +1.5, code-heavy pages +1.0. Search engines can't do this without access to page content."
   },
   "features": {
     "title": "Why maru-search?",
     "free": {
       "title": "100% Free",
-      "desc": "No OpenAI, no Google API, no Bing API. Only direct scraping."
+      "desc": "No OpenAI, Google API, Bing API. Only direct scraping."
     },
     "citations": {
       "title": "Citation-Native",
-      "desc": "Every result gets a [1], [2] ID. LLMs can cite sources accurately."
+      "desc": "Every result gets [1], [2] IDs. LLMs cite sources accurately."
     },
     "multi": {
       "title": "Multi-Engine",
@@ -28,24 +100,38 @@
     },
     "ranking": {
       "title": "BM25 Ranking",
-      "desc": "Local relevance scoring + authority/freshness metadata."
+      "desc": "Local relevance scores + authority/freshness metadata."
     },
     "code": {
       "title": "Code-Aware",
-      "desc": "Detects 21 languages, extracts API signatures, measures code-to-text ratio."
+      "desc": "21-language detection, API signature extraction, code-text ratio."
+    },
+    "freshness": {
+      "title": "Freshness Scoring",
+      "desc": "htmldate extraction, stale content warnings, auto year-injection."
     }
   },
   "tools": {
     "title": "8 Tools",
     "desc": "From quick answers to deep research.",
-    "answer": "Direct cited answer to any question",
-    "web_search": "Scrape search engines, return ranked results with citation IDs",
-    "search_with_citations": "Search with pre-numbered citations for academic writing",
-    "fetch_page": "Extract clean content from a single URL",
-    "fetch_bulk": "Fetch multiple URLs in parallel",
-    "deep_research": "Auto-expand query, crawl top results, synthesize with citations",
-    "stealthy_fetch": "Full anti-bot bypass for protected sites",
+    "answer": "Direct answer with inline citations",
+    "web_search": "Scrape, rank, return cited results",
+    "search_with_citations": "Pre-numbered citations for academic writing",
+    "fetch_page": "Extract single URL content",
+    "fetch_bulk": "Parallel fetch multiple URLs",
+    "deep_research": "Auto-expand, crawl, synthesize with citations",
+    "stealthy_fetch": "Anti-bot bypass for protected sites",
     "parallel_search": "Run multiple searches simultaneously"
+  },
+  "codeShowcase": {
+    "title": "Perplexity-level answers, zero API cost",
+    "subtitle": "One line of Python. No OpenAI bill.",
+    "tab1": "Quick Answer",
+    "tab2": "Deep Research",
+    "tab3": "Cited Search",
+    "code1": "from maru_search.tools import answer\n\nresult = answer('What is quantum error correction?')\nprint(result)\n# => Answer with [1], [2] inline citations",
+    "code2": "from maru_search.research.deep import deep_research\n\nreport = deep_research('Solid state battery 2024')\n# Auto-expands queries, crawls top results,\n# synthesizes cited report within token budget",
+    "code3": "from maru_search.tools import search_with_citations\n\nsources = search_with_citations('LLM context window scaling')\n# Returns pre-numbered [1]-[N] sources\n# Ready for academic paper insertion"
   },
   "install": {
     "title": "Get Started",
@@ -56,6 +142,10 @@
   },
   "arch": {
     "title": "Architecture",
-    "desc": "Clean, modular, extensible."
+    "desc": "Clean, modular, and extensible."
+  },
+  "footer": {
+    "built": "Built with 100% open source, 0% API keys",
+    "changelog": "Changelog"
   }
 }
