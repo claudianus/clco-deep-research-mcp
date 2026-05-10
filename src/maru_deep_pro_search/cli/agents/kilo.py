@@ -1,0 +1,66 @@
+"""Kilo Code adapter."""
+
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+
+from .base import AgentAdapter
+from ..backup import backup_file, read_json_safe, restore_file, write_json_safe
+from ..prompts import get_protocol_for_agent
+
+
+class KiloAdapter(AgentAdapter):
+    name = "kilo"
+    display_name = "Kilo Code"
+
+    def detect(self) -> bool:
+        return (
+            Path.home().joinpath(".config", "kilo").exists()
+            or shutil.which("kilo") is not None
+        )
+
+    def _config_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path("kilo.jsonc")
+        return Path.home() / ".config" / "kilo" / "kilo.jsonc"
+
+    def backup(self) -> list[Path]:
+        path = self._config_path("user")
+        b = backup_file(path)
+        return [b] if b else []
+
+    def restore(self) -> bool:
+        path = self._config_path("user")
+        backups = sorted(path.parent.glob(f"{path.name}.bak.*"), reverse=True)
+        if backups:
+            return restore_file(path, backups[0])
+        return False
+
+    def install_mcp(self, scope: str = "user") -> bool:
+        path = self._config_path(scope)
+        config = read_json_safe(path)
+        if "mcp" not in config:
+            config["mcp"] = {}
+
+        config["mcp"]["maru-deep-pro-search"] = {
+            "type": "local",
+            "command": ["python3", "-m", "maru_deep_pro_search.server"],
+            "enabled": True,
+        }
+        write_json_safe(path, config)
+        return True
+
+    def inject_rules(self, scope: str = "user") -> bool:
+        path = self._config_path(scope)
+        config = read_json_safe(path)
+        if "systemPrompt" not in config:
+            config["systemPrompt"] = ""
+
+        protocol = get_protocol_for_agent(self.name)
+        if protocol in config.get("systemPrompt", ""):
+            return True
+
+        config["systemPrompt"] = config.get("systemPrompt", "") + f"\n\n{protocol}"
+        write_json_safe(path, config)
+        return True

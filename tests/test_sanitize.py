@@ -1,6 +1,6 @@
 """Tests for prompt injection defense via metadata tagging + agent delegation."""
 
-from maru_search.utils.sanitize import (
+from maru_deep_pro_search.utils.sanitize import (
     analyze_content,
     wrap_external_content,
     sanitize_for_llm,

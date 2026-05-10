@@ -19,6 +19,7 @@ from .exceptions import MaruSearchError
 from .utils.retry import with_retry
 from .utils.cache import get_search_cache, get_fetch_cache, cache_key
 from .utils.sanitize import sanitize_for_llm, analyze_content, wrap_external_content
+from .utils.query_sanitize import sanitize_query
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,8 @@ async def tool_web_search(
     Returns content type hints and citation IDs per result so the LLM
     can prioritize and cite sources.
     """
+    query = sanitize_query(query)
+
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
@@ -277,6 +280,8 @@ async def tool_deep_research(
 
     Smart allocation gives more tokens to high-quality sources.
     """
+    query = sanitize_query(query)
+
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
@@ -335,6 +340,8 @@ async def tool_answer(
     - Creative writing
     - Reading specific known URLs (use fetch_page)
     """
+    query = sanitize_query(query)
+
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
@@ -395,6 +402,8 @@ async def tool_search_with_citations(
     - Academic or technical writing with source attribution
     - Building a bibliography before deep reading
     """
+    query = sanitize_query(query)
+
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
@@ -471,6 +480,8 @@ async def tool_parallel_search(
     max_results: int = 5,
 ) -> str:
     """Run multiple searches in parallel. Each query scrapes the search engine independently."""
+    queries = [sanitize_query(q) for q in queries]
+
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 

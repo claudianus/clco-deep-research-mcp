@@ -1,7 +1,7 @@
 """Tests for exception hierarchy."""
 
 import pytest
-from maru_search.exceptions import (
+from maru_deep_pro_search.exceptions import (
     MaruSearchError,
     NetworkError,
     RateLimitError,

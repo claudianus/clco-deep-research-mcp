@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.8.0] - 2026-05-10
+
+### Added
+- **Complete rebrand**: `maru-search` → `maru-deep-pro-search`
+  - Package name, module name, CLI entry points, MCP server name all updated
+- **`maru-deep-pro-search setup` CLI**: One-click agent configuration
+  - Auto-detects 7 AI agents: Claude Code, Cursor, Kimi, AntiGravity, Kilo Code, OpenCode, Windsurf
+  - Registers maru-deep-pro-search MCP server in each agent's config
+  - Injects unskippable "research-first" protocol into system prompts / rules
+  - Backs up original configs (restore with `--restore`)
+- **Stale year sanitizer**: Automatically removes outdated years from search queries
+  - Replaces 2024, 2023, etc. with "latest" to prevent stale results
+  - Applied to all search entry points (`deep_research`, `web_search`, `parallel_search`)
+- **`suggested_followups` in `deep_research`**: Gap detection for iterative research
+  - Analyzes crawled sources to identify uncovered topics
+  - Suggests 2-3 follow-up queries (e.g., "benchmark", "tutorial", "troubleshooting")
+  - Enables agent-level iterative research loops (Perplexity-style)
+- **New CLI module**: `src/maru_deep_pro_search/cli/` with agent adapters
+- **New utility**: `utils/query_sanitize.py` for query cleaning
+- **New research module**: `research/gap_detector.py` for follow-up suggestion
+
+### Changed
+- All internal imports updated from `maru_search` to `maru_deep_pro_search`
+- `pyproject.toml`: version 0.8.0, new entry points
+- AGENTS.md: Updated architecture and project structure
+
 ## [0.7.1] - 2026-05-10
 
 ### Fixed

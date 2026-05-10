@@ -2,14 +2,14 @@
 
 import pytest
 
-from maru_search.research.deep import (
+from maru_deep_pro_search.research.deep import (
     CitedSource,
     ResearchResult,
     _allocate_tokens,
     _extractive_summarize,
     format_for_llm,
 )
-from maru_search.extraction.content import estimate_token_count
+from maru_deep_pro_search.extraction.content import estimate_token_count
 
 
 class TestTokenAllocation:

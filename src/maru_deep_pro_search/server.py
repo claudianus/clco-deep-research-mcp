@@ -7,7 +7,7 @@ from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP("maru-search")
 
-_logger = logging.getLogger("maru_search")
+_logger = logging.getLogger("maru_deep_pro_search")
 _logger.setLevel(logging.INFO)
 
 _stderr_handler = logging.StreamHandler(sys.stderr)

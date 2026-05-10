@@ -2,7 +2,7 @@
 
 import time
 
-from maru_search.utils.cache import TTLCache, cache_key
+from maru_deep_pro_search.utils.cache import TTLCache, cache_key
 
 
 class TestTTLCache:

@@ -62,7 +62,7 @@ Before creating a new release tag:
 ## Project Structure Reminders
 
 ```
-src/maru_search/
+src/maru_deep_pro_search/
 ├── __init__.py            # Version info
 ├── server.py              # MCP server + prompts (8 tools)
 ├── tools.py               # 8 MCP tools + TOOL_GUIDANCE + TOOLS registry
@@ -99,7 +99,7 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 164 tests, all passing.
+**Current requirement**: 174 tests, all passing.
 
 ## Key Architecture Decisions
 

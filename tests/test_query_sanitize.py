@@ -1,0 +1,51 @@
+"""Tests for query_sanitize — stale year removal."""
+
+import pytest
+
+from maru_deep_pro_search.utils.query_sanitize import sanitize_query
+
+
+class TestSanitizeQuery:
+    def test_no_change_for_current_year(self):
+        assert sanitize_query("Python 3.13 features 2026", current_year=2026) == "Python 3.13 features 2026"
+
+    def test_replaces_single_stale_year(self):
+        assert sanitize_query("React best practices 2024", current_year=2026) == "React best practices latest"
+
+    def test_replaces_stale_year_range(self):
+        result = sanitize_query("AI regulation 2024 2025", current_year=2026)
+        assert "2024" not in result
+        assert "2025" not in result
+        assert "latest" in result
+
+    def test_replaces_in_phrase(self):
+        result = sanitize_query("Python features in 2024", current_year=2026)
+        assert "2024" not in result
+        assert "in latest" in result
+
+    def test_keeps_versions_in_comparison(self):
+        result = sanitize_query("Next.js 14 vs 15 2023", current_year=2026)
+        assert "14 vs 15" in result
+        assert "2023" not in result
+
+    def test_multiple_stale_years(self):
+        result = sanitize_query("History of AI 2022 2023 2024", current_year=2026)
+        assert "2022" not in result
+        assert "2023" not in result
+        assert "2024" not in result
+
+    def test_empty_query(self):
+        assert sanitize_query("") == ""
+
+    def test_no_year_query(self):
+        assert sanitize_query("Python asyncio tutorial") == "Python asyncio tutorial"
+
+    def test_as_of_phrase(self):
+        result = sanitize_query("Status as of 2024", current_year=2026)
+        assert "2024" not in result
+        assert "as of latest" in result
+
+    def test_dedupes_latest(self):
+        result = sanitize_query("React latest 2024", current_year=2026)
+        # Should not produce "latest latest"
+        assert "latest latest" not in result

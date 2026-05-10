@@ -81,6 +81,8 @@ class ResearchResult:
     # Answer synthesis
     synthesized_answer: str = ""
     has_answer: bool = False
+    # Follow-up suggestions
+    suggested_followups: list[str] = field(default_factory=list)
 
 
 async def deep_research(
@@ -315,6 +317,9 @@ async def deep_research(
     if synthesize_answer and allocated_sources:
         synthesized = _synthesize_answer(query, allocated_sources)
 
+    # Gap detection for follow-up research
+    suggested_followups = detect_gaps(query, allocated_sources)
+
     return ResearchResult(
         query=query,
         engine=engine,
@@ -329,6 +334,7 @@ async def deep_research(
         sources_dropped=sources_dropped,
         synthesized_answer=synthesized,
         has_answer=bool(synthesized),
+        suggested_followups=suggested_followups,
     )
 
 
@@ -533,6 +539,14 @@ def format_for_llm(
     # Synthesized answer (Perplexity-style)
     if result.has_answer and result.synthesized_answer:
         lines.append(result.synthesized_answer)
+
+    # Suggested follow-ups
+    if result.suggested_followups:
+        lines.append("### Suggested Follow-up Research")
+        lines.append("")
+        for sq in result.suggested_followups:
+            lines.append(f"- {sq}")
+        lines.append("")
 
     # Sources with citations
     lines.append("### Sources")

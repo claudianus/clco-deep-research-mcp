@@ -1,8 +1,8 @@
 """Tests for extraction utilities."""
 
 import pytest
-from maru_search.extraction.content import truncate_for_llm
-from maru_search.utils.url import should_skip_url, deduplicate_urls
+from maru_deep_pro_search.extraction.content import truncate_for_llm
+from maru_deep_pro_search.utils.url import should_skip_url, deduplicate_urls
 
 
 class TestTruncateForLlm:

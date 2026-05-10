@@ -2,13 +2,13 @@
 
 import inspect
 
-from maru_search.tools import (
+from maru_deep_pro_search.tools import (
     tool_fetch_page,
     tool_fetch_bulk,
     tool_stealthy_fetch,
     TOOLS,
 )
-from maru_search.research.deep import format_for_llm
+from maru_deep_pro_search.research.deep import format_for_llm
 
 
 class TestTokenDefaults:

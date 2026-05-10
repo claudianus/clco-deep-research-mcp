@@ -2,10 +2,10 @@
 
 import pytest
 
-from maru_search.research.expander import expand_query, _select_angles
-from maru_search.utils.url import is_authority_domain
-from maru_search.engines.duckduckgo import _guess_content_type
-from maru_search.engines.base import ContentType
+from maru_deep_pro_search.research.expander import expand_query, _select_angles
+from maru_deep_pro_search.utils.url import is_authority_domain
+from maru_deep_pro_search.engines.duckduckgo import _guess_content_type
+from maru_deep_pro_search.engines.base import ContentType
 
 
 class TestKoreanQueryExpansion:

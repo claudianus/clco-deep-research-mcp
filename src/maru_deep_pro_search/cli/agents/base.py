@@ -1,0 +1,65 @@
+"""Abstract base class for agent adapters."""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from pathlib import Path
+from typing import Any
+
+
+class AgentAdapter(ABC):
+    """Adapter for configuring a specific AI agent."""
+
+    name: str = ""
+    display_name: str = ""
+
+    @abstractmethod
+    def detect(self) -> bool:
+        """Return True if this agent is installed on the system."""
+        ...
+
+    @abstractmethod
+    def install_mcp(self, scope: str = "user") -> bool:
+        """Register maru-deep-pro-search MCP server in agent config.
+
+        Args:
+            scope: "user" or "project"
+
+        Returns:
+            True on success
+        """
+        ...
+
+    @abstractmethod
+    def inject_rules(self, scope: str = "user") -> bool:
+        """Inject the research-first protocol into agent rules/settings.
+
+        Args:
+            scope: "user" or "project"
+
+        Returns:
+            True on success
+        """
+        ...
+
+    @abstractmethod
+    def backup(self) -> list[Path]:
+        """Backup current agent configs. Returns list of backup paths."""
+        ...
+
+    @abstractmethod
+    def restore(self) -> bool:
+        """Restore agent configs from the most recent backup."""
+        ...
+
+    def configure(self, scope: str = "user") -> dict[str, Any]:
+        """Full setup: backup → install MCP → inject rules."""
+        backups = self.backup()
+        mcp_ok = self.install_mcp(scope)
+        rules_ok = self.inject_rules(scope)
+        return {
+            "backups": [str(b) for b in backups if b],
+            "mcp_installed": mcp_ok,
+            "rules_injected": rules_ok,
+            "success": mcp_ok and rules_ok,
+        }

@@ -1,6 +1,6 @@
 """Tests for documentation improvements."""
 
-from maru_search.tools import tool_fetch_page, tool_stealthy_fetch
+from maru_deep_pro_search.tools import tool_fetch_page, tool_stealthy_fetch
 
 
 class TestDocumentation:

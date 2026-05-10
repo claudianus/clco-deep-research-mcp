@@ -1,5 +1,5 @@
 <h1 align="center">
-  <code>maru-search</code>
+  <code>maru-deep-pro-search</code>
 </h1>
 
 <p align="center">
@@ -51,7 +51,7 @@
 
 ## What is it?
 
-`maru-search` is a **Model Context Protocol (MCP) server** that gives your AI coding agent real search superpowers — without burning API credits.
+`maru-deep-pro-search` is a **Model Context Protocol (MCP) server** that gives your AI coding agent real search superpowers — without burning API credits.
 
 | Capability | How we do it |
 |-----------|--------------|
@@ -69,12 +69,12 @@
 ## Quick Start
 
 ```bash
-pip install maru-search
+pip install maru-deep-pro-search
 ```
 
 **Claude Code:**
 ```bash
-claude mcp add maru-search pip:maru-search
+claude mcp add maru-deep-pro-search pip:maru-search
 ```
 
 **Cursor / VS Code / Windsurf:**
@@ -83,7 +83,7 @@ claude mcp add maru-search pip:maru-search
   "mcpServers": {
     "maru-search": {
       "command": "python3",
-      "args": ["-m", "maru_search.server"]
+      "args": ["-m", "maru_deep_pro_search.server"]
     }
   }
 }
@@ -252,7 +252,7 @@ These prompts are automatically injected into MCP clients that support prompt re
 
 ## Agent Configuration — Force Research-First Behavior
 
-The #1 problem with AI coding agents: they rely on stale training data instead of live web search. `maru-search` solves this at three levels:
+The #1 problem with AI coding agents: they rely on stale training data instead of live web search. `maru-deep-pro-search` solves this at three levels:
 
 ### 1. MCP Prompts (Server-Level)
 The `always_research_first` prompt uses explicit ALL-CAPS rules:
@@ -277,7 +277,7 @@ Injected into every tool context with:
 
 **Claude Code:**
 ```bash
-claude mcp add maru-search pip:maru-search
+claude mcp add maru-deep-pro-search pip:maru-search
 # The always_research_first prompt auto-injects
 ```
 
