@@ -15,7 +15,7 @@
   "features": {
     "title": "왜 maru-search인가?",
     "free": {
-      "title": "100% 묣은",
+      "title": "100% 공짜",
       "desc": "OpenAI, Google API, Bing API 없음. 오직 직접 스크래핑만 사용."
     },
     "citations": {
