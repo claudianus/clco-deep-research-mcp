@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.1] - 2026-05-10
+
+### Fixed
+- **Python version requirement**: Corrected `requires-python` from `>=3.9` to `>=3.10`
+  - Root cause: Core dependency `mcp>=1.0.0` requires Python 3.10+, causing `ResolutionImpossible` on Python 3.9
+  - Removed `"Programming Language :: Python :: 3.9"` classifier
+  - Updated AGENTS.md test count: 124 → 164
+
 ## [0.7.0] - 2026-05-10
 
 ### Added

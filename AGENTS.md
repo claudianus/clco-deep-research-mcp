@@ -99,7 +99,7 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 124 tests, all passing.
+**Current requirement**: 164 tests, all passing.
 
 ## Key Architecture Decisions
 
