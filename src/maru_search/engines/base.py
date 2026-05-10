@@ -82,10 +82,19 @@ class PageContent:
 
 
 class SearchEngine(ABC):
-    """Abstract base for all search engines."""
+    """Abstract base for all search engines.
+
+    Subclasses should set quality metadata to help the registry
+    recommend optimal engine combinations.
+    """
 
     name: str = ""
     supports_stealth: bool = False
+
+    # Quality metadata (used by SearchEngineRegistry.recommend_engines)
+    quality_tier: int = 2  # 1=best, 2=good, 3=fallback/last-resort
+    typical_latency_ms: int = 1200
+    reliability_score: float = 0.9  # 0.0-1.0, higher is more reliable
 
     @abstractmethod
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:

@@ -71,6 +71,9 @@ class GoogleEngine(SearchEngine):
 
     name = "google"
     supports_stealth = True
+    quality_tier = 3
+    typical_latency_ms = 2000
+    reliability_score = 0.60
 
     def __init__(self):
         self._fetcher = DynamicFetcher()

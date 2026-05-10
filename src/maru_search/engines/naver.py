@@ -32,6 +32,9 @@ class NaverEngine(SearchEngine):
 
     name = "naver"
     supports_stealth = True
+    quality_tier = 2
+    typical_latency_ms = 1200
+    reliability_score = 0.85
 
     def __init__(self):
         self._fetcher = DynamicFetcher()

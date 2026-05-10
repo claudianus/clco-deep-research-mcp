@@ -111,50 +111,79 @@ async def deep_research(
     """
     t0 = time.monotonic()
 
-    # Initialize engine via registry
+    # Phase 0: Engine selection
+    # If default engine, use metadata-based recommendation for multi-engine search
     if not SearchEngineRegistry.is_registered(engine):
         logger.warning("Engine '%s' not registered, falling back to duckduckgo_lite", engine)
         engine = "duckduckgo_lite"
 
-    search_engine = SearchEngineRegistry.create(engine)
+    if engine == "duckduckgo_lite":
+        engines = SearchEngineRegistry.recommend_engines(query, count=2)
+        logger.info("Auto-selected engines: %s", engines)
+    else:
+        engines = [engine]
+
+    primary_engine = SearchEngineRegistry.create(engines[0])
 
     # Phase 1: Query expansion
     subqueries = [query]
     if expand_queries:
         subqueries = expand_query(query, max_subqueries=5)
 
-    # Phase 2: Search all subqueries
-    all_results: list[SearchResult] = []
+    # Phase 2: Search across engines
+    # Strategy: run ALL subqueries on primary engine (depth)
+    #           run ORIGINAL query on secondary engines (breadth/diversification)
+    engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
+
     for sq in subqueries:
+        # Primary engine gets all subqueries for depth
         try:
             results = await with_retry(
-                search_engine.search,
+                primary_engine.search,
                 sq,
                 max_results=max_sources * 2,
                 max_attempts=2,
                 retryable_exceptions=(NetworkError, ParseError),
             )
-            all_results.extend(results)
-            logger.debug("Subquery '%s' returned %d results", sq, len(results))
+            engine_results[engines[0]].extend(results)
+            logger.debug("Subquery '%s' on %s returned %d results", sq, engines[0], len(results))
         except Exception as exc:
-            logger.warning("Subquery '%s' failed: %s", sq, exc)
+            logger.warning("Subquery '%s' on %s failed: %s", sq, engines[0], exc)
             continue
 
+    # Secondary engines only search the original query (breadth)
+    for eng_name in engines[1:]:
+        try:
+            secondary = SearchEngineRegistry.create(eng_name)
+            results = await with_retry(
+                secondary.search,
+                query,
+                max_results=max_sources * 2,
+                max_attempts=2,
+                retryable_exceptions=(NetworkError, ParseError),
+            )
+            engine_results[eng_name].extend(results)
+            logger.debug("Original query on %s returned %d results", eng_name, len(results))
+        except Exception as exc:
+            logger.warning("Engine %s failed for original query: %s", eng_name, exc)
+            continue
+
+    # Flatten for empty check
+    all_results = [r for results in engine_results.values() for r in results]
     if not all_results:
         return ResearchResult(
             query=query,
-            engine=engine,
+            engine=engines[0],
             total_sources=0,
             subqueries=subqueries,
         )
 
-    # Phase 3: Deduplicate, score, and rank using CrossEngineRanker
-    # (Single engine for now, but merge_results handles multi-engine transparently)
-    ranked = merge_results({engine: all_results}, query)
+    # Phase 3: Deduplicate, score, and rank (multi-engine merge)
+    ranked = merge_results(engine_results, query)
 
-    # Phase 4: Crawl top pages
+    # Phase 4: Crawl top pages (use primary engine for fetching)
     urls_to_fetch = [rr.result.url for rr in ranked[:max_sources]]
-    pages = await _fetch_pages(urls_to_fetch, search_engine, stealth=stealth)
+    pages = await _fetch_pages(urls_to_fetch, primary_engine, stealth=stealth)
     pages = rank_pages(pages, query)
 
     # Build cited sources

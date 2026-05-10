@@ -47,6 +47,34 @@ class SearchEngineRegistry:
         """Check if an engine is registered."""
         return name in cls._engines
 
+    @classmethod
+    def recommend_engines(cls, query: str = "", count: int = 3) -> list[str]:
+        """Recommend optimal engine combination based on metadata.
+
+        TIER 1 engines are always preferred. TIER 3 (e.g. Google) is only
+        included if we need more engines and TIER 1/2 are exhausted.
+
+        Args:
+            query: Optional query hint (for future locale-aware selection).
+            count: Number of engines to recommend (default: 3).
+
+        Returns:
+            List of engine names sorted by quality tier and reliability.
+        """
+        engines = cls.list_engines()
+        scored: list[tuple[str, int, float]] = []
+
+        for name in engines:
+            try:
+                engine = cls.create(name)
+                scored.append((name, engine.quality_tier, engine.reliability_score))
+            except Exception:
+                continue
+
+        # Sort by tier ascending (1 is best), then reliability descending
+        scored.sort(key=lambda x: (x[1], -x[2]))
+        return [name for name, _, _ in scored[:count]]
+
 
 # Auto-register built-in engines
 def _register_builtins() -> None:

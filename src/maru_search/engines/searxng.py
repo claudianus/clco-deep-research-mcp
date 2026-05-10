@@ -33,6 +33,9 @@ class SearXNGEngine(SearchEngine):
 
     name = "searxng"
     supports_stealth = False
+    quality_tier = 1
+    typical_latency_ms = 1500
+    reliability_score = 0.85
 
     def __init__(self, instances: list[str] | None = None):
         self.instances = instances or _DEFAULT_INSTANCES.copy()

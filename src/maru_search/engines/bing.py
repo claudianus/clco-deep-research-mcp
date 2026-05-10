@@ -39,6 +39,9 @@ class BingEngine(SearchEngine):
 
     name = "bing"
     supports_stealth = True
+    quality_tier = 2
+    typical_latency_ms = 1200
+    reliability_score = 0.90
 
     def __init__(self):
         self._fetcher = DynamicFetcher()

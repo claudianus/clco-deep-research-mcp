@@ -124,6 +124,9 @@ class DuckDuckGoEngine(SearchEngine):
 
     name = "duckduckgo"
     supports_stealth = False
+    quality_tier = 1
+    typical_latency_ms = 800
+    reliability_score = 0.95
 
     def __init__(self, variant: str = "duckduckgo_lite"):
         self.variant = variant
