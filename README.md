@@ -72,6 +72,35 @@
 pip install maru-deep-pro-search
 ```
 
+### 🚀 Automatic Setup (Recommended)
+
+One command auto-detects your AI agent and installs MCP + research-first rules:
+
+```bash
+maru-deep-pro-search setup
+```
+
+**Auto-detected agents:** Claude Code · Cursor · Kimi · AntiGravity · Kilo Code · OpenCode · Windsurf
+
+What it does:
+1. **Detects** installed AI agents on your system
+2. **Backs up** existing configs (restorable via `--restore`)
+3. **Injects** MCP server configuration
+4. **Enforces** mandatory research-first rules in the agent's system prompt
+
+```bash
+# List detected agents
+maru-deep-pro-search setup --list
+
+# Check if setup is still valid
+maru-deep-pro-search setup --check
+
+# Restore from backup
+maru-deep-pro-search setup --restore
+```
+
+### Manual Setup
+
 **Claude Code:**
 ```bash
 claude mcp add maru-deep-pro-search pip:maru-deep-pro-search
@@ -297,7 +326,7 @@ agent:
   extend: default
   name: research-first
   system_prompt: |
-    For EVERY user request, call deep_research from maru-search MCP first.
+    For EVERY user request, call deep_research from maru-deep-pro-search MCP first.
     Verify all information is current. THEN write code or answer.
     Your training data has a cutoff date. The web does not.
 ```

@@ -141,7 +141,15 @@
     "pip": "pip install maru-deep-pro-search",
     "claude": "claude mcp add maru-deep-pro-search pip:maru-deep-pro-search",
     "config": "MCP 설정",
-    "env": "환경 변수"
+    "env": "환경 변수",
+    "autoTitle": "자동 설정",
+    "autoDesc": "한 줄의 명령으로 AI 에이전트를 자동 감지하고 MCP + 리서치 우선 규칙을 주입합니다.",
+    "autoDetect": "에이전트 자동 감지",
+    "autoBackup": "설정 백업",
+    "autoInject": "MCP + 규칙 주입",
+    "flagList": "감지된 에이전트 목록",
+    "flagCheck": "유효성 검사",
+    "flagRestore": "백업에서 복원"
   },
   "arch": {
     "title": "아키텍처",

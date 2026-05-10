@@ -5,7 +5,57 @@
         <h2 class="text-3xl font-bold tracking-tight">{{ $t('install.title') }}</h2>
       </div>
 
-      <div class="mx-auto grid max-w-4xl gap-8 lg:grid-cols-2">
+      <div class="mx-auto grid max-w-6xl gap-8 lg:grid-cols-3">
+        <!-- Auto Setup -->
+        <UCard class="border-gray-800 bg-gray-900/40" :ui="{ body: { base: 'p-6' } }">
+          <div class="mb-4 flex items-center gap-2">
+            <UIcon name="i-heroicons-rocket-launch" class="text-emerald-400" />
+            <h3 class="text-lg font-semibold">{{ $t('install.autoTitle') }}</h3>
+          </div>
+          <p class="mb-4 text-sm text-gray-400">{{ $t('install.autoDesc') }}</p>
+          <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
+            <div class="flex items-center justify-between">
+              <code class="text-gray-300">maru-deep-pro-search setup</code>
+              <UButton
+                :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+                color="gray"
+                variant="ghost"
+                size="xs"
+                @click="copy('setup', 'maru-deep-pro-search setup')"
+              />
+            </div>
+          </div>
+          <div class="mt-4 space-y-2 text-sm text-gray-400">
+            <div class="flex items-center gap-2">
+              <UIcon name="i-heroicons-check-circle" class="text-emerald-400" />
+              <span>{{ $t('install.autoDetect') }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-heroicons-check-circle" class="text-emerald-400" />
+              <span>{{ $t('install.autoBackup') }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <UIcon name="i-heroicons-check-circle" class="text-emerald-400" />
+              <span>{{ $t('install.autoInject') }}</span>
+            </div>
+          </div>
+          <div class="mt-4 rounded-lg border border-gray-800 bg-gray-950 p-3 font-mono text-xs text-gray-500">
+            <div class="flex items-center justify-between">
+              <code>--list</code>
+              <span class="text-gray-600">{{ $t('install.flagList') }}</span>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <code>--check</code>
+              <span class="text-gray-600">{{ $t('install.flagCheck') }}</span>
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <code>--restore</code>
+              <span class="text-gray-600">{{ $t('install.flagRestore') }}</span>
+            </div>
+          </div>
+        </UCard>
+
+        <!-- Manual -->
         <UCard class="border-gray-800 bg-gray-900/40" :ui="{ body: { base: 'p-6' } }">
           <h3 class="mb-4 text-lg font-semibold">pip</h3>
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
@@ -24,18 +74,19 @@
           <h3 class="mb-4 mt-8 text-lg font-semibold">Claude Code</h3>
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
             <div class="flex items-center justify-between">
-              <code class="text-gray-300">claude mcp add maru-search pip:maru-search</code>
+              <code class="text-gray-300">claude mcp add maru-deep-pro-search pip:maru-deep-pro-search</code>
               <UButton
                 :icon="copied.claude ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
                 color="gray"
                 variant="ghost"
                 size="xs"
-                @click="copy('claude', 'claude mcp add maru-search pip:maru-search')"
+                @click="copy('claude', 'claude mcp add maru-deep-pro-search pip:maru-deep-pro-search')"
               />
             </div>
           </div>
         </UCard>
 
+        <!-- Config -->
         <UCard class="border-gray-800 bg-gray-900/40" :ui="{ body: { base: 'p-6' } }">
           <h3 class="mb-4 text-lg font-semibold">{{ $t('install.config') }}</h3>
           <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm leading-relaxed text-gray-300">

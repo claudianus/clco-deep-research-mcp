@@ -141,7 +141,15 @@
     "pip": "pip install maru-deep-pro-search",
     "claude": "claude mcp add maru-deep-pro-search pip:maru-deep-pro-search",
     "config": "MCP Config",
-    "env": "Environment Variables"
+    "env": "Environment Variables",
+    "autoTitle": "Automatic Setup",
+    "autoDesc": "One command auto-detects your AI agent and injects MCP + research-first rules.",
+    "autoDetect": "Auto-detects agents",
+    "autoBackup": "Backs up configs",
+    "autoInject": "Injects MCP + rules",
+    "flagList": "List detected agents",
+    "flagCheck": "Check validity",
+    "flagRestore": "Restore backup"
   },
   "arch": {
     "title": "Architecture",

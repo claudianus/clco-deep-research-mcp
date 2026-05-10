@@ -1,8 +1,65 @@
+# ── Python ──
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+*.egg
 *.egg-info/
 dist/
 build/
+pip-wheel-metadata/
+*.whl
+*.tar.gz
+
+# ── Virtual Environments ──
 .venv/
-*.egg
+venv/
+env/
+ENV/
+
+# ── Testing / Coverage ──
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+.nox/
+
+# ── Type Checking / Linting ──
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# ── Logs ──
+*.log
+
+# ── Environment Files ──
+.env
+.env.local
+.env.*.local
+
+# ── IDE / Editor ──
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-*
+
+# ── OS ──
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Node.js / Nuxt (docs/) ──
+node_modules/
+.nuxt/
+.output/
+.nitro/
+dist/
+
+# ── Misc ──
+*.bak
+*.tmp
