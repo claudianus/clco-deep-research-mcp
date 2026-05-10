@@ -36,10 +36,12 @@
 - [8 Tools](#8-tools)
 - [7 Search Engines](#7-search-engines)
 - [Architecture](#architecture)
+- [Real-World Usage](#real-world-usage)
 - [Performance](#performance)
 - [MCP Prompts](#mcp-prompts)
 - [Agent Configuration](#agent-configuration--force-research-first-behavior)
 - [Comparison](#comparison)
+- [Security & Privacy](#security--privacy)
 - [Configuration](#configuration)
 - [Testing](#testing)
 - [Contributing](#contributing)
@@ -162,7 +164,7 @@ flowchart TD
 
 | File | Responsibility |
 |------|----------------|
-| `server.py` | MCP server — 8 tools, 3 prompts, stdio transport |
+| `server.py` | MCP server — 8 tools, 4 prompts, stdio transport |
 | `tools.py` | Tool implementations + `TOOLS` registry + `TOOL_GUIDANCE` |
 | `engines/registry.py` | `SearchEngineRegistry` — factory pattern for multi-engine |
 | `engines/duckduckgo.py` | DuckDuckGo HTML scraping with fault-tolerant selectors |
@@ -176,6 +178,39 @@ flowchart TD
 | `research/expander.py` | Template-based query expansion |
 | `extraction/code.py` | 21-language detection, API signatures, package refs |
 | `extraction/content.py` | Token-aware truncation, heading extraction |
+
+---
+
+## Real-World Usage
+
+### For Vibe Coders
+
+These are real scenarios where `deep_research` prevents stale-knowledge disasters:
+
+**1. Project Planning**
+> "실시간 협업 텍스트 에디터를 개발하려고 하는데 딥리서치해서 최신 스택과 라이브러리 추천해줘"
+
+Agent calls `deep_research` → discovers Yjs + WebSocket + Hocuspocus stack → avoids recommending abandoned ShareJS.
+
+**2. Tech Stack Validation**
+> "Next.js API에 tRPC와 GraphQL 중 어떤 걸 써야 할까?"
+
+Agent calls `deep_research` → finds 2025 benchmarks → discovers tRPC has better DX for full-stack TypeScript, GraphQL for public APIs.
+
+**3. Multi-source Debugging**
+> "Next.js 14 App Router에서 'Module not found: Can't resolve fs'"
+
+Agent calls `deep_research` → finds 3 solutions: webpack config, dynamic import, or edge runtime flag → verifies which works in 2025.
+
+**4. Security/CVE Research**
+> "CVE-2024-21529가 우리 Express.js 백엔드에 미치는 영향을 평가해줘"
+
+Agent calls `deep_research` → finds patch version, workarounds, and whether the vulnerable pattern exists in user's code.
+
+**5. Academic/Technical Writing**
+> "Raft vs Paxos 합의 알고리즘 비교를 인출과 함께 작성해줘"
+
+Agent calls `search_with_citations` → gets [1], [2], [3] tagged sources → writes comparison with actual citations.
 
 ---
 
@@ -278,6 +313,19 @@ agent:
 | **Citation IDs** | ✅ Native | ✅ | ❌ | ❌ |
 | **MCP native** | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | **Open source** | ✅ MIT | ❌ Closed | ❌ Closed | ❌ Closed |
+
+---
+
+## Security & Privacy
+
+| Concern | How maru-search handles it |
+|---------|---------------------------|
+| **API keys** | ❌ None required. Zero external service dependencies. |
+| **Data leakage** | ❌ Nothing sent to OpenAI/Anthropic/Google. All computation is local. |
+| **Rate limits** | ❌ No paid API rate limits. Only search engine TOS applies. |
+| **PII exposure** | ❌ No user data stored or logged. Stateless by design. |
+| **Supply chain** | ✅ Single PyPI package. No hidden dependencies on proprietary services. |
+| **Self-hosting** | ✅ Run entirely on your machine. Source code is MIT-licensed. |
 
 ---
 
