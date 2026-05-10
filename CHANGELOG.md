@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.1] - 2026-05-10
+
+### Added
+- **Startpage Engine**: 8th search engine — Google results via privacy proxy
+  - HTML scraping, no API key, supports stealth mode
+  - Registered in SearchEngineRegistry as "startpage"
+- **Tests**: 134 → 135 tests (added Startpage engine registration test)
+
+### Changed
+- README.md: 7 → 8 search engines table
+- AGENTS.md: Updated project structure with all engine files
+- docs Mermaid diagram: Added Startpage node
+
 ## [0.6.0] - 2026-05-10
 
 ### Added
