@@ -73,14 +73,41 @@
 
 ## 빠른 시작
 
-### 🚀 한 줄 설정 (권장)
+### 🚀 한 줄 설치 (권장)
 
-패키지를 설치한 뒤 설정 마법사를 실행하세요. AI 에이전트를 자동 감지하고 모든 것을 설정합니다:
+한 줄을 복사해서 붙여넣기만 하세요. 패키지를 **설치하고** AI 에이전트를 자동 설정합니다:
+
+**macOS / Linux:**
+```bash
+curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
+```
+
+동작 과정:
+1. **`pip`로 설치** — `maru-deep-pro-search` 설치
+2. **에이전트 감지** — Claude Code, Cursor, Kimi 등 자동 탐지
+3. **MCP 설정 주입** — 서버 설정 자동 적용
+4. **리서치 우선 규칙 강제** — 에이전트가 항상 먼저 리서치하도록 설정
 
 ```bash
-pip install maru-deep-pro-search
-maru-deep-pro-search setup
+# 감지된 에이전트 목록
+maru-deep-pro-search setup --list
+
+# 설정 유효성 검사
+maru-deep-pro-search setup --check
+
+# 백업에서 복원
+maru-deep-pro-search setup --restore
 ```
+
+> **curl이 없으면?** pip로 직접 설치:
+> ```bash
+> pip install maru-deep-pro-search && maru-deep-pro-search setup
+> ```
 
 **자동 감지 에이전트:** Claude Code · Cursor · Kimi · AntiGravity · Kilo Code · OpenCode · Windsurf
 

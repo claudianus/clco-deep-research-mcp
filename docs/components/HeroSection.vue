@@ -25,26 +25,39 @@
         </p>
 
         <div class="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-          <div class="flex w-full max-w-md flex-col gap-2 rounded-lg border border-indigo-500/30 bg-gray-900/80 px-4 py-3 backdrop-blur">
-            <div class="flex items-center gap-2 font-mono text-sm">
-              <span class="text-gray-500">$</span>
-              <span class="text-gray-300">pip install</span>
-              <span class="text-emerald-400">maru-deep-pro-search</span>
+          <div class="flex w-full max-w-lg flex-col gap-2 rounded-lg border border-indigo-500/30 bg-gray-900/80 px-4 py-3 backdrop-blur">
+            <!-- OS Tabs -->
+            <div class="flex gap-2 mb-1">
+              <button
+                class="rounded-md px-3 py-1 text-xs font-medium transition-colors"
+                :class="osTab === 'mac' ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-gray-300'"
+                @click="osTab = 'mac'"
+              >
+                macOS / Linux
+              </button>
+              <button
+                class="rounded-md px-3 py-1 text-xs font-medium transition-colors"
+                :class="osTab === 'win' ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-gray-300'"
+                @click="osTab = 'win'"
+              >
+                Windows
+              </button>
             </div>
+            <!-- Command -->
             <div class="flex items-center gap-2 font-mono text-sm">
               <span class="text-gray-500">$</span>
-              <span class="text-emerald-400">maru-deep-pro-search setup</span>
+              <span class="text-emerald-400">{{ currentCommand }}</span>
               <UButton
                 :icon="copied ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
                 color="gray"
                 variant="ghost"
                 size="xs"
-                class="ml-auto"
+                class="ml-auto shrink-0"
                 @click="copyInstall"
               />
             </div>
             <div class="text-xs text-gray-500">
-              1. Install → 2. Auto-detects your AI agent · Injects MCP config · Enforces research-first rules
+              One-liner: installs + auto-detects your AI agent · Injects MCP config · Enforces research-first rules
             </div>
           </div>
         </div>
@@ -75,9 +88,16 @@
 <script setup>
 const { t } = useI18n()
 const copied = ref(false)
+const osTab = ref('mac')
+
+const commandMap = {
+  mac: 'curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash',
+  win: 'irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex',
+}
+const currentCommand = computed(() => commandMap[osTab.value])
 
 function copyInstall() {
-  navigator.clipboard.writeText('pip install maru-deep-pro-search && maru-deep-pro-search setup')
+  navigator.clipboard.writeText(currentCommand.value)
   copied.value = true
   setTimeout(() => copied.value = false, 2000)
 }

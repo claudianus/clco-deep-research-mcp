@@ -73,14 +73,41 @@
 
 ## Quick Start
 
-### 🚀 One-Liner Setup (Recommended)
+### 🚀 One-Liner Install (Recommended)
 
-Install the package, then run the setup wizard. It auto-detects your AI agent and configures everything:
+Copy-paste one line. It installs the package **and** auto-configures your AI agent:
+
+**macOS / Linux:**
+```bash
+curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
+```
+
+What it does:
+1. **Installs** `maru-deep-pro-search` via `pip`
+2. **Detects** your AI agent (Claude Code, Cursor, Kimi, etc.)
+3. **Injects** MCP server configuration
+4. **Enforces** mandatory research-first rules
 
 ```bash
-pip install maru-deep-pro-search
-maru-deep-pro-search setup
+# List detected agents
+maru-deep-pro-search setup --list
+
+# Check if setup is still valid
+maru-deep-pro-search setup --check
+
+# Restore from backup
+maru-deep-pro-search setup --restore
 ```
+
+> **No curl?** Use pip directly:
+> ```bash
+> pip install maru-deep-pro-search && maru-deep-pro-search setup
+> ```
 
 **Auto-detected agents:** Claude Code · Cursor · Kimi · AntiGravity · Kilo Code · OpenCode · Windsurf
 

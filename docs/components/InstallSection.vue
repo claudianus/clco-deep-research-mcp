@@ -16,33 +16,41 @@
             <UBadge color="emerald" variant="subtle" size="sm">Recommended</UBadge>
           </div>
           <p class="mb-4 text-sm text-gray-400">{{ $t('install.autoDesc') }}</p>
-          <div class="space-y-2">
-            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Step 1: Install</div>
-            <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
-              <div class="flex items-center justify-between">
-                <code class="text-gray-300">pip install maru-deep-pro-search</code>
-                <UButton
-                  :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
-                  color="gray"
-                  variant="ghost"
-                  size="xs"
-                  @click="copy('setup', 'pip install maru-deep-pro-search && maru-deep-pro-search setup')"
-                />
-              </div>
+          <!-- OS Tabs -->
+          <div class="flex gap-2 mb-3">
+            <button
+              class="rounded-md px-3 py-1 text-xs font-medium transition-colors"
+              :class="osTab === 'mac' ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-gray-300'"
+              @click="osTab = 'mac'"
+            >
+              macOS / Linux
+            </button>
+            <button
+              class="rounded-md px-3 py-1 text-xs font-medium transition-colors"
+              :class="osTab === 'win' ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-gray-300'"
+              @click="osTab = 'win'"
+            >
+              Windows
+            </button>
+          </div>
+
+          <!-- One-liner -->
+          <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
+            <div class="flex items-center justify-between gap-2">
+              <code class="text-emerald-400 break-all">{{ currentCommand }}</code>
+              <UButton
+                :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
+                color="gray"
+                variant="ghost"
+                size="xs"
+                class="shrink-0"
+                @click="copy('setup', currentCommand)"
+              />
             </div>
-            <div class="text-xs font-medium text-gray-500 uppercase tracking-wider">Step 2: Configure</div>
-            <div class="rounded-lg border border-gray-800 bg-gray-950 p-4 font-mono text-sm">
-              <div class="flex items-center justify-between">
-                <code class="text-emerald-400">maru-deep-pro-search setup</code>
-                <UButton
-                  :icon="copied.setup ? 'i-heroicons-check' : 'i-heroicons-document-duplicate'"
-                  color="gray"
-                  variant="ghost"
-                  size="xs"
-                  @click="copy('setup', 'pip install maru-deep-pro-search && maru-deep-pro-search setup')"
-                />
-              </div>
-            </div>
+          </div>
+
+          <div class="mt-2 text-xs text-gray-600">
+            No curl? <code class="text-gray-500">pip install maru-deep-pro-search && maru-deep-pro-search setup</code>
           </div>
           <div class="mt-4 space-y-2 text-sm text-gray-400">
             <div class="flex items-center gap-2">
@@ -131,6 +139,14 @@
 
 <script setup>
 const copied = reactive({ setup: false, pip: false, claude: false })
+const osTab = ref('mac')
+
+const commandMap = {
+  mac: 'curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash',
+  win: 'irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex',
+}
+const currentCommand = computed(() => commandMap[osTab.value])
+
 function copy(key, text) {
   navigator.clipboard.writeText(text)
   copied[key] = true
