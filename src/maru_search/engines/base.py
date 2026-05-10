@@ -72,7 +72,7 @@ class PageContent:
     api_signatures: list[dict] = field(default_factory=list)
     package_refs: list[dict] = field(default_factory=list)
     code_to_text_ratio: float = 0.0
-    freshness_days: int | None = None
+    freshness_days: Optional[int] = None
     is_api_reference: bool = False
     is_tutorial: bool = False
     is_error_solution: bool = False

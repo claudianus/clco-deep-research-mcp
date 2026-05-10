@@ -10,7 +10,7 @@ class MaruSearchError(Exception):
         self,
         message: str,
         retryable: bool = False,
-        suggested_engine: str | None = None,
+        suggested_engine: Optional[str] = None,
     ):
         super().__init__(message)
         self.retryable = retryable
@@ -34,7 +34,7 @@ class RateLimitError(MaruSearchError):
 class BlockedError(MaruSearchError):
     """Blocked by anti-bot or CAPTCHA."""
 
-    def __init__(self, message: str, suggested_engine: str | None = None):
+    def __init__(self, message: str, suggested_engine: Optional[str] = None):
         super().__init__(
             message,
             retryable=True,
@@ -45,7 +45,7 @@ class BlockedError(MaruSearchError):
 class ParseError(MaruSearchError):
     """Failed to parse SERP or page content."""
 
-    def __init__(self, message: str, suggested_engine: str | None = None):
+    def __init__(self, message: str, suggested_engine: Optional[str] = None):
         super().__init__(
             message,
             retryable=True,
