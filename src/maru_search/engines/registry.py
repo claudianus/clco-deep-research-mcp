@@ -57,5 +57,29 @@ def _register_builtins() -> None:
     except ImportError as exc:
         logger.warning("Could not register DuckDuckGo engine: %s", exc)
 
+    try:
+        from .searxng import SearXNGEngine
+        SearchEngineRegistry.register("searxng", SearXNGEngine)
+    except ImportError as exc:
+        logger.warning("Could not register SearXNG engine: %s", exc)
+
+    try:
+        from .bing import BingEngine
+        SearchEngineRegistry.register("bing", BingEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Bing engine: %s", exc)
+
+    try:
+        from .naver import NaverEngine
+        SearchEngineRegistry.register("naver", NaverEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Naver engine: %s", exc)
+
+    try:
+        from .qwant import QwantEngine
+        SearchEngineRegistry.register("qwant", QwantEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Qwant engine: %s", exc)
+
 
 _register_builtins()
