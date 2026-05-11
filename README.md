@@ -44,6 +44,7 @@
 - [For Researchers](#for-researchers)
 - [Performance Tips](#performance-tips)
 - [Performance](#performance-characteristics)
+- [Quick Reference](#quick-reference)
 - [Configuration](#configuration-reference)
 - [Before & After](#before--after)
 - [Known Limitations](#known-limitations)
@@ -708,6 +709,53 @@ docker run --rm -i maru-search
 | Scrapling session startup | ~0ms (amortized) | Single session reused per engine instance |
 | Semantic model load | ~2s (first call only) | Lazy init, CPU-only |
 | Memory footprint | ~150MB base, +120MB with semantic | No GPU required |
+
+---
+
+## Quick Reference
+
+### CLI Commands
+
+```bash
+# Setup (auto-detect agents)
+maru-deep-pro-search setup
+
+# Setup specific agents
+maru-deep-pro-search setup --agents cursor claude
+
+# List detected agents
+maru-deep-pro-search setup --list
+
+# Check config status
+maru-deep-pro-search setup --check
+
+# Restore from backup
+maru-deep-pro-search setup --restore
+
+# Initialize project harness
+maru-deep-pro-search init --path .
+
+# Show knowledge stats
+maru-deep-pro-search stats
+
+# Generate CI workflow
+maru-deep-pro-search workflow
+
+# Run MCP server
+maru-deep-pro-search
+```
+
+### Environment Variables
+
+```bash
+MARU_SEARCH_ENGINE=duckduckgo_lite        # Default engine
+MARU_SEARCH_MAX_RESULTS=10                # Results per query
+MARU_SEARCH_MAX_CONCURRENT=5              # Parallel fetch limit
+MARU_SEARCH_MAX_TOKENS_TOTAL=20000        # Total token budget
+MARU_SEARCH_TIMEOUT=30.0                  # Fetch timeout (s)
+MARU_SEARCH_RETRIES=3                     # Retry attempts
+MARU_SEARCH_SEMANTIC=true                 # Enable semantic ranking
+```
 
 ---
 
