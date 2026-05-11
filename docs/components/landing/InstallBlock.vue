@@ -1,44 +1,54 @@
 <template>
-  <div class="mx-auto max-w-lg rounded-xl border border-indigo-500/20 bg-gray-900/80 p-4 backdrop-blur">
-    <div class="mb-3 flex gap-2">
-      <button
-        v-for="cmd in commands"
-        :key="cmd.os"
-        class="rounded-md px-3 py-1 text-xs font-medium transition"
-        :class="activeOs === cmd.os ? 'bg-indigo-500/20 text-indigo-400' : 'text-gray-500 hover:text-gray-300'"
-        @click="activeOs = cmd.os"
-      >
-        {{ cmd.label }}
-      </button>
-    </div>
-    <div class="flex items-center gap-2 rounded-lg bg-gray-950 p-3 font-mono text-sm">
-      <span class="text-gray-600">$</span>
-      <span class="text-emerald-400">{{ activeCommand.command }}</span>
-      <button class="ml-auto rounded p-1 text-gray-500 hover:text-white transition" @click="copy">
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <rect x="9" y="9" width="13" height="13" rx="2" />
-          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-        </svg>
-      </button>
-    </div>
-    <p class="mt-2 text-xs text-gray-500">{{ oneLiner }}</p>
-    <p class="mt-1 text-xs text-gray-600">
-      {{ noCurlLabel }} <code class="text-gray-500">pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup</code>
-    </p>
-  </div>
+  <section id="install" class="surface-100 py-16 md:py-24">
+    <UContainer>
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-10">
+          <SectionTitle size="xl">{{ oneLiner }}</SectionTitle>
+          <p class="mt-3 text-gray-400">One command. Auto-detection. Zero configuration.</p>
+        </div>
+
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="terminal-dot bg-red-400/80" />
+            <div class="terminal-dot bg-yellow-400/80" />
+            <div class="terminal-dot bg-green-400/80" />
+            <div class="flex-1" />
+            <div class="flex gap-1">
+              <UButton v-for="(tab, i) in tabs" :key="tab.label" :variant="activeTab === i ? 'solid' : 'ghost'" :color="activeTab === i ? 'violet' : 'gray'" size="xs" @click="activeTab = i">{{ tab.label }}</UButton>
+            </div>
+          </div>
+          <div class="terminal-body">
+            <div v-if="activeTab === 0" class="space-y-1">
+              <div><span class="prompt">$</span> <span class="command">curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash</span></div>
+              <div class="text-gray-500"># Detects your AI agent, injects MCP config, enforces research-first rules</div>
+            </div>
+            <div v-else-if="activeTab === 1" class="space-y-1">
+              <div><span class="prompt">$</span> <span class="command">pip install maru-deep-pro-search[semantic]</span></div>
+              <div><span class="prompt">$</span> <span class="command">maru-deep-pro-search setup</span></div>
+              <div class="text-gray-500"># Manual setup with full semantic search support</div>
+            </div>
+            <div v-else class="space-y-1">
+              <div><span class="prompt">$</span> <span class="command">uv pip install maru-deep-pro-search[semantic]</span></div>
+              <div><span class="prompt">$</span> <span class="command">maru-deep-pro-search setup</span></div>
+              <div class="text-gray-500"># Fast install with uv package manager</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 text-sm text-gray-500">
+          <div class="flex items-center gap-2"><span class="text-emerald-400">✅</span><span>No API keys required</span></div>
+          <div class="flex items-center gap-2"><span class="text-violet-400">⚡</span><span>Works with Claude, Cursor, Kimi, Windsurf</span></div>
+        </div>
+      </div>
+    </UContainer>
+  </section>
 </template>
 
 <script setup lang="ts">
-const commands = useInstallCommands();
-const activeOs = ref<'mac' | 'win'>('mac');
-const activeCommand = computed(() => commands.find(c => c.os === activeOs.value)!);
+import { ref } from 'vue'
+import SectionTitle from '~/components/ui/SectionTitle.vue'
 
-function copy() {
-  navigator.clipboard.writeText(activeCommand.value.command);
-}
-
-defineProps<{
-  oneLiner: string;
-  noCurlLabel: string;
-}>();
+defineProps<{ oneLiner: string; noCurlLabel: string }>()
+const activeTab = ref(0)
+const tabs = [{ label: 'macOS / Linux' }, { label: 'pip' }, { label: 'uv' }]
 </script>

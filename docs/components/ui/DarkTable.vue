@@ -1,16 +1,30 @@
 <template>
-  <div class="overflow-hidden rounded-xl border border-gray-800">
+  <div class="overflow-hidden rounded-xl border border-white/[0.08]">
     <table class="w-full text-sm">
-      <thead class="bg-gray-800 text-gray-300">
-        <tr>
-          <th v-for="col in columns" :key="col.key" class="px-4 py-3 text-left font-semibold">
+      <thead>
+        <tr class="bg-white/[0.03] border-b border-white/[0.06]">
+          <th
+            v-for="col in columns"
+            :key="col.key"
+            class="px-4 py-3 text-left font-semibold text-gray-400 text-xs uppercase tracking-wider"
+          >
             {{ col.label }}
           </th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-800">
-        <tr v-for="(row, i) in rows" :key="i" :class="i % 2 === 1 ? 'bg-gray-900/30' : ''">
-          <td v-for="col in columns" :key="col.key" class="px-4 py-3" :class="col.class">
+      <tbody class="divide-y divide-white/[0.04]">
+        <tr
+          v-for="(row, i) in rows"
+          :key="i"
+          class="transition-colors hover:bg-white/[0.02]"
+          :class="i % 2 === 1 ? 'bg-white/[0.01]' : ''"
+        >
+          <td
+            v-for="col in columns"
+            :key="col.key"
+            class="px-4 py-3"
+            :class="col.class"
+          >
             <slot :name="col.key" :row="row" :value="row[col.key]">
               {{ row[col.key] }}
             </slot>
@@ -23,17 +37,17 @@
 
 <script setup lang="ts">
 interface Column {
-  key: string;
-  label: string;
-  class?: string;
+  key: string
+  label: string
+  class?: string
 }
 
 interface Row {
-  [key: string]: any;
+  [key: string]: any
 }
 
 defineProps<{
-  columns: Column[];
-  rows: Row[];
-}>();
+  columns: Column[]
+  rows: Row[]
+}>()
 </script>

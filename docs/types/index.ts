@@ -2,6 +2,8 @@ export interface Feature {
   icon: string;
   title: string;
   description: string;
+  wide?: boolean;
+  tags?: string[];
 }
 
 export interface Tool {

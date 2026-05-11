@@ -10,7 +10,8 @@
   },
   "install": {
     "oneLiner": "One-liner: installs package + auto-detects your AI agent + injects MCP config + enforces research-first rules.",
-    "noCurl": "No curl?"
+    "noCurl": "No curl?",
+    "button": "Install in 10 seconds"
   },
   "features": {
     "title": "Features"

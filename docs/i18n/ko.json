@@ -10,7 +10,8 @@
   },
   "install": {
     "oneLiner": "한 줄로: 패키지 설치 + AI 에이전트 자동 감지 + MCP 설정 주입 + 리서치 우선 규칙 강제.",
-    "noCurl": "curl이 없으면"
+    "noCurl": "curl이 없으면",
+    "button": "10초 만에 설치"
   },
   "features": {
     "title": "기능"
