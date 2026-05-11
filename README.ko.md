@@ -9,6 +9,9 @@
   <a href="./README.md">🇺🇸 English</a>
 </p>
 
+> ⚠️ **이 문서는 최신 정보를 반영하지 않을 수 있습니다.**  
+> v0.9.2 이후의 새로운 기능(10엔진, Academic 엔진, 72개 보안 시그니처, Audit Logging, Docker, 19개 에이전트 어댑터 등)은 [영문 README](./README.md)를 참조하세요.
+
 <p align="center">
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/actions"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/publish.yml?style=flat-square&label=CI" alt="CI"></a>
