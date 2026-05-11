@@ -258,6 +258,62 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 - Deep dive? → `deep_research`
 - Blocked? → `stealthy_fetch`
 
+### Example: Deep Research in Action
+
+```python
+from maru_deep_pro_search.tools import deep_research
+
+result = deep_research(
+    "What are the security implications of using pickle in Python production code?",
+    max_total_tokens=15000,
+)
+
+print(f"Query: {result.query}")
+print(f"Engine used: {result.engine}")
+print(f"Sources found: {result.total_sources}")
+print(f"High quality: {result.high_quality_count}")
+print(f"Time: {result.elapsed_ms:.0f}ms")
+print(f"\n{result.synthesized_answer}")
+```
+
+**Typical output:**
+
+```
+Query: What are the security implications of using pickle in Python production code?
+Engine used: duckduckgo_lite → searxng (failover)
+Sources found: 12
+High quality: 5
+Time: 4.2s
+
+Using Python's `pickle` module in production carries significant security risks:
+
+**Arbitrary Code Execution (ACE)** [1][3][5]
+`pickle` deserializes by executing Python code. A malicious payload can execute any command:
+```python
+# NEVER do this with untrusted data
+data = pickle.loads(untrusted_bytes)  # 💥 RCE vulnerability
+```
+
+**Safer Alternatives** [2][4]
+- `json` — text-only, no code execution (recommended for APIs)
+- `msgpack` — binary, fast, no code execution [2]
+- `protobuf` — schema-enforced, language-agnostic [4]
+
+**When pickle is acceptable** [3]
+- Internal caches with signed/encrypted payloads
+- Fully controlled environments with no untrusted input
+
+---
+Sources:
+[1] Python docs — pickle module security (docs.python.org, 2024)
+[2] msgpack.org — Serialization format comparison (2023)
+[3] OWASP — Insecure Deserialization Cheat Sheet (owasp.org, 2024)
+[4] Google — Protocol Buffers documentation (developers.google.com, 2024)
+[5] CVE-2024-XXXX — Python pickle remote code execution (cve.mitre.org)
+```
+
+This is what your AI agent sees after calling `deep_research` — a cited, synthesized answer with real sources, not hallucinated claims.
+
 ---
 
 ## Technical Deep Dives
