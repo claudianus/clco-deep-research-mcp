@@ -42,6 +42,8 @@
 - [Performance](#performance-characteristics)
 - [Configuration](#configuration-reference)
 - [Before & After](#before--after)
+- [FAQ](#faq)
+- [Tech Stack](#tech-stack)
 - [Testing](#testing)
 - [Contributing](#contributing)
 
@@ -580,6 +582,47 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 | **Ranking** | Raw engine ordering | BM25 + semantic + metadata hybrid |
 | **Resilience** | Single point of failure | 10-engine failover + smart fallback |
 | **Persistence** | Stateless | Project-level SQLite knowledge store |
+
+---
+
+## FAQ
+
+**Q: Do I need any API keys?**  
+A: No. Zero API keys required. The search engines are scraped directly via HTTP.
+
+**Q: Which Python versions are supported?**  
+A: Python 3.10, 3.11, 3.12, and 3.13.
+
+**Q: Does it work on Windows?**  
+A: Yes. Use the PowerShell install script or `pip install`.
+
+**Q: Can I use it without Docker?**  
+A: Absolutely. Docker is optional for sandboxed deployments.
+
+**Q: How do I add support for my favorite AI agent?**  
+A: See [CONTRIBUTING.md](./CONTRIBUTING.md). You need to implement 3 methods: `detect()`, `install()`, and `inject_rules()`.
+
+**Q: Is the knowledge store shared between projects?**  
+A: No. Each project gets its own `.maru/knowledge.db` in the project root.
+
+**Q: What happens when all 10 engines fail?**  
+A: The system returns an error with a suggested fallback engine. In practice, this is extremely rare due to the geographic diversity of the engine endpoints.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Scraping** | scrapling, trafilatura, htmldate |
+| **Ranking** | rank-bm25, sentence-transformers (optional) |
+| **MCP Protocol** | mcp>=1.0.0 |
+| **Configuration** | pydantic-settings |
+| **Persistence** | SQLite + FTS5 |
+| **Build** | uv, setuptools |
+| **Testing** | pytest, pytest-asyncio, pytest-cov |
+| **Linting** | ruff, mypy |
+| **CI/CD** | GitHub Actions |
 
 ---
 
