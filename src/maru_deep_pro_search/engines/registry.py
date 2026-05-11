@@ -127,5 +127,17 @@ def _register_builtins() -> None:
     except ImportError as exc:
         logger.warning("Could not register Startpage engine: %s", exc)
 
+    try:
+        from .academic import AcademicEngine
+        SearchEngineRegistry.register("academic", AcademicEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Academic engine: %s", exc)
+
+    try:
+        from .brave import BraveEngine
+        SearchEngineRegistry.register("brave", BraveEngine)
+    except ImportError as exc:
+        logger.warning("Could not register Brave engine: %s", exc)
+
 
 _register_builtins()

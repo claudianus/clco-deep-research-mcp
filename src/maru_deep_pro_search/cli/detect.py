@@ -97,6 +97,69 @@ def _detect_cline() -> bool:
     )
 
 
+# ── Zed ──────────────────────────────────────────────────────
+def _detect_zed() -> bool:
+    return (
+        shutil.which("zed") is not None
+        or Path.home().joinpath(".config", "zed").exists()
+        or Path.home().joinpath(".zed").exists()
+    )
+
+
+# ── JetBrains AI ─────────────────────────────────────────────
+def _detect_jetbrains() -> bool:
+    home = Path.home()
+    jetbrains_dirs = list(home.glob(".jetbrains*")) + list(home.glob("Library/Application Support/JetBrains*"))
+    return bool(
+        shutil.which("idea") or shutil.which("webstorm") or shutil.which("pycharm")
+        or jetbrains_dirs
+    )
+
+
+# ── Supermaven ───────────────────────────────────────────────
+def _detect_supermaven() -> bool:
+    return (
+        shutil.which("supermaven") is not None
+        or Path.home().joinpath(".supermaven").exists()
+    )
+
+
+# ── Cody (Sourcegraph) ───────────────────────────────────────
+def _detect_cody() -> bool:
+    home = Path.home()
+    vscode_ext = home / ".vscode" / "extensions"
+    has_cody_ext = False
+    if vscode_ext.exists():
+        has_cody_ext = any(
+            "sourcegraph" in p.name.lower()
+            for p in vscode_ext.iterdir()
+            if p.is_dir()
+        )
+    return (
+        shutil.which("cody") is not None
+        or home.joinpath(".config", "cody").exists()
+        or has_cody_ext
+    )
+
+
+# ── Codeium ──────────────────────────────────────────────────
+def _detect_codeium() -> bool:
+    home = Path.home()
+    vscode_ext = home / ".vscode" / "extensions"
+    has_codeium_ext = False
+    if vscode_ext.exists():
+        has_codeium_ext = any(
+            "codeium" in p.name.lower()
+            for p in vscode_ext.iterdir()
+            if p.is_dir()
+        )
+    return (
+        shutil.which("codeium") is not None
+        or home.joinpath(".codeium").exists()
+        or has_codeium_ext
+    )
+
+
 # ── Registry ─────────────────────────────────────────────────
 AGENT_DETECTORS: dict[str, AgentDetector] = {
     "claude": _detect_claude_code,
@@ -110,6 +173,11 @@ AGENT_DETECTORS: dict[str, AgentDetector] = {
     "copilot": _detect_copilot,
     "continue": _detect_continue,
     "cline": _detect_cline,
+    "zed": _detect_zed,
+    "jetbrains": _detect_jetbrains,
+    "supermaven": _detect_supermaven,
+    "cody": _detect_cody,
+    "codeium": _detect_codeium,
 }
 
 

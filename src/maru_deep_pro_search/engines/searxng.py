@@ -8,7 +8,7 @@ import logging
 import random
 from urllib.parse import quote_plus
 
-from scrapling import DynamicFetcher
+from scrapling import AsyncFetcher
 
 from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
 from ..exceptions import NetworkError, ParseError
@@ -39,7 +39,7 @@ class SearXNGEngine(SearchEngine):
 
     def __init__(self, instances: list[str] | None = None):
         self.instances = instances or _DEFAULT_INSTANCES.copy()
-        self._fetcher = DynamicFetcher()
+        self._fetcher = AsyncFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search via SearXNG JSON API with instance rotation."""

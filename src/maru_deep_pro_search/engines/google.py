@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from urllib.parse import quote_plus
 
-from scrapling import DynamicFetcher, StealthyFetcher
+from scrapling import AsyncFetcher, StealthyFetcher
 
 from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
 from ..exceptions import NetworkError, ParseError, BlockedError
@@ -76,7 +76,7 @@ class GoogleEngine(SearchEngine):
     reliability_score = 0.60
 
     def __init__(self):
-        self._fetcher = DynamicFetcher()
+        self._fetcher = AsyncFetcher()
         self._stealth_fetcher = StealthyFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:

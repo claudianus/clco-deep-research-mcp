@@ -8,8 +8,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Optional
-
 from .engines.registry import SearchEngineRegistry
 
 from .research.deep import deep_research, format_for_llm, AnswerResult

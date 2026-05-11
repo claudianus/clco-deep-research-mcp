@@ -45,7 +45,7 @@ irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scrip
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 
-The setup wizard auto-detects your AI agent (Claude Code, Cursor, Kimi, Windsurf, etc.), backs up existing configs, injects MCP settings, and enforces research-first rules. The `[semantic]` extra installs `sentence-transformers>=3.0.0` for dense vector ranking.
+The setup wizard auto-detects your AI agent (Claude Code, Cursor, Kimi, Windsurf, Zed, JetBrains AI, Supermaven, etc.), backs up existing configs, injects MCP settings, and enforces research-first rules. The `[semantic]` extra installs `sentence-transformers>=3.0.0` for dense vector ranking.
 
 ---
 
@@ -85,7 +85,7 @@ Modern AI coding agents ship with "web search" tools. They sound convenient — 
 
 This isn't a standalone search tool. It's a **search MCP server with harness setup tools** — it provides the search/fetch tools and injects the research-first rules into your agent.
 
-- **7-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG. One fails? The next one picks up instantly.
+- **8-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG, **Academic (ArXiv + Semantic Scholar)**. One fails? The next one picks up instantly.
 - **Perplexity-grade ranking** — BM25 relevance + semantic similarity + authority / freshness / code-density scoring. The best sources float to the top.
 - **Native citations** — Every claim gets `[1]`, `[2]`, `[3]`. Sources are real, traceable, and injected into the response.
 - **Deep research pipeline** — Auto query expansion → multi-angle search → smart fetch with anti-bot escalation → gap detection → synthesized cited answer.

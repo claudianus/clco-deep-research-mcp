@@ -8,7 +8,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Optional
 
 
 # Language signatures — fast regex over full lexer
@@ -129,7 +128,7 @@ class CodeAwareStats:
     is_tutorial: bool = False
     is_error_solution: bool = False
     published_date: str = ""
-    freshness_days: Optional[int] = None
+    freshness_days: int | None = None
 
     def to_dict(self) -> dict:
         return {

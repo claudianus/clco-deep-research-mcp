@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from urllib.parse import quote_plus
 
-from scrapling import DynamicFetcher
+from scrapling import AsyncFetcher
 
 from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
 from ..exceptions import NetworkError, ParseError
@@ -44,7 +44,7 @@ class QwantEngine(SearchEngine):
     reliability_score = 0.85
 
     def __init__(self):
-        self._fetcher = DynamicFetcher()
+        self._fetcher = AsyncFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search Qwant with retry and fallback selectors."""

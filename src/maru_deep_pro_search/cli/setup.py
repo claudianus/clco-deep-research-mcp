@@ -25,6 +25,11 @@ from .agents.aider import AiderAdapter
 from .agents.copilot import CopilotAdapter
 from .agents.continue_ import ContinueAdapter
 from .agents.cline import ClineAdapter
+from .agents.zed import ZedAdapter
+from .agents.jetbrains import JetBrainsAdapter
+from .agents.supermaven import SupermavenAdapter
+from .agents.cody import CodyAdapter
+from .agents.codeium import CodeiumAdapter
 
 ADAPTER_REGISTRY = {
     "claude": ClaudeAdapter,
@@ -38,6 +43,11 @@ ADAPTER_REGISTRY = {
     "copilot": CopilotAdapter,
     "continue": ContinueAdapter,
     "cline": ClineAdapter,
+    "zed": ZedAdapter,
+    "jetbrains": JetBrainsAdapter,
+    "supermaven": SupermavenAdapter,
+    "cody": CodyAdapter,
+    "codeium": CodeiumAdapter,
 }
 
 

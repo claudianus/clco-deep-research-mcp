@@ -5,7 +5,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional
 
 
 class ContentType(str, Enum):
@@ -72,7 +71,7 @@ class PageContent:
     api_signatures: list[dict] = field(default_factory=list)
     package_refs: list[dict] = field(default_factory=list)
     code_to_text_ratio: float = 0.0
-    freshness_days: Optional[int] = None
+    freshness_days: int | None = None
     is_api_reference: bool = False
     is_tutorial: bool = False
     is_error_solution: bool = False

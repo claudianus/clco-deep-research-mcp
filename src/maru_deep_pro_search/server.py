@@ -398,6 +398,12 @@ def run() -> None:
             from .cli.init_cmd import main as _init_main
             # init_cmd.py has no subcommand; skip the "init" keyword.
             sys.exit(_init_main(sys.argv[2:]))
+        if sub == "stats":
+            from .cli.stats_cmd import main as _stats_main
+            sys.exit(_stats_main(sys.argv[2:]))
+        if sub == "workflow":
+            from .cli.workflow_cmd import main as _workflow_main
+            sys.exit(_workflow_main(sys.argv[2:]))
     try:
         mcp.run(transport="stdio")
     except Exception:

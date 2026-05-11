@@ -45,7 +45,7 @@ class CitedSource:
     package_refs: list[dict] = field(default_factory=list)
     code_to_text_ratio: float = 0.0
     published_date: str = ""
-    freshness_days: Optional[int] = None
+    freshness_days: int | None = None
     is_api_reference: bool = False
     is_tutorial: bool = False
     is_error_solution: bool = False
@@ -141,14 +141,20 @@ async def deep_research(
                     ))
                 return ResearchResult(
                     query=query,
+                    engine="cache",
+                    total_sources=len(sources),
                     sources=sources,
-                    answer=entry.answer,
                     elapsed_ms=0.0,
-                    engine_used="cache",
-                    query_expansions=[],
-                    gap_analysis="",
-                    token_budget=max_total_tokens,
-                    tokens_used=len(entry.answer),
+                    high_quality_count=sum(1 for s in sources if s.quality == "high"),
+                    blocked_count=sum(1 for s in sources if s.quality == "blocked"),
+                    subqueries=[query],
+                    total_tokens_used=len(entry.answer),
+                    tokens_allocated=len(entry.answer),
+                    sources_summarized=0,
+                    sources_dropped=0,
+                    synthesized_answer=entry.answer,
+                    has_answer=bool(entry.answer),
+                    suggested_followups=[],
                 )
         except Exception as exc:
             logger.debug("Knowledge store check failed: %s", exc)
@@ -349,7 +355,7 @@ async def deep_research(
         new_urls = all_external[:max_sources - len(sources)]
 
         if new_urls:
-            linked_pages = await _fetch_pages(new_urls, search_engine, stealth=True)
+            linked_pages = await _fetch_pages(new_urls, primary_engine, stealth=True)
             linked_pages = rank_pages(linked_pages, query)
             for lp in linked_pages:
                 if lp.content_length > 200:

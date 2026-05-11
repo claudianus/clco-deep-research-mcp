@@ -88,7 +88,7 @@ def _guess_content_type(url: str, snippet: str = "") -> ContentType:
     # Korean-specific detection
     korean_indicators = ["velog.io", "tistory.com", "naver.com/blog", "brunch.co.kr", "okky.kr"]
     if any(ind in domain for ind in korean_indicators):
-        if "github.com" in domain:
+        if domain.endswith("github.com"):
             return ContentType.CODE
         return ContentType.ARTICLE
 
@@ -129,6 +129,21 @@ class DuckDuckGoEngine(SearchEngine):
         self.variant = variant
         self._session = None
         self._stealth_session = None
+
+    async def close(self) -> None:
+        """Close any open sessions to free resources."""
+        if self._session is not None:
+            try:
+                await self._session.close()
+            except Exception:
+                pass
+            self._session = None
+        if self._stealth_session is not None:
+            try:
+                await self._stealth_session.close()
+            except Exception:
+                pass
+            self._stealth_session = None
 
     async def _get_session(self, stealth: bool = False):
         """Lazy-init and reuse AsyncDynamicSession to avoid browser startup overhead."""

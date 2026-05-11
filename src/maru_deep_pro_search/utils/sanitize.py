@@ -60,6 +60,16 @@ _ATTACK_SIGNATURES: list[tuple[re.Pattern, str]] = []
 
 def _compile_signatures() -> list[tuple[re.Pattern, str]]:
     signatures: list[tuple[str, str]] = [
+        # MCP-specific injection patterns
+        (r"\{\s*['\"]?name['\"]?\s*:\s*['\"]?(deep_research|web_search|fetch_page|answer)['\"]?", "mcp"),
+        (r"\{\s*['\"]?function['\"]?\s*:\s*['\"]?(deep_research|web_search|fetch_page|answer)['\"]?", "mcp"),
+        (r"functions\.(deep_research|web_search|fetch_page|answer)\s*\(", "mcp"),
+        (r"tool_calls?\s*[:\[]", "mcp"),
+        (r"invoke_tool\s*\(", "mcp"),
+        (r"\.mcp\.json", "mcp"),
+        (r"mcpServers", "mcp"),
+        (r"mcp_server", "mcp"),
+        # Standard prompt injection
         (r"ignore\s+(all\s+)?previous\s+(instructions?|commands?|prompts?)", "en"),
         (r"ignore\s+above\s+(instructions?|commands?|prompts?)", "en"),
         (r"disregard\s+(all\s+)?previous\s+(instructions?|commands?)", "en"),

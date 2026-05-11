@@ -53,6 +53,66 @@ def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
         tools["go_lint"] = "go vet ./..."
         tools["go_test"] = "go test ./..."
 
+    # Java / Kotlin
+    if (root / "pom.xml").exists():
+        tools["java_test"] = "mvn test"
+        if shutil.which("mvn"):
+            tools["java_lint"] = "mvn spotbugs:check"
+    elif (root / "build.gradle").exists() or (root / "build.gradle.kts").exists():
+        tools["java_test"] = "./gradlew test"
+        if shutil.which("ktlint"):
+            tools["kotlin_lint"] = "ktlint"
+
+    # C / C++
+    if (root / "CMakeLists.txt").exists():
+        if shutil.which("cppcheck"):
+            tools["cpp_lint"] = "cppcheck --enable=all ."
+        if (root / "Makefile").exists():
+            tools["cpp_test"] = "make test"
+    elif (root / "Makefile").exists():
+        tools["c_test"] = "make test"
+
+    # C# (.NET)
+    if any(root.glob("*.csproj")):
+        tools["csharp_lint"] = "dotnet format --verify-no-changes"
+        tools["csharp_test"] = "dotnet test"
+
+    # Ruby
+    if (root / "Gemfile").exists():
+        if shutil.which("rubocop"):
+            tools["ruby_lint"] = "rubocop"
+        if shutil.which("rspec"):
+            tools["ruby_test"] = "rspec"
+
+    # PHP
+    if (root / "composer.json").exists():
+        if shutil.which("phpstan"):
+            tools["php_lint"] = "phpstan analyse"
+        if (root / "phpunit.xml").exists() or (root / "phpunit.xml.dist").exists():
+            tools["php_test"] = "vendor/bin/phpunit"
+
+    # Swift
+    if (root / "Package.swift").exists():
+        tools["swift_lint"] = "swiftlint"
+        tools["swift_test"] = "swift test"
+
+    # Dart / Flutter
+    if (root / "pubspec.yaml").exists():
+        tools["dart_lint"] = "dart analyze"
+        tools["dart_test"] = "dart test"
+
+    # Scala
+    if (root / "build.sbt").exists():
+        if shutil.which("sbt"):
+            tools["scala_test"] = "sbt test"
+
+    # TypeScript (Deno, Biome)
+    if (root / "deno.json").exists() or (root / "deno.jsonc").exists():
+        tools["deno_lint"] = "deno lint"
+        tools["deno_test"] = "deno test"
+    if (root / "biome.json").exists():
+        tools["biome_lint"] = "biome check ."
+
     return tools
 
 
