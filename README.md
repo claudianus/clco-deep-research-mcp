@@ -37,6 +37,7 @@
 - [Why built-in search isn't enough](#why-your-agents-built-in-web-search-isnt-enough)
 - [Architecture](#architecture)
 - [8 Tools](#8-tools)
+- [How It Works](#how-it-works)
 - [Technical Deep Dives](#technical-deep-dives)
 - [Docker](#docker)
 - [Security](#security)
@@ -313,6 +314,48 @@ Sources:
 ```
 
 This is what your AI agent sees after calling `deep_research` — a cited, synthesized answer with real sources, not hallucinated claims.
+
+---
+
+## How It Works
+
+When your agent calls `deep_research`, here's what happens under the hood:
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│  1. Query       │────▶│  2. Expand      │────▶│  3. Search      │
+│  Parse          │     │  Subqueries     │     │  10 Engines     │
+│                 │     │                 │     │  (parallel)     │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+┌─────────────────┐     ┌─────────────────┐     ┌────────▼────────┐
+│  7. Synthesize  │◀────│  6. Gap Detect  │◀────│  5. Deep Fetch  │
+│  Cited Answer   │     │  Missing Info   │     │  + Extract      │
+│                 │     │                 │     │                 │
+└─────────────────┘     └─────────────────┘     └─────────────────┘
+         ▲                                              │
+         └──────────────────────────────────────────────┘
+                    4. Rank & Deduplicate
+```
+
+**Phase 1: Query Parsing** — Detects query intent (factual, technical, comparative, temporal) and selects the optimal engine strategy.
+
+**Phase 2: Query Expansion** — Generates 3-5 subqueries from templates and synonyms. A query about "Express.js security" becomes:
+- "Express.js security best practices 2024"
+- "Express.js CVE vulnerabilities"
+- "express helmet middleware configuration"
+
+**Phase 3: Parallel Search** — Dispatches subqueries to up to 10 engines concurrently. First 3 results returned abort the rest.
+
+**Phase 4: Hybrid Ranking** — BM25 relevance × semantic similarity × authority × freshness × code-density. Best sources float to the top.
+
+**Phase 5: Smart Fetch** — Fetches full page content with anti-bot escalation (HTTP → stealth → Playwright). Extracts clean text with trafilatura.
+
+**Phase 6: Gap Detection** — Analyzes fetched content for missing information. If no code examples found, triggers a targeted "code example" subquery.
+
+**Phase 7: Synthesis** — Combines sources into a cited answer with `[1]`, `[2]` IDs. Every claim is traceable.
+
+**Total time:** ~3-8 seconds for typical queries.
 
 ---
 
