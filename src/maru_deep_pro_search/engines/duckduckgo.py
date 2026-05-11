@@ -8,12 +8,9 @@ import re
 import time
 from urllib.parse import quote_plus, unquote, urljoin, urlparse
 
-from scrapling import DynamicFetcher, StealthyFetcher
-
 from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
 from ..exceptions import NetworkError, ParseError, BlockedError
 from ..utils.url import should_skip_url, resolve_redirect, get_domain, is_authority_domain
-from ..utils.retry import with_retry
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +127,32 @@ class DuckDuckGoEngine(SearchEngine):
 
     def __init__(self, variant: str = "duckduckgo_lite"):
         self.variant = variant
-        self._fetcher = DynamicFetcher()
+        self._session = None
+        self._stealth_session = None
+
+    async def _get_session(self, stealth: bool = False):
+        """Lazy-init and reuse AsyncDynamicSession to avoid browser startup overhead."""
+        if stealth:
+            if self._stealth_session is None:
+                from scrapling.engines._browsers._controllers import AsyncStealthySession
+                self._stealth_session = AsyncStealthySession(
+                    disable_resources=True,
+                    block_ads=True,
+                    retries=2,
+                    retry_delay=1,
+                )
+                await self._stealth_session.start()
+            return self._stealth_session
+        if self._session is None:
+            from scrapling.engines._browsers._controllers import AsyncDynamicSession
+            self._session = AsyncDynamicSession(
+                disable_resources=True,
+                block_ads=True,
+                retries=1,
+                retry_delay=1,
+            )
+            await self._session.start()
+        return self._session
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search DuckDuckGo with retry and fallback selectors."""
@@ -138,12 +160,8 @@ class DuckDuckGoEngine(SearchEngine):
         search_url = cfg["search_url"].format(query=quote_plus(query))
 
         try:
-            page = await with_retry(
-                self._fetcher.async_fetch,
-                search_url,
-                max_attempts=3,
-                retryable_exceptions=(Exception,),
-            )
+            session = await self._get_session()
+            page = await session.fetch(search_url, timeout=30000)
         except Exception as exc:
             logger.error("SERP scrape failed [%s]: %s", self.variant, exc)
             raise NetworkError(f"Failed to fetch SERP: {exc}", retryable=True)
@@ -212,28 +230,48 @@ class DuckDuckGoEngine(SearchEngine):
 
         return results
 
-    async def fetch(self, url: str, stealth: bool = False) -> PageContent:
+    async def fetch(self, url: str, stealth: bool = False, timeout: float = 15.0) -> PageContent:
         """Fetch a page with content extraction."""
         t0 = time.monotonic()
 
-        fetcher = StealthyFetcher() if stealth else self._fetcher
-
         try:
-            page = await with_retry(
-                fetcher.async_fetch,
-                url,
-                max_attempts=2,
-                retryable_exceptions=(Exception,),
-            )
+            session = await self._get_session(stealth)
+            # Scrapling timeout is in milliseconds
+            page = await session.fetch(url, timeout=int(timeout * 1000))
             final_url = page.url if hasattr(page, 'url') else url
         except Exception as exc:
             duration = (time.monotonic() - t0) * 1000
+            err = str(exc).lower()
+            # Smart error classification for fallback decisions
+            if "timeout" in err or "timed out" in err:
+                error_type = "timeout"
+                needs_stealth_flag = not stealth
+            elif "dns" in err or "name resolution" in err or "getaddrinfo" in err:
+                error_type = "dns"
+                needs_stealth_flag = False
+            elif "connection" in err or "refused" in err or "reset" in err:
+                error_type = "network"
+                needs_stealth_flag = False
+            elif "ssl" in err or "certificate" in err:
+                error_type = "ssl"
+                needs_stealth_flag = True
+            elif "403" in err or "forbidden" in err or "blocked" in err:
+                error_type = "blocked"
+                needs_stealth_flag = True
+            elif "404" in err or "not found" in err:
+                error_type = "not_found"
+                needs_stealth_flag = False
+            else:
+                error_type = "unknown"
+                needs_stealth_flag = not stealth
+
+            logger.debug("Fetch %s for %s: %s", error_type, url, exc)
             return PageContent(
                 url=url,
-                error_message=str(exc),
+                error_message=f"[{error_type.upper()}] {exc}",
                 quality=ExtractionQuality.BLOCKED,
                 fetch_duration_ms=duration,
-                needs_stealth=not stealth,
+                needs_stealth=needs_stealth_flag,
             )
 
         duration = (time.monotonic() - t0) * 1000

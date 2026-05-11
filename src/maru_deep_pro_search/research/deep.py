@@ -7,17 +7,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 
 from ..engines.base import SearchResult, PageContent, ContentType, ExtractionQuality
 from ..engines.registry import SearchEngineRegistry
 from ..exceptions import MaruSearchError, NetworkError, ParseError
-from ..utils.url import should_skip_url, deduplicate_urls, is_authority_domain
+from ..utils.url import should_skip_url, deduplicate_urls, is_authority_domain, get_domain
 from ..utils.retry import with_retry
 from ..extraction.content import truncate_for_llm
-from .expander import expand_query
-from .ranker import merge_results, rank_pages, RankedResult
+from .expander import expand_query, extract_keywords
+from .ranker import merge_results, rank_pages, RankedResult, _jaccard_similarity
+from .gap_detector import detect_gaps
 
 logger = logging.getLogger(__name__)
 
@@ -96,6 +98,7 @@ async def deep_research(
     max_total_tokens: int = 20000,
     summarize: bool = False,
     synthesize_answer: bool = True,
+    use_knowledge_store: bool = True,
 ) -> ResearchResult:
     """End-to-end deep research pipeline with query expansion and multi-pass crawling.
 
@@ -110,8 +113,45 @@ async def deep_research(
         max_total_tokens: Total output token budget.
         summarize: Enable extractive summarization for over-budget scenarios.
         synthesize_answer: Generate a synthesized answer from sources.
+        use_knowledge_store: If True, check local knowledge cache first.
     """
     t0 = time.monotonic()
+
+    store = None
+    # Phase 0: Knowledge store cache check
+    if use_knowledge_store:
+        try:
+            from ..harness.persistence import KnowledgeStore
+            store = KnowledgeStore()
+            cached = store.query(query, max_results=1)
+            if cached:
+                entry = cached[0]
+                logger.info("Knowledge cache HIT for query: %s", query[:60])
+                # Reconstruct ResearchResult from cache
+                sources = []
+                for s in entry.sources:
+                    sources.append(CitedSource(
+                        citation_id=s.get("citation_id", 1),
+                        url=s.get("url", ""),
+                        title=s.get("title", ""),
+                        snippet=s.get("snippet", ""),
+                        content=s.get("content", ""),
+                        markdown=s.get("markdown", ""),
+                        quality=s.get("quality", ""),
+                    ))
+                return ResearchResult(
+                    query=query,
+                    sources=sources,
+                    answer=entry.answer,
+                    elapsed_ms=0.0,
+                    engine_used="cache",
+                    query_expansions=[],
+                    gap_analysis="",
+                    token_budget=max_total_tokens,
+                    tokens_used=len(entry.answer),
+                )
+        except Exception as exc:
+            logger.debug("Knowledge store check failed: %s", exc)
 
     # Phase 0: Engine selection
     # If default engine, use metadata-based recommendation for multi-engine search
@@ -132,29 +172,24 @@ async def deep_research(
     if expand_queries:
         subqueries = expand_query(query, max_subqueries=5)
 
-    # Phase 2: Search across engines
-    # Strategy: run ALL subqueries on primary engine (depth)
-    #           run ORIGINAL query on secondary engines (breadth/diversification)
+    # Phase 2: Search across engines — ALL CONCURRENT
+    # Primary engine subqueries + secondary engines run in parallel
     engine_results: dict[str, list[SearchResult]] = {e: [] for e in engines}
 
-    for sq in subqueries:
-        # Primary engine gets all subqueries for depth
+    async def _search_subquery(sq: str) -> list[SearchResult]:
         try:
-            results = await with_retry(
+            return await with_retry(
                 primary_engine.search,
                 sq,
                 max_results=max_sources * 2,
                 max_attempts=2,
                 retryable_exceptions=(NetworkError, ParseError),
             )
-            engine_results[engines[0]].extend(results)
-            logger.debug("Subquery '%s' on %s returned %d results", sq, engines[0], len(results))
         except Exception as exc:
             logger.warning("Subquery '%s' on %s failed: %s", sq, engines[0], exc)
-            continue
+            return []
 
-    # Secondary engines only search the original query (breadth)
-    for eng_name in engines[1:]:
+    async def _search_secondary(eng_name: str) -> tuple[str, list[SearchResult]]:
         try:
             secondary = SearchEngineRegistry.create(eng_name)
             results = await with_retry(
@@ -164,11 +199,26 @@ async def deep_research(
                 max_attempts=2,
                 retryable_exceptions=(NetworkError, ParseError),
             )
-            engine_results[eng_name].extend(results)
-            logger.debug("Original query on %s returned %d results", eng_name, len(results))
+            return (eng_name, results)
         except Exception as exc:
             logger.warning("Engine %s failed for original query: %s", eng_name, exc)
-            continue
+            return (eng_name, [])
+
+    search_tasks: list[asyncio.Task] = []
+    for sq in subqueries:
+        search_tasks.append(asyncio.create_task(_search_subquery(sq)))
+    for eng_name in engines[1:]:
+        search_tasks.append(asyncio.create_task(_search_secondary(eng_name)))
+
+    all_results = await asyncio.gather(*search_tasks, return_exceptions=True)
+    for res in all_results:
+        if isinstance(res, list):
+            engine_results[engines[0]].extend(res)
+        elif isinstance(res, tuple):
+            eng_name, results = res
+            engine_results[eng_name].extend(results)
+        elif isinstance(res, Exception):
+            logger.warning("Search task failed: %s", res)
 
     # Flatten for empty check
     all_results = [r for results in engine_results.values() for r in results]
@@ -184,8 +234,45 @@ async def deep_research(
     ranked = merge_results(engine_results, query)
 
     # Phase 4: Crawl top pages (use primary engine for fetching)
-    urls_to_fetch = [rr.result.url for rr in ranked[:max_sources]]
-    pages = await _fetch_pages(urls_to_fetch, primary_engine, stealth=stealth)
+    urls_to_fetch = _prioritize_urls([rr.result.url for rr in ranked[:max_sources]])
+
+    # Network health probe + domain history filter
+    network = await _probe_network(primary_engine)
+    effective_timeout = 5.0
+    effective_max_sources = max_sources
+    if network["slow"]:
+        logger.warning("Slow network (%.0fms). Reducing targets.", network["latency_ms"])
+        effective_timeout = 3.0
+        effective_max_sources = max(3, max_sources - 2)
+
+    if use_knowledge_store and store:
+        urls_to_fetch = _filter_slow_domains(urls_to_fetch, store)
+    urls_to_fetch = urls_to_fetch[:effective_max_sources]
+
+    pages = await _fetch_pages(urls_to_fetch, primary_engine, stealth=stealth, timeout_per_fetch=effective_timeout)
+
+    # Record domain performance
+    if use_knowledge_store and store:
+        for p in pages:
+            domain = get_domain(p.url)
+            store.record_domain_fetch(domain, p.fetch_duration_ms, p.quality != ExtractionQuality.BLOCKED)
+
+    # Smart fallback: stealth retry for blocked pages
+    blocked_stealth = [p for p in pages if p.quality == ExtractionQuality.BLOCKED and p.needs_stealth]
+    if blocked_stealth:
+        logger.info("Stealth retry for %d blocked pages", len(blocked_stealth))
+        stealth_pages = await _fetch_pages(
+            [p.url for p in blocked_stealth],
+            primary_engine,
+            stealth=True,
+            max_concurrent=3,
+            min_quality_results=1,
+            timeout_per_fetch=8.0,
+        )
+        # Replace blocked entries with stealth results where successful
+        stealth_map = {normalize_url(p.url): p for p in stealth_pages if p.quality != ExtractionQuality.BLOCKED}
+        pages = [stealth_map.get(normalize_url(p.url), p) for p in pages]
+
     pages = rank_pages(pages, query)
 
     # Build cited sources
@@ -309,7 +396,7 @@ async def deep_research(
     allocated_sources = []
     for src, budget in allocations:
         if summarize and len(src.markdown) > budget * 4:
-            src.markdown = _extractive_summarize(src.markdown, budget)
+            src.markdown = _extractive_summarize(src.markdown, budget, query)
         allocated_sources.append(src)
 
     # Answer synthesis
@@ -320,7 +407,7 @@ async def deep_research(
     # Gap detection for follow-up research
     suggested_followups = detect_gaps(query, allocated_sources)
 
-    return ResearchResult(
+    result = ResearchResult(
         query=query,
         engine=engine,
         total_sources=len(allocated_sources),
@@ -337,55 +424,239 @@ async def deep_research(
         suggested_followups=suggested_followups,
     )
 
+    # Persist to knowledge store
+    if use_knowledge_store:
+        try:
+            from ..harness.persistence import KnowledgeStore
+            store = KnowledgeStore()
+            sources_json = []
+            for s in allocated_sources:
+                sources_json.append({
+                    "citation_id": s.citation_id,
+                    "url": s.url,
+                    "title": s.title,
+                    "snippet": s.snippet,
+                    "content": s.content[:2000],
+                    "markdown": s.markdown[:2000],
+                    "quality": s.quality,
+                })
+            store.save(
+                query=query,
+                answer=synthesized or "",
+                sources=sources_json,
+            )
+            logger.info("Persisted research result to knowledge store")
+        except Exception as exc:
+            logger.debug("Failed to persist to knowledge store: %s", exc)
+
+    return result
+
+
+def _classify_query(query: str) -> str:
+    """Classify query type for synthesis strategy selection."""
+    lower = query.lower()
+    if any(k in lower for k in [" vs ", " versus ", "compare", "comparison", "difference between", "diff between"]):
+        return "comparison"
+    if any(k in lower for k in ["how to ", "install ", "setup ", "configure ", "deploy ", "getting started", "tutorial", "guide"]):
+        return "howto"
+    if any(k in lower for k in ["error", "fix", "deprecated", "removed", "alternative", "migrate", "troubleshoot", "issue", "problem", "bug", "solution"]):
+        return "problem"
+    if any(k in lower for k in ["what is ", "meaning of", "define ", "definition"]):
+        return "definition"
+    if any(k in lower for k in ["latest", "new ", "2025", "2026", "2027", "recent", "update", "news"]):
+        return "news"
+    return "general"
+
+
+def _extract_key_sentences(text: str, query_keywords: set[str], max_sentences: int = 3, query: str = "") -> list[str]:
+    """Extract sentences most relevant to query keywords from cleaned text.
+
+    Preprocesses markdown to remove headings, code blocks, and boilerplate
+    before extracting information-dense sentences. Optionally uses semantic
+    embeddings for relevance scoring when sentence-transformers is installed.
+    """
+    import re
+
+    # 1. Preprocess: remove markdown artifacts
+    # Remove code blocks
+    text = re.sub(r'```[\s\S]*?```', ' ', text)
+    # Remove inline code
+    text = re.sub(r'`[^`]+`', ' ', text)
+    # Remove markdown headings entirely
+    text = re.sub(r'^#+.*$', ' ', text, flags=re.MULTILINE)
+    # Remove boilerplate markers
+    text = text.replace('_[Content summarized for brevity]_', ' ')
+    text = text.replace('*Disclaimer:', ' ')
+    # Collapse multiple spaces
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    # 2. Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+
+    # 3. Pre-compute semantic similarities (batch, optional)
+    semantic_sims: dict[str, float] = {}
+    if query:
+        try:
+            from .semantic_ranker import SemanticRanker
+            if SemanticRanker.available():
+                candidates = [
+                    sent.strip() for sent in sentences
+                    if 40 <= len(sent.strip()) <= 350
+                ]
+                if candidates:
+                    sims = SemanticRanker.query_sentence_similarity_batch(query, candidates)
+                    for sent, sim in zip(candidates, sims):
+                        semantic_sims[sent] = sim
+        except Exception:
+            pass
+
+    scored: list[tuple[float, str]] = []
+    seen: set[str] = set()
+
+    for idx, sent in enumerate(sentences):
+        sent_clean = sent.strip()
+        if len(sent_clean) < 30 or len(sent_clean) > 350:
+            continue
+        # Skip fragments and boilerplate
+        if sent_clean.startswith('URL:') or sent_clean.startswith('Links:') or sent_clean.startswith('_Links:'):
+            continue
+        # Skip code-like sentences
+        code_starters = ('fn ', 'use ', 'struct ', 'impl ', 'mod ', 'let ', 'const ', 'pub ', 'async fn', 'println!', 'match ', 'enum ', 'type ', 'trait ', '#[', 'import ', 'from ', 'class ', 'def ', 'var ', 'const ')
+        if any(sent_clean.lower().startswith(cs) for cs in code_starters):
+            continue
+        # Skip sentences with too many symbols (likely code/config)
+        if sum(1 for c in sent_clean if c in '{}[]()<>|=&;@') > 8:
+            continue
+        if sent_clean in seen:
+            continue
+        seen.add(sent_clean)
+
+        # Score by keyword overlap
+        sent_words = set(re.findall(r'\b[a-zA-Z]+\b', sent_clean.lower()))
+        overlap = len(sent_words & query_keywords) / max(len(query_keywords), 1)
+
+        # Semantic relevance boost (optional)
+        semantic_boost = semantic_sims.get(sent_clean, 0.0) * 0.6
+
+        # Boost factors
+        boost = 0.0
+        # Numbers/dates/versions indicate factual density
+        if re.search(r'\d{4}|v\d+\.\d+|version \d+|\d+%|\d+x', sent_clean):
+            boost += 0.8
+        # Definition patterns
+        if re.search(r'\b(is a|are a|provides|offers|supports|requires|enables|allows|consists of|refers to)\b', sent_clean.lower()):
+            boost += 0.5
+        # Contrast/comparison patterns
+        if re.search(r'\b(vs|versus|compared to|unlike|while|whereas|however|but|although)\b', sent_clean.lower()):
+            boost += 0.4
+        # Structural keywords
+        if any(k in sent_clean.lower() for k in ["deprecated", "removed", "replaced", "alternative", "recommended", "best practice"]):
+            boost += 0.4
+        # Penalize first sentence (often intro/generic)
+        if idx == 0:
+            boost -= 0.2
+        # Penalize overly generic sentences
+        generic_starters = {"this article", "in this post", "we will", "let's", "in this guide", "before we", "today we"}
+        if any(sent_clean.lower().startswith(s) for s in generic_starters):
+            boost -= 0.4
+
+        scored.append((overlap + boost + semantic_boost, sent_clean))
+
+    scored.sort(reverse=True)
+    return [s for _, s in scored[:max_sentences]]
+
+
+def _deduplicate_insights(insights: list[tuple[str, int]]) -> list[tuple[str, int]]:
+    """Remove near-duplicate insights using Jaccard similarity."""
+    unique: list[tuple[str, int]] = []
+    for text, cid in insights:
+        is_dup = False
+        for utext, _ in unique:
+            sim = _jaccard_similarity(text, utext)
+            if sim > 0.65:
+                is_dup = True
+                break
+        if not is_dup:
+            unique.append((text, cid))
+    return unique
+
 
 def _synthesize_answer(query: str, sources: list[CitedSource]) -> str:
-    """Generate a rule-based synthesized answer from sources.
+    """Generate a structured, query-type-aware synthesized answer.
 
-    Uses headings and first paragraphs to build a structured summary
-    with inline citations like [1], [2].
+    Perplexity-style synthesis that adapts structure based on query type:
+    - comparison: "X is ..., Y is ..., conclusion: ..."
+    - problem:   "Problem: ... Alternatives: (1) ... (2) ..."
+    - howto:     "Step 1: ... Step 2: ..."
+    - definition: "X is a ... It works by ..."
+    - general:   Key findings with inline citations
     """
     if not sources:
         return ""
 
-    # Collect key insights from each source
-    insights: list[str] = []
+    query_type = _classify_query(query)
+    query_keywords = set(extract_keywords(query))
+    if not query_keywords:
+        query_keywords = set(query.lower().split())
+
+    # Extract structured insights from each source
+    insights: list[tuple[str, int]] = []
     for src in sources:
-        text = src.markdown or src.content or src.snippet
+        # Prefer raw content over summarized markdown for synthesis
+        text = src.content or src.markdown or src.snippet
         if not text:
             continue
 
-        # Extract first meaningful paragraph and any headings
-        lines = text.split("\n")
-        paragraphs = [l.strip() for l in lines if l.strip() and not l.startswith("#")]
-        headings = [l.strip("# ").strip() for l in lines if l.startswith("#")]
+        # Extract the most relevant sentences from the source
+        key_sents = _extract_key_sentences(text, query_keywords, max_sentences=2, query=query)
+        for sent in key_sents:
+            insights.append((sent, src.citation_id))
 
-        # Use heading + first paragraph as insight
-        insight_parts = []
-        if headings:
-            insight_parts.append(headings[0])
-        if paragraphs:
-            # Take first paragraph up to 200 chars
-            para = paragraphs[0][:200]
-            if len(paragraphs[0]) > 200:
-                para += "..."
-            insight_parts.append(para)
-
-        if insight_parts:
-            insights.append(
-                f"- {' — '.join(insight_parts)} [{src.citation_id}]"
-            )
+    # Deduplicate insights
+    insights = _deduplicate_insights(insights)
 
     if not insights:
         return ""
 
-    # Build synthesized answer
-    answer_parts = [
-        f"### Quick Answer: {query}",
-        "",
-        "Based on the search results, here are the key findings:",
-        "",
-    ]
-    answer_parts.extend(insights[:6])  # Max 6 insights
+    # Build answer based on query type
+    answer_parts: list[str] = []
+
+    if query_type == "comparison":
+        answer_parts.append(f"### Comparison: {query}")
+        answer_parts.append("")
+        for text, cid in insights[:5]:
+            answer_parts.append(f"- {text} [{cid}]")
+
+    elif query_type == "problem":
+        answer_parts.append(f"### Problem & Solution: {query}")
+        answer_parts.append("")
+        # First insight often describes the problem
+        if insights:
+            answer_parts.append(f"**Situation:** {insights[0][0]} [{insights[0][1]}]")
+            answer_parts.append("")
+        # Subsequent insights are alternatives/solutions
+        answer_parts.append("**Key points:**")
+        for text, cid in insights[1:5]:
+            answer_parts.append(f"- {text} [{cid}]")
+
+    elif query_type == "howto":
+        answer_parts.append(f"### Guide: {query}")
+        answer_parts.append("")
+        for i, (text, cid) in enumerate(insights[:5], 1):
+            answer_parts.append(f"{i}. {text} [{cid}]")
+
+    elif query_type == "definition":
+        answer_parts.append(f"### Definition: {query}")
+        answer_parts.append("")
+        for text, cid in insights[:4]:
+            answer_parts.append(f"- {text} [{cid}]")
+
+    else:  # general / news
+        answer_parts.append(f"### Quick Answer: {query}")
+        answer_parts.append("")
+        for text, cid in insights[:5]:
+            answer_parts.append(f"- {text} [{cid}]")
+
     answer_parts.append("")
     answer_parts.append("---")
     answer_parts.append("")
@@ -440,34 +711,47 @@ def _allocate_tokens(
     return allocations, sources_summarized, sources_dropped
 
 
-def _extractive_summarize(markdown: str, max_tokens: int) -> str:
-    """Create extractive summary using headings and key paragraphs."""
+def _extractive_summarize(markdown: str, max_tokens: int, query: str = "") -> str:
+    """Create extractive summary using headings and key paragraphs.
+
+    Query-aware: sections containing query keywords retain more sentences.
+    """
     from ..extraction.content import extract_headings, estimate_token_count
 
     if estimate_token_count(markdown) <= max_tokens:
         return markdown
 
-    headings = extract_headings(markdown)
+    query_keywords = set(extract_keywords(query)) if query else set()
 
     summary_parts = []
     lines = markdown.split('\n')
     current_section = []
     in_section = False
+    section_has_keyword = False
 
     for line in lines:
         if line.startswith('#'):
             if current_section:
-                summary_parts.extend(current_section[:2])
+                limit = 4 if section_has_keyword else 2
+                summary_parts.extend(current_section[:limit])
                 current_section = []
             in_section = True
             current_section.append(line)
+            section_has_keyword = bool(
+                query_keywords and query_keywords & set(re.findall(r'\b[a-zA-Z]+\b', line.lower()))
+            )
         elif in_section and line.strip() and not line.startswith('#'):
             current_section.append(line)
-            if len(current_section) >= 3:
+            if query_keywords and not section_has_keyword:
+                section_has_keyword = bool(
+                    query_keywords & set(re.findall(r'\b[a-zA-Z]+\b', line.lower()))
+                )
+            if len(current_section) >= 8:
                 in_section = False
 
     if current_section:
-        summary_parts.extend(current_section[:2])
+        limit = 4 if section_has_keyword else 2
+        summary_parts.extend(current_section[:limit])
 
     summary = '\n\n'.join(summary_parts)
 
@@ -477,19 +761,91 @@ def _extractive_summarize(markdown: str, max_tokens: int) -> str:
     return summary + "\n\n_[Content summarized for brevity]_"
 
 
+def _prioritize_urls(urls: list[str]) -> list[str]:
+    """Sort URLs so high-trust domains are fetched first."""
+    from ..utils.url import get_domain
+
+    HIGH_TRUST = {
+        "github.com", "gitlab.com", "stackoverflow.com", "stackexchange.com",
+        "docs.python.org", "developer.mozilla.org", "react.dev", "nextjs.org",
+        "nodejs.org", "go.dev", "pkg.go.dev", "doc.rust-lang.org", "docs.rs",
+        "learn.microsoft.com", "postgresql.org", "kubernetes.io", "fastapi.tiangolo.com",
+        "docs.djangoproject.com", "vuejs.org", "svelte.dev",
+    }
+
+    def _score(url: str) -> int:
+        domain = get_domain(url)
+        if any(d in domain for d in HIGH_TRUST):
+            return 0
+        if domain.endswith((".edu", ".gov", ".ac.kr", ".go.kr", ".or.kr")):
+            return 1
+        if any(d in domain for d in ["medium.com", "dev.to", "blog.", "tistory.com", "velog.io"]):
+            return 3
+        return 2
+
+    return sorted(urls, key=_score)
+
+
+async def _probe_network(engine) -> dict:
+    """Probe network latency with a fast, reliable URL."""
+    t0 = time.monotonic()
+    try:
+        await asyncio.wait_for(
+            engine.fetch("https://lite.duckduckgo.com", timeout=3.0),
+            timeout=5.0,
+        )
+        elapsed = (time.monotonic() - t0) * 1000
+        return {"ok": True, "latency_ms": elapsed, "slow": elapsed > 5000}
+    except Exception:
+        elapsed = (time.monotonic() - t0) * 1000
+        return {"ok": False, "latency_ms": elapsed, "slow": True}
+
+
+def _filter_slow_domains(urls: list[str], store=None, max_fail_rate: float = 0.8) -> list[str]:
+    """Filter out URLs from domains with poor fetch history."""
+    if not store:
+        return urls
+    filtered = []
+    for url in urls:
+        domain = get_domain(url)
+        stats = store.get_domain_stats(domain)
+        if stats and stats["success_rate"] < (1 - max_fail_rate) and stats["total"] >= 3:
+            logger.debug("Skip slow domain %s (rate=%.0f%%)", domain, stats["success_rate"] * 100)
+            continue
+        filtered.append(url)
+    return filtered
+
+
 async def _fetch_pages(
     urls: list[str],
     engine,
     stealth: bool = False,
     max_concurrent: int = 5,
+    min_quality_results: int = 3,
+    timeout_per_fetch: float = 5.0,
 ) -> list[PageContent]:
-    """Fetch multiple pages concurrently with semaphore control."""
+    """Fetch multiple pages with fast abort.
+
+    Uses asyncio.as_completed so fast sites return immediately.
+    Cancels remaining tasks once enough high-quality results are collected.
+    """
     sem = asyncio.Semaphore(max_concurrent)
+    results: list[PageContent] = []
 
     async def _one(u: str) -> PageContent:
         async with sem:
             try:
-                return await engine.fetch(u, stealth=stealth)
+                return await asyncio.wait_for(
+                    engine.fetch(u, stealth=stealth, timeout=timeout_per_fetch),
+                    timeout=timeout_per_fetch + 2.0,
+                )
+            except asyncio.TimeoutError:
+                return PageContent(
+                    url=u,
+                    error_message=f"Timeout after {timeout_per_fetch}s",
+                    quality=ExtractionQuality.BLOCKED,
+                    fetch_duration_ms=int(timeout_per_fetch * 1000),
+                )
             except Exception as exc:
                 logger.warning("Fetch failed for %s: %s", u, exc)
                 return PageContent(
@@ -498,7 +854,37 @@ async def _fetch_pages(
                     quality=ExtractionQuality.BLOCKED,
                 )
 
-    return await asyncio.gather(*(_one(u) for u in urls))
+    pending = [asyncio.create_task(_one(u)) for u in urls]
+
+    try:
+        for coro in asyncio.as_completed(pending, timeout=30.0):
+            try:
+                page = await coro
+                results.append(page)
+                # Fast abort: enough high-quality results?
+                good = sum(
+                    1 for r in results
+                    if r.quality == ExtractionQuality.HIGH and r.content_length > 200
+                )
+                if good >= min_quality_results and len(results) >= min_quality_results + 1:
+                    logger.info("Fast abort: %d high-quality pages fetched", good)
+                    break
+            except asyncio.CancelledError:
+                pass
+    except asyncio.TimeoutError:
+        logger.warning("Overall fetch pipeline timeout after 30s")
+    finally:
+        # Cancel any remaining tasks and wait for cleanup
+        for task in pending:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*pending, return_exceptions=True)
+
+    # Drain any remaining tasks
+    if pending:
+        await asyncio.gather(*pending, return_exceptions=True)
+
+    return results
 
 
 def format_for_llm(

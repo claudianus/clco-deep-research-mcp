@@ -15,10 +15,14 @@ _CURRENT_YEAR = datetime.now().year
 
 # Template-based query expansion angles
 _QUERY_TEMPLATES = {
-    "recent": [
+    "recent_versioned": [
         f"{{query}} latest {_CURRENT_YEAR} {_CURRENT_YEAR + 1}",
         "{query} new features updates",
         "{query} recent developments",
+    ],
+    "recent_general": [
+        "{query} recent developments",
+        "{query} overview explained",
     ],
     "tutorial": [
         "{query} tutorial getting started",
@@ -62,6 +66,19 @@ _QUERY_TEMPLATES = {
         "{query} 한글 설명서",
         "{query} 국내 번역",
     ],
+}
+
+# Concepts that are stable enough that "latest YYYY" is usually noise
+_STABLE_CONCEPTS = {
+    "list comprehension", "dictionary", "tuple", "set", "string",
+    "for loop", "while loop", "if statement", "function", "class",
+    "inheritance", "polymorphism", "encapsulation", "recursion",
+    "ownership", "borrowing", "lifetime", "trait", "struct", "enum",
+    "closure", "iterator", "generics", "macro",
+    "variable", "constant", "scope", "namespace", "module",
+    "http", "tcp", "udp", "rest", "json", "xml", "yaml",
+    "algorithm", "data structure", "big o", "complexity",
+    "sort", "search", "tree", "graph", "queue", "stack", "heap",
 }
 
 
@@ -109,8 +126,20 @@ def _select_angles(query: str) -> list[str]:
         angles.extend(["korean_community", "korean_docs", "recent"])
         return angles
 
-    # Always include recent
-    angles.append("recent")
+    # Determine if query needs versioned "latest" expansion
+    has_version = bool(re.search(r'\d+\.\d+|v\d+\.|\b\d{4}\b', query))
+    is_stable = any(concept in lower for concept in _STABLE_CONCEPTS)
+    needs_freshness = any(kw in lower for kw in [
+        "deprecated", "removed", "latest", "new ", "update", "release",
+        "version", "v2", "v3", "migrate", "migration", "upgrade",
+    ])
+
+    if has_version or needs_freshness:
+        angles.append("recent_versioned")
+    elif not is_stable:
+        angles.append("recent_versioned")
+    else:
+        angles.append("recent_general")
 
     # Code-related queries
     if any(kw in lower for kw in ["python", "javascript", "typescript", "go", "rust", "java", "code", "programming", "api", "library", "framework"]):
@@ -121,12 +150,12 @@ def _select_angles(query: str) -> list[str]:
         angles.extend(["troubleshooting", "community"])
 
     # Comparison queries
-    if any(kw in lower for kw in ["vs", "versus", "compare", "alternative", "best"]):
+    if any(kw in lower for kw in ["vs", "versus", "compare", "alternative", "best", "difference between", "diff between"]):
         angles.append("comparison")
 
     # General tech queries
-    if not angles:
-        angles.extend(["tutorial", "comparison"])
+    if len(angles) <= 2:
+        angles.extend(["tutorial", "github"])
 
     return angles
 

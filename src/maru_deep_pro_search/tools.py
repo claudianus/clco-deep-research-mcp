@@ -11,7 +11,7 @@ import logging
 from typing import Optional
 
 from .engines.registry import SearchEngineRegistry
-from .engines.duckduckgo import DuckDuckGoEngine
+
 from .research.deep import deep_research, format_for_llm, AnswerResult
 from .research.ranker import merge_results
 from .extraction.content import truncate_for_llm
@@ -68,11 +68,20 @@ async def tool_web_search(
 
     try:
         search_engine = SearchEngineRegistry.create(engine)
-        results = await with_retry(
-            search_engine.search,
-            query,
-            max_results=max_results,
-            max_attempts=3,
+        results = await asyncio.wait_for(
+            with_retry(
+                search_engine.search,
+                query,
+                max_results=max_results,
+                max_attempts=3,
+            ),
+            timeout=30.0,
+        )
+    except asyncio.TimeoutError:
+        return (
+            f"## [TIMEOUT] Search for '{query}' exceeded 30 seconds.\n\n"
+            "_The search engine may be slow or blocked.\n"
+            "Try a different engine or a more specific query._"
         )
     except MaruSearchError as e:
         if e.suggested_engine and e.suggested_engine != engine:
@@ -142,8 +151,18 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
         logger.debug("Cache hit for fetch: %s", url)
         return cached
 
-    engine = DuckDuckGoEngine()
-    page = await engine.fetch(url, stealth=stealth)
+    engine = SearchEngineRegistry.create("duckduckgo")
+    try:
+        page = await asyncio.wait_for(
+            engine.fetch(url, stealth=stealth),
+            timeout=20.0,
+        )
+    except asyncio.TimeoutError:
+        return (
+            f"## [TIMEOUT] {url}\n"
+            "_Fetch exceeded 20 seconds. The site may be too slow or blocked.\n"
+            "Try stealthy_fetch() or a different URL._"
+        )
 
     if page.quality.value == "blocked":
         return (
@@ -216,14 +235,39 @@ async def tool_fetch_bulk(
 
     Each result includes quality signals so the LLM can prioritize reading.
     """
-    engine = DuckDuckGoEngine()
+    engine = SearchEngineRegistry.create("duckduckgo")
     sem = asyncio.Semaphore(max_concurrent)
 
     async def _fetch_one(u: str):
         async with sem:
-            return await engine.fetch(u, stealth=stealth)
+            try:
+                return await asyncio.wait_for(
+                    engine.fetch(u, stealth=stealth),
+                    timeout=20.0,
+                )
+            except asyncio.TimeoutError:
+                from .engines.base import PageContent, ExtractionQuality
+                return PageContent(
+                    url=u,
+                    error_message="Fetch timeout after 20 seconds",
+                    quality=ExtractionQuality.BLOCKED,
+                    fetch_duration_ms=20000,
+                )
 
-    pages = await asyncio.gather(*(_fetch_one(u) for u in urls))
+    pages = await asyncio.gather(*(_fetch_one(u) for u in urls), return_exceptions=True)
+    # unwrap any stray exceptions into PageContent
+    safe_pages: list = []
+    for p in pages:
+        if isinstance(p, Exception):
+            from .engines.base import PageContent, ExtractionQuality
+            safe_pages.append(PageContent(
+                url="",
+                error_message=str(p),
+                quality=ExtractionQuality.BLOCKED,
+            ))
+        else:
+            safe_pages.append(p)
+    pages = safe_pages
 
     lines: list[str] = []
     for i, page in enumerate(pages, 1):
@@ -293,17 +337,30 @@ async def tool_deep_research(
         logger.debug("Cache hit for deep_research: %s", query)
         return cached
 
-    result = await deep_research(
-        query=query,
-        engine=engine,
-        max_sources=max_sources,
-        follow_links=follow_links,
-        expand_queries=expand_queries,
-        max_tokens_per_source=max_tokens_per_source,
-        max_total_tokens=max_total_tokens,
-        summarize=summarize,
-        synthesize_answer=True,
-    )
+    try:
+        result = await asyncio.wait_for(
+            deep_research(
+                query=query,
+                engine=engine,
+                max_sources=max_sources,
+                follow_links=follow_links,
+                expand_queries=expand_queries,
+                max_tokens_per_source=max_tokens_per_source,
+                max_total_tokens=max_total_tokens,
+                summarize=summarize,
+                synthesize_answer=True,
+            ),
+            timeout=120.0,
+        )
+    except asyncio.TimeoutError:
+        return (
+            "## [TIMEOUT] Deep research exceeded 120 seconds.\n\n"
+            "_The query may be too broad or sources are responding slowly.\n"
+            "Suggestions:\n"
+            "- Reduce max_sources (e.g., 4 instead of 8)\n"
+            "- Use web_search for faster results\n"
+            "- Try a more specific query_"
+        )
     result_text = format_for_llm(
         result,
         max_tokens_per_source=max_tokens_per_source,
@@ -345,17 +402,27 @@ async def tool_answer(
     if engine not in SEARCH_ENGINES:
         engine = "duckduckgo_lite"
 
-    result = await deep_research(
-        query=query,
-        engine=engine,
-        max_sources=max_sources,
-        follow_links=False,
-        expand_queries=True,
-        max_tokens_per_source=max_tokens // max_sources,
-        max_total_tokens=max_tokens,
-        summarize=True,
-        synthesize_answer=True,
-    )
+    try:
+        result = await asyncio.wait_for(
+            deep_research(
+                query=query,
+                engine=engine,
+                max_sources=max_sources,
+                follow_links=False,
+                expand_queries=True,
+                max_tokens_per_source=max_tokens // max_sources,
+                max_total_tokens=max_tokens,
+                summarize=True,
+                synthesize_answer=True,
+            ),
+            timeout=60.0,
+        )
+    except asyncio.TimeoutError:
+        return (
+            f"## [TIMEOUT] Answer generation exceeded 60 seconds.\n\n"
+            f"_Query: {query}_\n\n"
+            "Try a more specific question or use web_search instead."
+        )
 
     if not result.sources:
         return f"I couldn't find any sources for: **{query}**"
@@ -409,11 +476,20 @@ async def tool_search_with_citations(
 
     try:
         search_engine = SearchEngineRegistry.create(engine)
-        results = await with_retry(
-            search_engine.search,
-            query,
-            max_results=max_results,
-            max_attempts=3,
+        results = await asyncio.wait_for(
+            with_retry(
+                search_engine.search,
+                query,
+                max_results=max_results,
+                max_attempts=3,
+            ),
+            timeout=30.0,
+        )
+    except asyncio.TimeoutError:
+        return (
+            f"## [TIMEOUT] Search for '{query}' exceeded 30 seconds.\n\n"
+            "_The search engine may be slow or blocked.\n"
+            "Try a different engine or a more specific query._"
         )
     except MaruSearchError as e:
         if e.suggested_engine and e.suggested_engine != engine:

@@ -97,6 +97,28 @@ class TestMergeResults:
         assert len(ranked) == 2
 
 
+class TestSemanticRanker:
+    def test_available_returns_bool(self):
+        from maru_deep_pro_search.research.semantic_ranker import SemanticRanker
+        result = SemanticRanker.available()
+        assert isinstance(result, bool)
+
+    def test_score_results_empty(self):
+        from maru_deep_pro_search.research.semantic_ranker import SemanticRanker
+        scores = SemanticRanker.score_results("test", [])
+        assert scores == []
+
+    def test_sentence_similarity_empty(self):
+        from maru_deep_pro_search.research.semantic_ranker import SemanticRanker
+        result = SemanticRanker.sentence_similarity([])
+        assert result == []
+
+    def test_semantic_dedupe_empty(self):
+        from maru_deep_pro_search.research.semantic_ranker import SemanticRanker
+        result = SemanticRanker.semantic_dedupe([])
+        assert result == []
+
+
 class TestRankPages:
     def test_empty_list(self):
         assert rank_pages([], "test") == []

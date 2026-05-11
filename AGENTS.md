@@ -83,7 +83,13 @@ src/maru_deep_pro_search/
 ├── research/              # Deep research pipeline
 │   ├── deep.py            # Deep research + answer synthesis + citations
 │   ├── expander.py        # Query expansion (template-based)
-│   └── ranker.py          # BM25 + metadata cross-engine ranking
+│   ├── ranker.py          # BM25 + semantic hybrid cross-engine ranking
+│   ├── semantic_ranker.py # Bi-Encoder dense vector similarity (optional)
+│   └── gap_detector.py    # Research gap detection
+├── harness/               # Project-level knowledge persistence & workflow
+│   ├── persistence.py     # KnowledgeStore (SQLite + semantic search)
+│   ├── project.py         # init_project(), HarnessProject
+│   └── workflow.py        # WorkflowEngine with 7-phase generator
 └── utils/                 # URL, retry utilities
     ├── retry.py           # Exponential backoff with jitter
     └── url.py             # URL normalization, filtering, deduplication
@@ -98,7 +104,7 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 174 tests, all passing.
+**Current requirement**: 193 tests, all passing.
 
 ## Key Architecture Decisions
 
@@ -112,6 +118,9 @@ pytest tests/ -v
 8. **Citation-native output** — All results include citation IDs [1], [2] without external services
 9. **Research-first enforcement** — MCP prompts, tool descriptions, and TOOL_GUIDANCE are all designed to FORCE the agent to research before coding. See below.
 10. **Prompt injection defense** — All fetched content is sanitized before LLM injection (zero-width chars removed, chat tokens neutralized, suspicious patterns flagged and replaced).
+11. **Semantic hybrid ranking** — Optional `sentence-transformers` integration adds dense vector similarity on top of BM25 for significantly better relevance. Falls back gracefully when not installed.
+12. **Smart fallback engine** — Error-type-aware responses (dns/network/ssl/blocked/not_found) with per-type strategy. Stealth auto-retry, network health probe, domain history filter.
+13. **Harness platform** — Project-level knowledge persistence (`KnowledgeStore`) and structured workflow engine (`WorkflowEngine`) for research-coding loops.
 
 ## Forcing Agents to Research Before Coding
 
@@ -190,3 +199,35 @@ Your training data has a cutoff date. The web does not.
 ```
 
 Then run: `kimi --agent-file ~/.kimi/agents/research-first.yaml`
+
+## SKILL.md vs AGENTS.md: Effectiveness Evaluation
+
+This project uses **AGENTS.md** as its primary instruction layer for AI coding agents. Here is an honest assessment of its effectiveness compared to the SKILL.md pattern.
+
+### Why AGENTS.md instead of SKILL.md
+
+| Dimension | AGENTS.md (this project) | SKILL.md (MCP pattern) |
+|---|---|---|
+| **Discovery** | Read automatically when agents traverse the filesystem | Requires explicit MCP `skills/list` + `skills/get` calls |
+| **Overhead** | Zero tool calls | 2+ MCP tool calls per session |
+| **Freshness** | Version-controlled with code | Loaded from external skill registry |
+| **Depth** | Project-specific deployment rules, architecture decisions, testing requirements | Generic, reusable across projects |
+| **Scope** | Can be nested per-directory | Global or user-scoped only |
+
+### Strengths observed
+
+1. **Deployment guardrails work**: The `CRITICAL REMINDER` at the top has prevented multiple accidental manual PyPI uploads during development sessions.
+2. **Test gatekeeping**: The explicit "174 tests, all passing" requirement acts as a commit barrier — agents consistently run tests before committing because the number is stated.
+3. **Architecture alignment**: New features (e.g., gap detector, query sanitizer) naturally follow the existing architectural patterns documented here because the decisions are co-located with the codebase.
+4. **No MCP dependency**: Works even when the MCP server is not running or the client does not support skills.
+
+### Limitations acknowledged
+
+1. **Not discoverable via MCP-only clients**: Agents that exclusively use MCP tools without filesystem access (rare, but possible in sandboxed environments) will never see AGENTS.md.
+2. **No structured metadata**: Unlike SKILL.md, there is no schema for declaring dependencies, capabilities, or version compatibility. This is mitigated by `pyproject.toml` and inline documentation.
+3. **Manual synchronization**: When architecture changes, AGENTS.md must be updated manually. The Version Bump Checklist helps but does not eliminate this.
+4. **Limited to filesystem access**: Requires the agent to have read access to the project directory. Cloud IDE agents with virtualized file systems may need explicit prompting.
+
+### Recommendation
+
+Use **AGENTS.md** for project-specific operational rules (deployment, testing, architecture, enforcement mechanisms). Use **SKILL.md** for reusable cross-project capabilities (e.g., a generic "Python testing" skill). This project relies on AGENTS.md alone because its agent instructions are tightly coupled to the codebase and deployment workflow — a SKILL.md would be either too generic to be useful or too specific to be reusable.

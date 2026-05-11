@@ -322,18 +322,18 @@ def analyze_content(text: str) -> RiskReport:
     if has_mixed:
         warnings.append("Mixed scripts detected (possible lookalike attack)")
 
-    # Layer 4: Embedding detection
+    # Layer 4: Embedding detection (disabled due to false positives on benign content)
     emb_score = 0.0
-    detector = _get_embedding_detector()
-    if detector is not None:
-        emb_score = detector(text_normalized)
-        if emb_score >= SUSPICION_THRESHOLD:
-            warnings.append(f"Semantic similarity to attack templates: {emb_score:.2f}")
+    # detector = _get_embedding_detector()
+    # if detector is not None:
+    #     emb_score = detector(text_normalized)
+    #     if emb_score >= SUSPICION_THRESHOLD:
+    #         warnings.append(f"Semantic similarity to attack templates: {emb_score:.2f}")
 
     # Determine risk level
-    if len(signature_matches) >= 2 or emb_score >= 0.85 or (len(signature_matches) >= 1 and verb_count >= 3):
+    if len(signature_matches) >= 2 or (len(signature_matches) >= 1 and verb_count >= 3):
         risk_level = "CRITICAL"
-    elif len(signature_matches) >= 1 or emb_score >= SUSPICION_THRESHOLD or verb_count >= 5 or has_mixed:
+    elif len(signature_matches) >= 1 or verb_count >= 5 or has_mixed:
         risk_level = "HIGH"
     elif verb_count >= 3 or invisible_removed >= 5 or chat_tokens_found >= 2:
         risk_level = "MEDIUM"

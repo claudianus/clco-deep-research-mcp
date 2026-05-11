@@ -115,12 +115,12 @@ class SearXNGEngine(SearchEngine):
             suggested_engine="duckduckgo_lite",
         )
 
-    async def fetch(self, url: str, stealth: bool = False) -> PageContent:
+    async def fetch(self, url: str, stealth: bool = False, timeout: float = 15.0) -> PageContent:
         """Fetch a page — delegates to DuckDuckGo-style extraction."""
-        from .duckduckgo import DuckDuckGoEngine
+        from .registry import SearchEngineRegistry
 
-        engine = DuckDuckGoEngine()
-        return await engine.fetch(url, stealth=stealth)
+        engine = SearchEngineRegistry.create("duckduckgo")
+        return await engine.fetch(url, stealth=stealth, timeout=timeout)
 
 
 def _guess_content_type(url: str, snippet: str = "") -> ContentType:

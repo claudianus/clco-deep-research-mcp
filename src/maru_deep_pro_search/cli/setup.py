@@ -100,6 +100,15 @@ def cmd_setup(args: argparse.Namespace) -> int:
         else:
             print(f"   {_yellow('! 규칙 주입 실패 (수동 설정 필요)')}")
 
+    # Semantic search recommendation
+    try:
+        import sentence_transformers
+        print(f"\n  {_green('✓')} semantic search (sentence-transformers) 설치됨")
+    except ImportError:
+        print(f"\n  {_yellow('!')} semantic search 미설치")
+        print(f"     설치 시 검색 품질 ↑: {_bold('pip install sentence-transformers')}")
+        print(f"     또는: {_bold('pip install maru-deep-pro-search[semantic]')}")
+
     print(f"\n{_green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
     print(f"   되돌리려면: {_bold('maru-deep-pro-search setup --restore')}")
     return 0

@@ -187,9 +187,9 @@ class GoogleEngine(SearchEngine):
 
         return results
 
-    async def fetch(self, url: str, stealth: bool = False) -> PageContent:
+    async def fetch(self, url: str, stealth: bool = False, timeout: float = 15.0) -> PageContent:
         """Fetch a page with content extraction."""
-        from .duckduckgo import DuckDuckGoEngine
+        from .registry import SearchEngineRegistry
 
-        engine = DuckDuckGoEngine()
-        return await engine.fetch(url, stealth=stealth)
+        engine = SearchEngineRegistry.create("duckduckgo")
+        return await engine.fetch(url, stealth=stealth, timeout=timeout)

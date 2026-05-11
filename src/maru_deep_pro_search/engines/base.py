@@ -102,6 +102,12 @@ class SearchEngine(ABC):
         ...
 
     @abstractmethod
-    async def fetch(self, url: str, stealth: bool = False) -> PageContent:
-        """Fetch and extract content from a URL."""
+    async def fetch(self, url: str, stealth: bool = False, timeout: float = 15.0) -> PageContent:
+        """Fetch and extract content from a URL.
+
+        Args:
+            url: Target URL.
+            stealth: Use anti-bot bypass.
+            timeout: Max seconds for the fetch operation (converted to ms for Scrapling).
+        """
         ...

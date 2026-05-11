@@ -2,6 +2,51 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+## [0.9.0] - 2026-05-10
+
+### Added
+- **Harness Platform Phase A**: Project-level knowledge persistence and workflow engine
+  - `harness/persistence.py`: `KnowledgeStore` with SQLite + optional semantic search
+  - `harness/project.py`: `init_project()` and `HarnessProject` for `.maru/` directory management
+  - `harness/workflow.py`: `WorkflowEngine` with 7-phase generator (context→research→design→implement→verify)
+  - `cli/init_cmd.py`: `maru-deep-pro-search init` CLI command
+  - `test_harness.py`: 10 tests covering knowledge store, project init, and workflow
+- **Semantic Hybrid Ranking** (optional, requires `sentence-transformers`)
+  - `research/semantic_ranker.py`: Bi-Encoder (`multilingual-e5-small`) for dense vector similarity
+  - `ranker.py`: BM25 + semantic hybrid scoring in `merge_results()` and `rank_pages()`
+  - `_fuzzy_dedupe()`: Jaccard + semantic hybrid deduplication (threshold 0.95)
+  - `[project.optional-dependencies] semantic`: `pip install maru-deep-pro-search[semantic]`
+  - `cli/setup.py`: Installation prompt for semantic search during agent setup
+- **Smart Fallback Engine**: Resilient crawling with error-type-aware responses
+  - `duckduckgo.py`: Error classification (dns/network/ssl/blocked/not_found) with per-type fallback strategy
+  - `deep.py`: Stealth auto-retry for blocked pages, network health probe, domain history filter
+  - `persistence.py`: `domain_stats` table for per-domain fetch performance tracking
+- **Network Performance Optimization**
+  - `duckduckgo.py`: `AsyncDynamicSession` lazy init + reuse with `disable_resources=True`, `block_ads=True`
+  - `registry.py`: Engine instance caching to maximize session reuse
+  - All engines delegate fetch through `SearchEngineRegistry.create("duckduckgo")` singleton
+- **Timeout Hardening**
+  - All tools wrapped with `asyncio.wait_for()` (20s fetch, 30s search, 60s answer, 120s deep research)
+  - `_fetch_pages()`: Early abort after 3 high-quality results + proper task cancellation in `finally`
+  - Scrapling `timeout` converted from seconds to milliseconds (15s → 15000ms)
+
+### Changed
+- **Embedding model upgrade**: `all-MiniLM-L6-v2` (2021, 22M, English-only) → `intfloat/multilingual-e5-small` (2023, 33M, 100+ languages)
+- **Cross-Encoder removal**: Removed unused `ms-marco-MiniLM-L-6-v2` cross-encoder and `rerank_results()` dead code
+- **Kimi CLI system prompt**: Patched `agents/default/system.md` for Korean output + English thinking + caveman ultra compression
+
+### Improved
+- **Subquery parallelization**: Deep research subqueries and secondary engines now run via `asyncio.gather()` concurrently
+- **Test coverage**: 184 → 193 tests (added `test_research.py`, semantic ranker tests, domain stats tests)
+- **AGENTS.md**: Updated version bump checklist and architecture documentation
+
+## [0.8.1] - 2026-05-10
+
+### Changed
+- **Docs from scratch**: README and GitHub Pages completely rewritten
+
 ## [0.8.1] - 2026-05-10
 
 ### Changed

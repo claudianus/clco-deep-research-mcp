@@ -5,6 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>maru-deep-pro-search — Force your AI agent to research first</title>
   <meta name="description" content="Universal AI Search MCP Server. Zero API keys. Direct scraping. Forces your AI agent to research before coding.">
+  <link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔍%3C/text%3E%3C/svg%3E">
+  <!-- Open Graph -->
+  <meta property="og:title" content="maru-deep-pro-search — Force your AI agent to research first">
+  <meta property="og:description" content="Zero API keys. Direct scraping. Citation-native answers. One-liner install.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://claudianus.github.io/maru-deep-pro-search/">
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="maru-deep-pro-search">
+  <meta name="twitter:description" content="Force your AI agent to research before coding. One-liner install.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -25,6 +36,21 @@
   </style>
 </head>
 <body class="bg-gray-950 text-gray-100 antialiased">
+  <script>
+    (function() {
+      var saved = localStorage.getItem('maru-lang');
+      if (saved === 'ko' && !location.pathname.includes('/ko/')) {
+        location.href = './ko/';
+        return;
+      }
+      if (saved) return;
+      var lang = (navigator.language || navigator.userLanguage || '').toLowerCase();
+      if (lang.startsWith('ko') && !location.pathname.includes('/ko/')) {
+        localStorage.setItem('maru-lang', 'ko');
+        location.href = './ko/';
+      }
+    })();
+  </script>
 
   <!-- Nav -->
   <nav class="sticky top-0 z-50 border-b border-gray-800/60 bg-gray-950/80 backdrop-blur-xl">
@@ -35,7 +61,7 @@
         <a href="#tools" class="text-gray-400 hover:text-white transition">Tools</a>
         <a href="https://github.com/claudianus/maru-deep-pro-search" target="_blank" class="text-gray-400 hover:text-white transition">GitHub</a>
         <a href="https://pypi.org/project/maru-deep-pro-search/" target="_blank" class="text-gray-400 hover:text-white transition">PyPI</a>
-        <a href="./ko/" class="rounded-md bg-gray-800 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700">🇰🇷 KO</a>
+        <a href="./ko/" onclick="localStorage.setItem('maru-lang', 'ko')" class="rounded-md bg-gray-800 px-2 py-1 text-xs text-gray-300 hover:bg-gray-700">🇰🇷 KO</a>
       </div>
     </div>
   </nav>
@@ -97,6 +123,41 @@
     </div>
   </section>
 
+  <!-- Architecture -->
+  <section class="border-t border-gray-800/60 py-16">
+    <div class="mx-auto max-w-4xl px-4">
+      <h2 class="mb-8 text-center text-2xl font-bold">Architecture</h2>
+      <div class="rounded-xl border border-gray-800 bg-gray-900/40 p-5 overflow-x-auto">
+        <pre class="font-mono text-sm text-gray-300 leading-relaxed">
+┌─────────────┐     ┌──────────────┐     ┌─────────────┐
+│ User Query  │────▶│ Query Expand │────▶│ 7 Engines   │
+└─────────────┘     └──────────────┘     └──────┬──────┘
+                                                │
+                     ┌──────────────────────────┘
+                     ▼
+            ┌─────────────────┐
+            │ BM25 + Metadata │
+            │    Ranking      │
+            └────────┬────────┘
+                     │
+       ┌─────────────┼─────────────┐
+       ▼             ▼             ▼
+  ┌─────────┐  ┌──────────┐  ┌──────────┐
+  │trafilatura│  │htmldate  │  │ 21-lang  │
+  │content  │   │freshness │  │  code    │
+  └────┬────┘  └────┬─────┘  └────┬─────┘
+       └─────────────┼─────────────┘
+                     ▼
+            ┌─────────────────┐
+            │ Cited Answer    │
+            │ [1] [2] [3]     │
+            └─────────────────┘
+        </pre>
+      </div>
+      <p class="mt-4 text-center text-sm text-gray-400">Zero LLMs in the server. Synthesis is rule-based; your agent's LLM handles reasoning.</p>
+    </div>
+  </section>
+
   <!-- Tools -->
   <section id="tools" class="border-t border-gray-800/60 py-16">
     <div class="mx-auto max-w-4xl px-4">
@@ -134,6 +195,41 @@
           <code class="rounded bg-gray-800 px-2 py-0.5 text-sm text-indigo-300">parallel_search</code>
           <span class="text-sm text-gray-300">Run multiple searches simultaneously</span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Before & After -->
+  <section class="border-t border-gray-800/60 py-16">
+    <div class="mx-auto max-w-4xl px-4">
+      <h2 class="mb-8 text-center text-2xl font-bold">Before & After</h2>
+      <div class="overflow-hidden rounded-xl border border-gray-800">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-800 text-gray-300">
+            <tr>
+              <th class="px-4 py-3 text-left font-semibold">Before</th>
+              <th class="px-4 py-3 text-left font-semibold text-indigo-300">After</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-800">
+            <tr>
+              <td class="px-4 py-3 text-gray-400">Agent answers with stale 2023 training data</td>
+              <td class="px-4 py-3 text-gray-200">Live web search with freshness scoring</td>
+            </tr>
+            <tr class="bg-gray-900/30">
+              <td class="px-4 py-3 text-gray-400">No sources, possible hallucination</td>
+              <td class="px-4 py-3 text-gray-200">Every claim backed by [1], [2] citations</td>
+            </tr>
+            <tr>
+              <td class="px-4 py-3 text-gray-400">Manual MCP config per agent</td>
+              <td class="px-4 py-3 text-gray-200">One-liner auto-detects & configures all agents</td>
+            </tr>
+            <tr class="bg-gray-900/30">
+              <td class="px-4 py-3 text-gray-400">$5–50/month API costs</td>
+              <td class="px-4 py-3 text-gray-200"><strong>Forever free</strong></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>

@@ -33,6 +33,7 @@ class RankedResult:
     result: SearchResult
     bm25_score: float = 0.0
     metadata_score: float = 0.0
+    semantic_score: float = 0.0
     final_score: float = 0.0
     citation_id: int = 0
 
@@ -133,21 +134,37 @@ def _jaccard_similarity(a: str, b: str) -> float:
 def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[SearchResult]:
     """Remove results with highly similar titles or snippets even if URLs differ.
 
-    This catches Medium mirrors, StackOverflow copy-paste blogs, and
-    aggregator sites that repost the same content.
+    Hybrid Jaccard + semantic dedupe catches Medium mirrors, StackOverflow
+    copy-paste blogs, aggregator sites, and paraphrased duplicates.
     """
     unique: list[SearchResult] = []
 
-    for r in results:
+    # Pre-compute semantic similarities if available
+    semantic_sims: dict[tuple[int, int], float] = {}
+    try:
+        from .semantic_ranker import SemanticRanker
+        if SemanticRanker.available() and len(results) > 1:
+            texts = [f"{r.title} {r.snippet[:200]}" for r in results]
+            sim_matrix = SemanticRanker.sentence_similarity(texts)
+            if sim_matrix:
+                for i in range(len(results)):
+                    for j in range(i):
+                        semantic_sims[(j, i)] = float(sim_matrix[i][j])
+    except Exception:
+        pass
+
+    for i, r in enumerate(results):
         is_dup = False
-        for u in unique:
+        for j, u in enumerate(unique):
             # Title similarity (high weight — same title = likely duplicate)
             title_sim = _jaccard_similarity(r.title, u.title)
             # Snippet similarity (check first 200 chars)
             snippet_sim = _jaccard_similarity(r.snippet[:200], u.snippet[:200])
+            # Semantic similarity (catches paraphrased duplicates)
+            sem_sim = semantic_sims.get((j, i), 0.0)
 
-            # Duplicates: very similar title OR very similar snippet
-            if title_sim > threshold or snippet_sim > threshold:
+            # Duplicates: Jaccard high OR semantic very high
+            if title_sim > threshold or snippet_sim > threshold or sem_sim > 0.95:
                 is_dup = True
                 # Merge engine metadata: keep the one with more engine confirmations
                 if len(r.engines_found) > len(u.engines_found):
@@ -157,7 +174,7 @@ def _fuzzy_dedupe(results: list[SearchResult], threshold: float = 0.72) -> list[
         if not is_dup:
             unique.append(r)
 
-    logger.debug("Fuzzy dedupe: %d -> %d results", len(results), len(unique))
+    logger.debug("Hybrid dedupe: %d -> %d results", len(results), len(unique))
     return unique
 
 
@@ -203,20 +220,34 @@ def merge_results(
     # Phase 3: Compute BM25 scores
     bm25_scores = _compute_bm25_scores(query, merged)
 
+    # Phase 3b: Compute semantic scores (optional, lazy-loaded)
+    semantic_scores: dict[str, float] = {}
+    try:
+        from .semantic_ranker import SemanticRanker
+        if SemanticRanker.available():
+            sims = SemanticRanker.score_results(query, merged)
+            for r, sim in zip(merged, sims):
+                semantic_scores[normalize_url(r.url)] = sim
+    except Exception:
+        pass  # Graceful fallback when sentence-transformers not installed
+
     # Phase 4: Build ranked results
     ranked: list[RankedResult] = []
     for r in merged:
         bm25 = bm25_scores.get(normalize_url(r.url), 0.0)
         meta = _score_metadata(r)
+        semantic = semantic_scores.get(normalize_url(r.url), 0.0)
         # Normalize BM25 to be comparable with metadata score
         # (BM25 scores can be 0-30+, we compress to 0-5 range)
         normalized_bm25 = min(bm25 / 5.0, 5.0) if bm25 > 0 else 0.0
-        final = normalized_bm25 + meta + r.cross_engine_score
+        # Semantic similarity is [0,1]; scale to [0,2] to match BM25 weight
+        final = normalized_bm25 + meta + r.cross_engine_score + semantic * 2.0
 
         ranked.append(RankedResult(
             result=r,
             bm25_score=normalized_bm25,
             metadata_score=meta,
+            semantic_score=semantic,
             final_score=final,
         ))
 
@@ -250,6 +281,18 @@ def rank_pages(pages: list[PageContent], query: str) -> list[PageContent]:
     """
     query_keywords = set(extract_keywords(query))
 
+    # Semantic scores (optional, lazy-loaded)
+    semantic_scores: dict[str, float] = {}
+    try:
+        from .semantic_ranker import SemanticRanker
+        if SemanticRanker.available() and pages:
+            texts = [f"{p.title} {p.text[:300]}" for p in pages]
+            sims = SemanticRanker.query_sentence_similarity_batch(query, texts)
+            for p, sim in zip(pages, sims):
+                semantic_scores[normalize_url(p.url)] = sim
+    except Exception:
+        pass
+
     scored_pages: list[tuple[PageContent, float]] = []
     for p in pages:
         score = 0.0
@@ -270,6 +313,10 @@ def rank_pages(pages: list[PageContent], query: str) -> list[PageContent]:
         text = f"{p.title} {p.text[:500]}".lower()
         overlap = sum(1 for kw in query_keywords if kw in text)
         score += overlap * 0.5
+
+        # Semantic relevance
+        semantic = semantic_scores.get(normalize_url(p.url), 0.0)
+        score += semantic * 2.0
 
         # Content type preference
         if p.content_type == ContentType.DOCUMENTATION:

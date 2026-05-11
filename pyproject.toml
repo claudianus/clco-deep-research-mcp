@@ -1,6 +1,6 @@
 [project]
 name = "maru-deep-pro-search"
-version = "0.8.1"
+version = "0.9.0"
 description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = "MIT"
@@ -51,6 +51,7 @@ Issues = "https://github.com/claudianus/maru-deep-pro-search/issues"
 maru-deep-pro-search = "maru_deep_pro_search.server:run"
 maru-deep-pro-search-mcp = "maru_deep_pro_search.server:run"
 maru-deep-pro-search-setup = "maru_deep_pro_search.cli.setup:main"
+maru-deep-pro-search-init = "maru_deep_pro_search.cli.init_cmd:main"
 
 [tool.uvx]
 python = "3.12"
@@ -62,6 +63,11 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.optional-dependencies]
+semantic = [
+    "sentence-transformers>=3.0.0",
+]
 
 [dependency-groups]
 dev = [

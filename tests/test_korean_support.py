@@ -21,7 +21,7 @@ class TestKoreanQueryExpansion:
     def test_english_query_not_korean(self):
         angles = _select_angles("python asyncio tutorial")
         assert "korean_community" not in angles
-        assert "recent" in angles
+        assert any(a.startswith("recent") for a in angles)
 
     def test_mixed_query_korean_priority(self):
         angles = _select_angles("Korean python developer community")

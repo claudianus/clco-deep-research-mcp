@@ -14,6 +14,7 @@ class SearchEngineRegistry:
     """Registry for search engine implementations."""
 
     _engines: dict[str, Type[SearchEngine]] = {}
+    _instances: dict[str, SearchEngine] = {}
 
     @classmethod
     def register(cls, name: str, engine_class: Type[SearchEngine]) -> None:
@@ -33,9 +34,14 @@ class SearchEngineRegistry:
 
     @classmethod
     def create(cls, name: str, **kwargs) -> SearchEngine:
-        """Create an engine instance by name."""
-        engine_class = cls.get(name)
-        return engine_class(**kwargs)
+        """Create or retrieve a cached engine instance by name.
+
+        Instances are cached to reuse expensive resources (e.g. browser sessions).
+        """
+        if name not in cls._instances:
+            engine_class = cls.get(name)
+            cls._instances[name] = engine_class(**kwargs)
+        return cls._instances[name]
 
     @classmethod
     def list_engines(cls) -> list[str]:
