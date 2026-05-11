@@ -385,6 +385,19 @@ async def parallel_search(
 
 def run() -> None:
     import asyncio
+    # Allow intuitive `maru-deep-pro-search setup` / `init` usage even though
+    # the primary entry point is the MCP server.
+    if len(sys.argv) > 1:
+        sub = sys.argv[1]
+        if sub == "setup":
+            from .cli.setup import main as _setup_main
+            # setup.py uses "setup" as an argparse subcommand, so we must
+            # include it in the forwarded argv.
+            sys.exit(_setup_main(sys.argv[1:]))
+        if sub == "init":
+            from .cli.init_cmd import main as _init_main
+            # init_cmd.py has no subcommand; skip the "init" keyword.
+            sys.exit(_init_main(sys.argv[2:]))
     try:
         mcp.run(transport="stdio")
     except Exception:
