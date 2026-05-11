@@ -30,6 +30,7 @@
 
 ## 📑 Table of Contents
 
+- [Design Principles](#design-principles)
 - [One-liner Install](#one-liner-install)
 - [What it does](#what-it-does)
   - [vs Alternatives](#vs-alternatives)
@@ -48,6 +49,20 @@
 - [Tech Stack](#tech-stack)
 - [Testing](#testing)
 - [Contributing](#contributing)
+
+---
+
+## Design Principles
+
+These principles guide every design decision in the project:
+
+1. **Zero API keys, forever** — No OpenAI, no Anthropic, no SerpAPI, no Bing API. Direct scraping and local computation only.
+2. **Failover by default** — Single points of failure are unacceptable. 10 engines, automatic escalation, graceful degradation.
+3. **Citation-native** — Every claim must be traceable. Sources are first-class citizens, not afterthoughts.
+4. **Research-first enforcement** — The agent MUST search before coding. Rules are injected, not suggested.
+5. **Defense in depth** — Prompt injection defense isn't a checkbox. 72 signatures, multi-language, MCP-specific attacks.
+6. **Transparency by default** — Audit every tool call. Log everything. Let users inspect the system.
+7. **Batteries included, swappable** — Works out of the box with sensible defaults, but every component is replaceable.
 
 ---
 
