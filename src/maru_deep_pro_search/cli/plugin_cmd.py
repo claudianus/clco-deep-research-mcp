@@ -21,6 +21,7 @@ def _red(text: str) -> str:
 
 
 def cmd_list(args: argparse.Namespace) -> int:
+    """List installed plugins."""
     mgr = PluginManager(args.path)
     plugins = mgr.list_plugins()
     if not plugins:
@@ -40,6 +41,7 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_install(args: argparse.Namespace) -> int:
+    """Install a plugin from Git URL or local path."""
     mgr = PluginManager(args.path)
     try:
         plugin = mgr.install(args.source)
@@ -56,6 +58,7 @@ def cmd_install(args: argparse.Namespace) -> int:
 
 
 def cmd_uninstall(args: argparse.Namespace) -> int:
+    """Remove an installed plugin."""
     mgr = PluginManager(args.path)
     if mgr.uninstall(args.name):
         print(_green(f"✓ {args.name} 제거 완료"))
@@ -65,6 +68,7 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Manage maru harness plugins."""
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search-plugin",
         description="Manage maru harness plugins.",
