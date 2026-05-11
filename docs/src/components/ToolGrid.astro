@@ -1,0 +1,26 @@
+---
+interface Tool {
+  name: string;
+  desc: string;
+}
+
+const tools: Tool[] = [
+  { name: 'answer', desc: 'Quick answer with inline citations' },
+  { name: 'web_search', desc: 'Scrape + rank + return cited results' },
+  { name: 'search_with_citations', desc: 'Pre-numbered sources for academic writing' },
+  { name: 'fetch_page', desc: 'Extract clean content from a single URL' },
+  { name: 'fetch_bulk', desc: 'Parallel fetch with deduplication' },
+  { name: 'deep_research', desc: '7-phase pipeline: expand → search → rank → crawl → synthesize' },
+  { name: 'stealthy_fetch', desc: 'Anti-bot bypass for protected sites' },
+  { name: 'parallel_search', desc: 'Run multiple searches simultaneously' },
+];
+---
+
+<div class="grid gap-3 sm:grid-cols-2">
+  {tools.map(t => (
+    <div class="flex items-center gap-3 rounded-lg border border-gray-800 bg-gray-900/40 px-4 py-3">
+      <code class="rounded bg-gray-800 px-2 py-0.5 text-sm text-indigo-300 whitespace-nowrap">{t.name}</code>
+      <span class="text-sm text-gray-300">{t.desc}</span>
+    </div>
+  ))}
+</div>

@@ -1,0 +1,18 @@
+---
+title: Configuration
+description: Environment variables and runtime configuration.
+---
+
+All environment variables are optional. Runtime config is loaded via `pydantic-settings` with env prefix `MARU_SEARCH_`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MARU_SEARCH_ENGINE` | `duckduckgo_lite` | Default search engine |
+| `MARU_SEARCH_MAX_RESULTS` | `10` | Results per query per engine |
+| `MARU_SEARCH_MAX_CONCURRENT` | `5` | Parallel fetch limit |
+| `MARU_SEARCH_MAX_TOKENS_SOURCE` | `2500` | Token budget per extracted source |
+| `MARU_SEARCH_MAX_TOKENS_TOTAL` | `20000` | Total output token budget |
+| `MARU_SEARCH_TIMEOUT` | `30.0` | Fetch timeout (seconds) |
+| `MARU_SEARCH_RETRIES` | `3` | Retry attempts for transient failures |
+| `MARU_SEARCH_STEALTH_TIMEOUT` | `15.0` | Stealth session timeout (seconds) |
+| `MARU_SEARCH_MIN_QUALITY_RESULTS` | `3` | Early abort threshold for HIGH quality results |

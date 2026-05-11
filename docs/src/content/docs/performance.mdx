@@ -1,0 +1,12 @@
+---
+title: Performance
+description: Performance characteristics and benchmarks.
+---
+
+| Metric | Target | Implementation |
+|--------|--------|----------------|
+| Cache hit (KnowledgeStore) | `<100ms` | SQLite FTS5 + indexed domain_stats |
+| Full `deep_research` | `<10s` | 7 engines, 5 concurrent, early abort at 3 HIGH results |
+| Scrapling session startup | ~0ms (amortized) | Single session reused per engine instance |
+| Semantic model load | ~2s (first call only) | Lazy init, CPU-only |
+| Memory footprint | ~150MB base, +120MB with semantic | No GPU required |

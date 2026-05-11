@@ -1,0 +1,79 @@
+---
+title: maru-deep-pro-search
+template: splash
+hero:
+  title: 'Force your AI agent<br>to research first.'
+  tagline: "Zero API keys. Semantic hybrid ranking. Smart fallback. Harness platform. Your agent's training data is outdated. The web is not."
+  actions:
+    - text: Install
+      link: '#install'
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/claudianus/maru-deep-pro-search
+      icon: external
+      variant: minimal
+---
+
+import InstallBlock from '../../components/InstallBlock.astro';
+import FeatureGrid from '../../components/FeatureGrid.astro';
+import AsciiArt from '../../components/AsciiArt.astro';
+import ToolGrid from '../../components/ToolGrid.astro';
+import PerfTable from '../../components/PerfTable.astro';
+import BeforeAfter from '../../components/BeforeAfter.astro';
+
+## One-liner Install
+
+<InstallBlock />
+
+## What it does
+
+Your AI coding agent has a critical flaw: it answers from stale training data. **maru-deep-pro-search** fixes this by giving your agent live web search superpowers — and **forcing it to use them first**.
+
+| Capability | How |
+|-----------|-----|
+| **Search** | Scrapes 7 engines directly via async HTTP. No API keys. |
+| **Rank** | BM25 + dense semantic similarity + authority/freshness/code-density scoring |
+| **Research** | 7-phase deep research pipeline with auto query expansion, smart fetch, and gap detection |
+| **Cite** | Every result gets `[1]`, `[2]` IDs — native citation architecture |
+| **Enforce** | Setup CLI injects mandatory research-first rules into your agent |
+| **Persist** | Harness platform stores project knowledge in SQLite with optional semantic embeddings |
+
+**Core principle:** 100% free, forever. No OpenAI, no Anthropic, no Google Search API, no SerpAPI, no Bing API.
+
+## Features
+
+<FeatureGrid />
+
+## Architecture
+
+<AsciiArt />
+
+## Tools
+
+<ToolGrid />
+
+**Decision tree:**
+- Quick answer? → `answer`
+- Need sources? → `web_search` or `search_with_citations`
+- Deep dive? → `deep_research`
+- Blocked? → `stealthy_fetch`
+
+## Performance
+
+<PerfTable />
+
+## Before & After
+
+<BeforeAfter />
+
+## Testing
+
+```bash
+pytest tests/ -v
+```
+
+193 tests, all passing.
+
+## License
+
+MIT © [claudianus](https://github.com/claudianus)

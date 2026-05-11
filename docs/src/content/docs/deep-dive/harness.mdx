@@ -1,0 +1,28 @@
+---
+title: Harness Platform
+description: Project-level knowledge persistence and structured workflow engine.
+---
+
+## KnowledgeStore (SQLite)
+
+- `pages`: extracted content with full-text search (FTS5)
+- `domain_stats`: per-domain performance tracking
+- `semantic_embeddings`: optional vector storage for similarity search
+- `projects`: project metadata and configuration
+
+## WorkflowEngine (7-Phase Generator)
+
+1. **Probe**: Network health check
+2. **Expand**: Query expansion
+3. **Search**: Multi-engine parallel search
+4. **Rank**: Hybrid ranking + deduplication
+5. **Fetch**: Smart fetch with domain filtering
+6. **Extract**: Content extraction + sanitization
+7. **Synthesize**: Rule-based answer + citation + gap detection
+
+## CLI Commands
+
+```bash
+maru-deep-pro-search init          # Initialize .maru/ in current directory
+maru-deep-pro-search setup         # Configure AI agent integration
+```

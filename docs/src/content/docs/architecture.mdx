@@ -1,0 +1,79 @@
+---
+title: Architecture
+description: System architecture of maru-deep-pro-search MCP server.
+---
+
+The server contains **zero generative LLMs**. Synthesis is rule-based; your agent's LLM handles reasoning. Optional semantic scoring uses an embedding model (bi-encoder only, no generation).
+
+## High-Level Flow
+
+```
+User Query
+    │
+    ▼
+┌─────────────┐
+│ Query       │
+│ Expander    │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐     ┌─────────────────────────┐
+│ 7 Engines   │────▶│ Result Merge &          │
+│ (async)     │     │ Fuzzy Deduplication     │
+└─────────────┘     └───────────┬─────────────┘
+                                │
+                    ┌───────────┘
+                    ▼
+        ┌─────────────────────┐
+        │ Hybrid Ranking      │
+        │ BM25 + Semantic +   │
+        │ Metadata            │
+        └──────────┬──────────┘
+                   │
+                   ▼
+        ┌─────────────────────┐
+        │ Smart Fetch Layer   │
+        └──────────┬──────────┘
+                   │
+                   ▼
+        ┌─────────────────────┐
+        │ Content Extraction  │
+        └──────────┬──────────┘
+                   │
+                   ▼
+        ┌─────────────────────┐
+        │ Synthesis &         │
+        │ Citation            │
+        └─────────────────────┘
+```
+
+## Component Breakdown
+
+### MCP Server Layer
+- **4 Prompts**: `always_research_first`, `tool_selection_guide`, `anti_bot_strategy`, `research_workflow`
+- **8 Tools**: Exposed via `tools/list` and `tools/call`
+- **TOOL_GUIDANCE**: Injected into every tool call context to enforce research-first behavior
+
+### Query Expansion Engine
+Template-based expansion with synonym injection. Produces 5–7 expanded queries per original, executed in parallel across all engines.
+
+### Multi-Engine Search Layer
+Seven search engines via direct scraping: DuckDuckGo (lite + html), SearXNG (6-instance failover), Bing, Google, Naver, Qwant, Startpage. `SearchEngineRegistry` singleton pattern with `AsyncDynamicSession` reuse.
+
+### Hybrid Ranking Engine
+```
+final_score = bm25_score × 0.35
+            + authority_score × 0.20
+            + freshness_score × 0.15
+            + code_density × 0.10
+            + semantic_score × 0.20
+```
+
+### Smart Fetch Layer
+Network probe → domain history filter → priority queue → error-type-aware strategy → Scrapling session reuse → early abort.
+
+### Content Extraction Pipeline
+trafilatura → htmldate → code.py (21-language syntax detection) → sanitize.py (prompt injection defense).
+
+### Synthesis & Citation
+Rule-based answer synthesis with native `[1]`, `[2]`, `[3]` citation IDs and gap detection for incomplete research.

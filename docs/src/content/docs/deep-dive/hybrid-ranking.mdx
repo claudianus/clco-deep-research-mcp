@@ -1,0 +1,44 @@
+---
+title: Hybrid Ranking Algorithm
+description: BM25 + semantic + metadata ensemble scoring.
+---
+
+The ranking engine combines four signals into a weighted ensemble:
+
+```
+final_score = bm25_score      × 0.35
+            + authority_score × 0.20
+            + freshness_score × 0.15
+            + code_density    × 0.10
+            + semantic_score  × 0.20   (if sentence-transformers installed)
+```
+
+## BM25
+
+`rank-bm25` library, k1=1.5, b=0.75. Computed over title + snippet corpus. Probabilistic retrieval with saturation and length normalization.
+
+## Authority Scoring
+
+- Domain whitelist bonus: `github.com`, `docs.python.org`, `developer.mozilla.org`, etc. get +0.3
+- TLD scoring: `.edu`, `.gov`, `.ac.kr` get +0.2; `.blog`, `.medium` get -0.1
+- Path depth penalty: deeper paths get slightly lower scores
+
+## Freshness Scoring
+
+`htmldate` extracts publish date from HTML metadata. Exponential decay: `score = exp(-days_old / 365)`. Undated pages get neutral score (0.5).
+
+## Code Density
+
+`pygments` tokenizes content with language-appropriate lexer. `code_density = code_tokens / total_tokens`.
+
+## Semantic Scoring (Optional)
+
+- Model: `intfloat/multilingual-e5-small` (33M params, 384-dim, 100+ languages, MIT license, MTEB 59.3)
+- Bi-encoder only. Cosine similarity between query embedding and page text embedding (first 300 chars)
+- Cross-encoder was evaluated and removed: marginal gains (`<2%`) not worth 3× latency increase
+
+## Deduplication
+
+- URL-level exact dedup (normalized via `urllib.parse`)
+- Fuzzy dedup: Jaccard similarity on title + snippet (threshold 0.72)
+- Semantic fallback dedup: cosine similarity >0.95

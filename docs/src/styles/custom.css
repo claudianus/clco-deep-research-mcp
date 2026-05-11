@@ -1,0 +1,68 @@
+/* Custom font import — must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* Starlight custom styles to match original dark theme */
+:root {
+  --sl-color-bg: #0a0a0f;
+  --sl-color-bg-nav: #111118;
+  --sl-color-bg-sidebar: #111118;
+  --sl-color-bg-inline-code: #1f1f2e;
+  --sl-color-bg-accent: #1f1f2e;
+  --sl-color-text: #e2e8f0;
+  --sl-color-text-accent: #818cf8;
+  --sl-color-border: #1f1f2e;
+  --sl-color-hairline: #1f1f2e;
+  --sl-color-hairline-shade: #1f1f2e;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+code, kbd, .font-mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* Make the hero landing page wider */
+[data-page-id='index'] .sl-container,
+[data-page-id='ko/index'] .sl-container {
+  max-width: 80rem;
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0f;
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a3c;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f5a;
+}
+
+/* Table styling to match original */
+.sl-markdown-content table {
+  border-radius: 0.75rem;
+  border: 1px solid #1f1f2e;
+  overflow: hidden;
+}
+
+.sl-markdown-content th {
+  background: #1f1f2e;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+
+.sl-markdown-content td {
+  border-color: #1f1f2e;
+}
+
+/* Code block styling */
+.astro-code {
+  border-radius: 0.5rem;
+  border: 1px solid #1f1f2e;
+}
