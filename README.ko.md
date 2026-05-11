@@ -27,18 +27,21 @@
 
 ## 한 줄 설치
 
-**macOS / Linux:**
+> **요구사항:** Python **≥3.10** (설치 스크립트가 자동으로 맞춰줍니다)
+
+**macOS / Linux — 권장 (uv 자동 설치):**
 ```bash
 curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash
 ```
 
-**Windows (PowerShell):**
+**Windows (PowerShell) — 권장:**
 ```powershell
 irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
 ```
 
-curl이 없으면:
+**수동 설치 (pip):**
 ```bash
+# Python 3.10 이상이 이미 설치되어 있어야 합니다
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 

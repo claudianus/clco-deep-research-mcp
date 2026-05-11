@@ -7,6 +7,13 @@ import sys
 from pathlib import Path
 
 from .detect import detect_agents, installed_agents
+from .env_check import (
+    bold,
+    ensure_compatible_python,
+    green,
+    red,
+    yellow,
+)
 from .agents.claude import ClaudeAdapter
 from .agents.cursor import CursorAdapter
 from .agents.kimi import KimiAdapter
@@ -26,22 +33,6 @@ ADAPTER_REGISTRY = {
 }
 
 
-def _bold(text: str) -> str:
-    return f"\033[1m{text}\033[0m"
-
-
-def _green(text: str) -> str:
-    return f"\033[32m{text}\033[0m"
-
-
-def _red(text: str) -> str:
-    return f"\033[31m{text}\033[0m"
-
-
-def _yellow(text: str) -> str:
-    return f"\033[33m{text}\033[0m"
-
-
 def cmd_list(args: argparse.Namespace) -> int:
     """Show detected agents and their installation status."""
     print("\n🔍 설치된 AI 에이전트 감지 중...\n")
@@ -50,9 +41,9 @@ def cmd_list(args: argparse.Namespace) -> int:
         adapter_cls = ADAPTER_REGISTRY[name]
         display = adapter_cls.display_name
         if detected:
-            print(f"  {_green('✓')} {display} ({name})")
+            print(f"  {green('✓')} {display} ({name})")
         else:
-            print(f"  {_red('✗')} {display} ({name})")
+            print(f"  {red('✗')} {display} ({name})")
     return 0
 
 
@@ -63,7 +54,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
     installed = [name for name, detected in agents.items() if detected]
 
     if not installed:
-        print(_yellow("  설치된 에이전트를 찾을 수 없습니다."))
+        print(yellow("  설치된 에이전트를 찾을 수 없습니다."))
         print("  지원하는 에이전트: Claude Code, Cursor, Kimi, AntiGravity, Kilo Code, OpenCode, Windsurf")
         return 1
 
@@ -73,13 +64,13 @@ def cmd_setup(args: argparse.Namespace) -> int:
     # Filter to only installed agents
     selected = [s for s in selected if s in installed]
     if not selected:
-        print(_red("  선택한 에이전트 중 설치된 것이 없습니다."))
+        print(red("  선택한 에이전트 중 설치된 것이 없습니다."))
         return 1
 
     scope = args.scope or "user"
 
-    print(f"\n{_bold('설정할 에이전트:')} {', '.join(selected)}")
-    print(f"{_bold('설정 범위:')} {scope}\n")
+    print(f"\n{bold('설정할 에이전트:')} {', '.join(selected)}")
+    print(f"{bold('설정 범위:')} {scope}\n")
 
     for name in selected:
         adapter_cls = ADAPTER_REGISTRY[name]
@@ -94,23 +85,23 @@ def cmd_setup(args: argparse.Namespace) -> int:
         if result["mcp_installed"]:
             print(f"   ✓ MCP 서버 등록 완료")
         else:
-            print(f"   {_yellow('! MCP 서버 등록 실패')}")
+            print(f"   {yellow('! MCP 서버 등록 실패')}")
         if result["rules_injected"]:
             print(f"   ✓ 리서치 프로토콜 주입 완료")
         else:
-            print(f"   {_yellow('! 규칙 주입 실패 (수동 설정 필요)')}")
+            print(f"   {yellow('! 규칙 주입 실패 (수동 설정 필요)')}")
 
     # Semantic search recommendation
     try:
         import sentence_transformers
-        print(f"\n  {_green('✓')} semantic search (sentence-transformers) 설치됨")
+        print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
     except ImportError:
-        print(f"\n  {_yellow('!')} semantic search 미설치")
-        print(f"     설치 시 검색 품질 ↑: {_bold('pip install sentence-transformers')}")
-        print(f"     또는: {_bold('pip install maru-deep-pro-search[semantic]')}")
+        print(f"\n  {yellow('!')} semantic search 미설치")
+        print(f"     설치 시 검색 품질 ↑: {bold('pip install sentence-transformers')}")
+        print(f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}")
 
-    print(f"\n{_green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
-    print(f"   되돌리려면: {_bold('maru-deep-pro-search setup --restore')}")
+    print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
+    print(f"   되돌리려면: {bold('maru-deep-pro-search setup --restore')}")
     return 0
 
 
@@ -130,7 +121,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
     if restored_any:
         print(f"\n{_green('✅ 복원 완료!')} 에이전트를 재시작하세요.")
     else:
-        print(_yellow("복원할 백업을 찾을 수 없습니다."))
+        print(yellow("복원할 백업을 찾을 수 없습니다."))
     return 0
 
 
@@ -187,6 +178,11 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     args = parser.parse_args(argv)
+
+    # Always validate Python version first — never let the user stumble
+    # into a cryptic pip error later on.
+    if ensure_compatible_python() != 0:
+        return 1
 
     if args.command == "setup":
         if args.list:

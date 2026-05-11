@@ -27,18 +27,21 @@
 
 ## One-liner Install
 
-**macOS / Linux:**
+> **Prerequisite:** Python **≥3.10** (the install script handles this automatically)
+
+**macOS / Linux — recommended (auto-installs uv if needed):**
 ```bash
 curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.sh | bash
 ```
 
-**Windows (PowerShell):**
+**Windows (PowerShell) — recommended:**
 ```powershell
 irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
 ```
 
-Or with pip:
+**Manual install (pip):**
 ```bash
+# Make sure Python 3.10+ is already on your PATH
 pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 ```
 
