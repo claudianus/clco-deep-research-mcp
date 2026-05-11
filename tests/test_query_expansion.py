@@ -1,6 +1,5 @@
 """Tests for query expansion module."""
 
-import pytest
 from maru_deep_pro_search.research.expander import expand_query, extract_keywords
 
 

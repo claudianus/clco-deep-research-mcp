@@ -2,7 +2,7 @@
 
 import os
 
-from maru_deep_pro_search.config import SearchConfig, DEFAULT_CONFIG
+from maru_deep_pro_search.config import DEFAULT_CONFIG, SearchConfig
 
 
 class TestSearchConfig:

@@ -6,9 +6,16 @@ import shutil
 from pathlib import Path
 from typing import Any
 
-from .base import AgentAdapter
-from ..backup import backup_file, read_json_safe, read_text_safe, restore_file, write_json_safe, write_text_safe
+from ..backup import (
+    backup_file,
+    read_json_safe,
+    read_text_safe,
+    restore_file,
+    write_json_safe,
+    write_text_safe,
+)
 from ..prompts import get_protocol_for_agent
+from .base import AgentAdapter
 
 
 class ZedAdapter(AgentAdapter):

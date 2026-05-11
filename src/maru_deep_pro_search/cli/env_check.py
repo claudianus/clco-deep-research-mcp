@@ -188,7 +188,7 @@ def ensure_compatible_python() -> int:
     print(
         yellow(
             "! 시스템 Python이 여전히 오래된 버전입니다. "
-            f"아래 명령으로 설치를 진행하세요:\n"
+            "아래 명령으로 설치를 진행하세요:\n"
         )
     )
     print(bold(f"   {uv} tool install --python {MIN_PY_MAJOR}.{MIN_PY_MINOR} maru-deep-pro-search"))

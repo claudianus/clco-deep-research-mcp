@@ -134,9 +134,7 @@ def _select_angles(query: str) -> list[str]:
         "version", "v2", "v3", "migrate", "migration", "upgrade",
     ])
 
-    if has_version or needs_freshness:
-        angles.append("recent_versioned")
-    elif not is_stable:
+    if has_version or needs_freshness or not is_stable:
         angles.append("recent_versioned")
     else:
         angles.append("recent_general")
@@ -177,12 +175,11 @@ def extract_keywords(query: str) -> list[str]:
         "too", "very", "just", "and", "but", "if", "or", "because",
         "until", "while", "what", "which", "who", "whom", "this",
         "that", "these", "those", "am", "it", "its", "about",
-        "against", "down", "out", "off", "over", "under", "again",
-        "further", "then", "once", "i", "me", "my", "myself", "we",
+        "against", "down", "out", "off", "over", "i", "me", "my", "myself", "we",
         "our", "ours", "ourselves", "you", "your", "yours", "yourself",
         "yourselves", "he", "him", "his", "himself", "she", "her",
         "hers", "herself", "they", "them", "their", "theirs",
-        "themselves", "get", "using", "use", "how", "tutorial",
+        "themselves", "get", "using", "use", "tutorial",
         "guide", "example", "sample", "documentation", "docs",
     }
 

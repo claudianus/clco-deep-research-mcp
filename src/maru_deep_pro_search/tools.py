@@ -8,16 +8,15 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from .engines.registry import SearchEngineRegistry
 
-from .research.deep import deep_research, format_for_llm, AnswerResult
-from .research.ranker import merge_results
-from .extraction.content import truncate_for_llm
+from .engines.registry import SearchEngineRegistry
 from .exceptions import MaruSearchError
-from .utils.retry import with_retry
-from .utils.cache import get_search_cache, get_fetch_cache, cache_key
-from .utils.sanitize import sanitize_for_llm, analyze_content, wrap_external_content
+from .extraction.content import truncate_for_llm
+from .research.deep import deep_research, format_for_llm
+from .utils.cache import cache_key, get_fetch_cache, get_search_cache
 from .utils.query_sanitize import sanitize_query
+from .utils.retry import with_retry
+from .utils.sanitize import analyze_content, wrap_external_content
 
 logger = logging.getLogger(__name__)
 
@@ -201,8 +200,8 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     link_section = ""
     if page.external_links:
         links_preview = "\n".join(
-            f"- [{l['text'][:60]}]({l['url']})"
-            for l in page.external_links[:5]
+            f"- [{link['text'][:60]}]({link['url']})"
+            for link in page.external_links[:5]
         )
         link_section = f"\n\n**Follow-up links:**\n{links_preview}"
 
@@ -244,7 +243,7 @@ async def tool_fetch_bulk(
                     timeout=20.0,
                 )
             except asyncio.TimeoutError:
-                from .engines.base import PageContent, ExtractionQuality
+                from .engines.base import ExtractionQuality, PageContent
                 return PageContent(
                     url=u,
                     error_message="Fetch timeout after 20 seconds",
@@ -257,7 +256,7 @@ async def tool_fetch_bulk(
     safe_pages: list = []
     for p in pages:
         if isinstance(p, Exception):
-            from .engines.base import PageContent, ExtractionQuality
+            from .engines.base import ExtractionQuality, PageContent
             safe_pages.append(PageContent(
                 url="",
                 error_message=str(p),

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import sys
 from pathlib import Path
 
 from .env_check import bold, green, yellow
@@ -56,7 +55,7 @@ def cmd_generate_workflow(args: argparse.Namespace) -> int:
     path = Path(".github/workflows/maru-research.yml")
     if path.exists() and not args.force:
         print(yellow(f"⚠ Workflow already exists at {path}"))
-        print(f"   Use --force to overwrite")
+        print("   Use --force to overwrite")
         return 1
 
     path.parent.mkdir(parents=True, exist_ok=True)

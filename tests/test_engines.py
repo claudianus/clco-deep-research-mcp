@@ -3,7 +3,6 @@
 import pytest
 
 from maru_deep_pro_search.engines.registry import SearchEngineRegistry
-from maru_deep_pro_search.engines.base import SearchEngine
 
 
 class TestSearchEngineRegistry:

@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import shutil
 from pathlib import Path
 from typing import Any
 
-from .base import AgentAdapter
 from ..backup import (
     backup_file,
     read_json_safe,
@@ -17,6 +15,7 @@ from ..backup import (
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent
+from .base import AgentAdapter
 
 
 class ClaudeAdapter(AgentAdapter):

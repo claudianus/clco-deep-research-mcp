@@ -13,8 +13,8 @@ from __future__ import annotations
 import logging
 import re
 import unicodedata
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -210,8 +210,8 @@ _embedding_detector: Callable[[str], float] | None = None
 
 def _try_load_embedding_detector() -> Callable[[str], float] | None:
     try:
-        from sentence_transformers import SentenceTransformer
         import numpy as np
+        from sentence_transformers import SentenceTransformer
     except ImportError:
         return None
 
@@ -307,7 +307,7 @@ def analyze_content(text: str) -> RiskReport:
     if not text:
         return RiskReport(risk_level="LOW", sanitized_content="")
 
-    original_len = len(text)
+    len(text)
     warnings: list[str] = []
 
     # Layer 1: Character analysis
@@ -319,7 +319,7 @@ def analyze_content(text: str) -> RiskReport:
     text_clean = _CHAT_TOKENS.sub(lambda m: m.group(0).replace("<", "‹").replace(">", "›"), text_clean)
 
     text_normalized = _normalize_lookalikes(text_clean)
-    lookalike_count = sum(1 for a, b in zip(text_clean, text_normalized) if a != b)
+    lookalike_count = sum(1 for a, b in zip(text_clean, text_normalized, strict=False) if a != b)
 
     if invisible_removed > 0:
         warnings.append(f"{invisible_removed} invisible/zero-width characters detected and removed")
@@ -336,7 +336,7 @@ def analyze_content(text: str) -> RiskReport:
             signature_matches.append((snippet, lang))
 
     if signature_matches:
-        langs = ", ".join(sorted(set(lang for _, lang in signature_matches[:5])))
+        langs = ", ".join(sorted({lang for _, lang in signature_matches[:5]}))
         warnings.append(f"{len(signature_matches)} attack signatures matched ({langs})")
 
     # Layer 3: Context heuristics (check original before normalization)

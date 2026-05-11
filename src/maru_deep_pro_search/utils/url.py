@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urlparse, urljoin, unquote
+from urllib.parse import unquote, urljoin, urlparse
 
 # Domains that rarely contain useful text content
 _SKIP_DOMAINS = {
@@ -36,8 +36,7 @@ _AUTHORITY_DOMAINS = {
     "docs.djangoproject.com", "vuejs.org", "svelte.dev",
     "github.com", "gitlab.com", "stackoverflow.com",
     "arxiv.org", "pubmed.ncbi.nlm.nih.gov", "scholar.google.com",
-    "pypi.org", "npmjs.com", "crates.io", "pkg.go.dev",
-    "realpython.com", "dev.to", "medium.com",
+    "pypi.org", "npmjs.com", "crates.io", "realpython.com", "dev.to", "medium.com",
     # Korean developer communities
     "velog.io", "tistory.com", "naver.com", "daum.net",
     "brunch.co.kr", "okky.kr", "hashnode.dev",
@@ -83,10 +82,7 @@ def should_skip_url(url: str) -> bool:
         return True
 
     # Skip pure tracking URLs
-    if url.count("?") > 2 or url.count("&") > 5:
-        return True
-
-    return False
+    return bool(url.count("?") > 2 or url.count("&") > 5)
 
 
 def is_authority_domain(url: str) -> bool:

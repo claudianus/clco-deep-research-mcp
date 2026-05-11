@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import random
@@ -10,10 +9,10 @@ from urllib.parse import quote_plus
 
 from scrapling import AsyncFetcher
 
-from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
 from ..exceptions import NetworkError, ParseError
-from ..utils.url import get_domain, should_skip_url, is_authority_domain
 from ..utils.retry import with_retry
+from ..utils.url import get_domain, is_authority_domain, should_skip_url
+from .base import ContentType, PageContent, SearchEngine, SearchResult
 
 logger = logging.getLogger(__name__)
 

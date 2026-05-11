@@ -63,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"\n{_green('✅ Harness initialized!')}")
     print(f"   Knowledge store: {Path(result['root']) / '.maru' / 'knowledge.db'}")
-    print(f"   Next: commit changes and restart your agent.")
+    print("   Next: commit changes and restart your agent.")
     return 0
 
 

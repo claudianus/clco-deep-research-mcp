@@ -1,6 +1,6 @@
 """Tests for tool guidance and MCP prompts."""
 
-from maru_deep_pro_search.tools import TOOLS, TOOL_GUIDANCE
+from maru_deep_pro_search.tools import TOOL_GUIDANCE, TOOLS
 
 
 class TestToolGuidance:
@@ -45,6 +45,6 @@ class TestEnhancedToolDescriptions:
         assert "BEST FOR" in desc
 
     def test_all_tools_have_enhanced_descriptions(self):
-        for tool_name, (func, desc, schema) in TOOLS.items():
+        for tool_name, (_func, desc, _schema) in TOOLS.items():
             assert len(desc) > 50, f"{tool_name} description too short"
             assert "BEST FOR" in desc or "best for" in desc.lower(), f"{tool_name} missing BEST FOR"

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Type
 
 from .base import SearchEngine
 
@@ -13,17 +12,17 @@ logger = logging.getLogger(__name__)
 class SearchEngineRegistry:
     """Registry for search engine implementations."""
 
-    _engines: dict[str, Type[SearchEngine]] = {}
+    _engines: dict[str, type[SearchEngine]] = {}
     _instances: dict[str, SearchEngine] = {}
 
     @classmethod
-    def register(cls, name: str, engine_class: Type[SearchEngine]) -> None:
+    def register(cls, name: str, engine_class: type[SearchEngine]) -> None:
         """Register a search engine class."""
         cls._engines[name] = engine_class
         logger.debug("Registered search engine: %s", name)
 
     @classmethod
-    def get(cls, name: str) -> Type[SearchEngine]:
+    def get(cls, name: str) -> type[SearchEngine]:
         """Get engine class by name."""
         if name not in cls._engines:
             available = ", ".join(cls._engines.keys())

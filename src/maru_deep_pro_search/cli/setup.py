@@ -4,9 +4,27 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
-from .detect import detect_agents, installed_agents
+from .agents.aider import AiderAdapter
+from .agents.amazon_q import AmazonQAdapter
+from .agents.antigravity import AntiGravityAdapter
+from .agents.claude import ClaudeAdapter
+from .agents.cline import ClineAdapter
+from .agents.codeium import CodeiumAdapter
+from .agents.cody import CodyAdapter
+from .agents.continue_ import ContinueAdapter
+from .agents.copilot import CopilotAdapter
+from .agents.cursor import CursorAdapter
+from .agents.devin import DevinAdapter
+from .agents.jetbrains import JetBrainsAdapter
+from .agents.kilo import KiloAdapter
+from .agents.kimi import KimiAdapter
+from .agents.opencode import OpenCodeAdapter
+from .agents.supermaven import SupermavenAdapter
+from .agents.tabnine import TabnineAdapter
+from .agents.windsurf import WindsurfAdapter
+from .agents.zed import ZedAdapter
+from .detect import detect_agents
 from .env_check import (
     bold,
     ensure_compatible_python,
@@ -14,25 +32,6 @@ from .env_check import (
     red,
     yellow,
 )
-from .agents.claude import ClaudeAdapter
-from .agents.cursor import CursorAdapter
-from .agents.kimi import KimiAdapter
-from .agents.antigravity import AntiGravityAdapter
-from .agents.kilo import KiloAdapter
-from .agents.opencode import OpenCodeAdapter
-from .agents.windsurf import WindsurfAdapter
-from .agents.aider import AiderAdapter
-from .agents.copilot import CopilotAdapter
-from .agents.continue_ import ContinueAdapter
-from .agents.cline import ClineAdapter
-from .agents.zed import ZedAdapter
-from .agents.jetbrains import JetBrainsAdapter
-from .agents.supermaven import SupermavenAdapter
-from .agents.cody import CodyAdapter
-from .agents.codeium import CodeiumAdapter
-from .agents.amazon_q import AmazonQAdapter
-from .agents.devin import DevinAdapter
-from .agents.tabnine import TabnineAdapter
 
 ADAPTER_REGISTRY = {
     "claude": ClaudeAdapter,
@@ -107,19 +106,19 @@ def cmd_setup(args: argparse.Namespace) -> int:
             for b in result["backups"]:
                 print(f"   ✓ 백업 저장: {b}")
         if result["mcp_installed"]:
-            print(f"   ✓ MCP 서버 등록 완료")
+            print("   ✓ MCP 서버 등록 완료")
         else:
             print(f"   {yellow('! MCP 서버 등록 실패')}")
         if result["rules_injected"]:
-            print(f"   ✓ 리서치 프로토콜 주입 완료")
+            print("   ✓ 리서치 프로토콜 주입 완료")
         else:
             print(f"   {yellow('! 규칙 주입 실패 (수동 설정 필요)')}")
 
     # Semantic search recommendation
-    try:
-        import sentence_transformers
+    import importlib.util
+    if importlib.util.find_spec("sentence_transformers"):
         print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
-    except ImportError:
+    else:
         print(f"\n  {yellow('!')} semantic search 미설치")
         print(f"     설치 시 검색 품질 ↑: {bold('pip install sentence-transformers')}")
         print(f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}")
@@ -133,7 +132,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
     """Restore agent configs from backups."""
     print("\n🔄 설정 복원 중...\n")
     restored_any = False
-    for name, adapter_cls in ADAPTER_REGISTRY.items():
+    for _name, adapter_cls in ADAPTER_REGISTRY.items():
         adapter = adapter_cls()
         if adapter.detect():
             if adapter.restore():
@@ -143,7 +142,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
                 print(f"   ✗ {adapter.display_name} 복원할 백업 없음")
 
     if restored_any:
-        print(f"\n{_green('✅ 복원 완료!')} 에이전트를 재시작하세요.")
+        print(f"\n{green('✅ 복원 완료!')} 에이전트를 재시작하세요.")
     else:
         print(yellow("복원할 백업을 찾을 수 없습니다."))
     return 0
@@ -153,7 +152,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     """Verify that configs are still in place."""
     print("\n🔍 설정 상태 확인 중...\n")
     all_ok = True
-    for name, adapter_cls in ADAPTER_REGISTRY.items():
+    for _name, adapter_cls in ADAPTER_REGISTRY.items():
         adapter = adapter_cls()
         if adapter.detect():
             # Simple heuristic: check if MCP config exists

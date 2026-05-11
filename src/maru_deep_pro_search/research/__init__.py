@@ -1,8 +1,8 @@
 """Research pipeline for maru-search."""
 
-from .deep import deep_research, format_for_llm, ResearchResult, CitedSource, AnswerResult
+from .deep import AnswerResult, CitedSource, ResearchResult, deep_research, format_for_llm
 from .expander import expand_query, extract_keywords
-from .ranker import merge_results, rank_pages, RankedResult
+from .ranker import RankedResult, merge_results, rank_pages
 
 __all__ = [
     "deep_research",

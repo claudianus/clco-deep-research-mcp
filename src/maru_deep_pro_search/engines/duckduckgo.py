@@ -2,15 +2,15 @@
 
 from __future__ import annotations
 
-import asyncio
+import contextlib
 import logging
 import re
 import time
-from urllib.parse import quote_plus, unquote, urljoin, urlparse
+from urllib.parse import quote_plus, urljoin, urlparse
 
-from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
-from ..exceptions import NetworkError, ParseError, BlockedError
-from ..utils.url import should_skip_url, resolve_redirect, get_domain, is_authority_domain
+from ..exceptions import NetworkError, ParseError
+from ..utils.url import get_domain, resolve_redirect, should_skip_url
+from .base import ContentType, ExtractionQuality, PageContent, SearchEngine, SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -133,16 +133,12 @@ class DuckDuckGoEngine(SearchEngine):
     async def close(self) -> None:
         """Close any open sessions to free resources."""
         if self._session is not None:
-            try:
+            with contextlib.suppress(Exception):
                 await self._session.close()
-            except Exception:
-                pass
             self._session = None
         if self._stealth_session is not None:
-            try:
+            with contextlib.suppress(Exception):
                 await self._stealth_session.close()
-            except Exception:
-                pass
             self._stealth_session = None
 
     async def _get_session(self, stealth: bool = False):
@@ -179,7 +175,7 @@ class DuckDuckGoEngine(SearchEngine):
             page = await session.fetch(search_url, timeout=30000)
         except Exception as exc:
             logger.error("SERP scrape failed [%s]: %s", self.variant, exc)
-            raise NetworkError(f"Failed to fetch SERP: {exc}", retryable=True)
+            raise NetworkError(f"Failed to fetch SERP: {exc}", retryable=True) from exc
 
         results: list[SearchResult] = []
         seen: set[str] = set()
@@ -197,7 +193,7 @@ class DuckDuckGoEngine(SearchEngine):
             containers = page.css("a[href^='http']")
             logger.debug("Fallback to all links, found %d", len(containers))
 
-        for i, el in enumerate(containers[:max_results * 3]):
+        for _i, el in enumerate(containers[:max_results * 3]):
             title_el = _first(el, cfg["title"])
             url_el = _first(el, cfg["url"])
             snippet_el = _first(el, cfg["snippet"])
@@ -238,7 +234,7 @@ class DuckDuckGoEngine(SearchEngine):
         if not results:
             logger.warning("No results found for query: %s", query)
             raise ParseError(
-                f"No results found. The page structure may have changed.",
+                "No results found. The page structure may have changed.",
                 retryable=True,
                 suggested_engine="duckduckgo" if self.variant == "duckduckgo_lite" else None,
             )
@@ -301,10 +297,8 @@ class DuckDuckGoEngine(SearchEngine):
         # Strip noise
         for sel in _STRIP_SELECTORS:
             for el in page.css(sel):
-                try:
+                with contextlib.suppress(Exception):
                     el._root.drop_tree()
-                except Exception:
-                    pass
 
         # Find main content
         main_el = None
@@ -330,8 +324,8 @@ class DuckDuckGoEngine(SearchEngine):
 
         if original_html:
             try:
-                import trafilatura
                 import htmldate as _htmldate
+                import trafilatura
 
                 # Try trafilatura on original HTML
                 tf_result = trafilatura.extract(
@@ -359,13 +353,11 @@ class DuckDuckGoEngine(SearchEngine):
 
                 # htmldate fallback
                 if not _date_result:
-                    try:
+                    with contextlib.suppress(Exception):
                         _date_result = _htmldate.find_date(
                             original_html,
                             outputformat="%Y-%m-%d",
                         ) or ""
-                    except Exception:
-                        pass
 
                 # Code-aware analysis
                 from ..extraction.code import analyze_code_content

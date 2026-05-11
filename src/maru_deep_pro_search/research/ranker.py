@@ -6,11 +6,11 @@ to produce Perplexity-level result ranking."""
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
-from ..engines.base import SearchResult, PageContent, ContentType
-from ..utils.url import is_authority_domain, normalize_url
+from ..engines.base import ContentType, PageContent, SearchResult
 from ..research.expander import extract_keywords
+from ..utils.url import is_authority_domain, normalize_url
 
 logger = logging.getLogger(__name__)
 
@@ -117,7 +117,7 @@ def _normalize_text(text: str) -> set[str]:
         return set()
     # Lowercase, remove punctuation, split into words
     cleaned = "".join(c if c.isalnum() or c.isspace() else " " for c in text.lower())
-    return set(w for w in cleaned.split() if len(w) > 2)
+    return {w for w in cleaned.split() if len(w) > 2}
 
 
 def _jaccard_similarity(a: str, b: str) -> float:
@@ -226,7 +226,7 @@ def merge_results(
         from .semantic_ranker import SemanticRanker
         if SemanticRanker.available():
             sims = SemanticRanker.score_results(query, merged)
-            for r, sim in zip(merged, sims):
+            for r, sim in zip(merged, sims, strict=False):
                 semantic_scores[normalize_url(r.url)] = sim
     except Exception:
         pass  # Graceful fallback when sentence-transformers not installed
@@ -288,7 +288,7 @@ def rank_pages(pages: list[PageContent], query: str) -> list[PageContent]:
         if SemanticRanker.available() and pages:
             texts = [f"{p.title} {p.text[:300]}" for p in pages]
             sims = SemanticRanker.query_sentence_similarity_batch(query, texts)
-            for p, sim in zip(pages, sims):
+            for p, sim in zip(pages, sims, strict=False):
                 semantic_scores[normalize_url(p.url)] = sim
     except Exception:
         pass

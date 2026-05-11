@@ -10,9 +10,9 @@ import logging
 import os
 from urllib.parse import quote_plus
 
-from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
-from ..exceptions import NetworkError, ParseError
+from ..exceptions import NetworkError, ParseError, RateLimitError
 from ..utils.url import get_domain, should_skip_url
+from .base import ContentType, PageContent, SearchEngine, SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -56,22 +56,21 @@ class BraveEngine(SearchEngine):
                 "aiohttp required for Brave Search.",
                 retryable=False,
                 suggested_engine="duckduckgo_lite",
-            )
+            ) from None
 
         try:
-            async with aiohttp.ClientSession(headers=headers) as session:
-                async with session.get(url) as resp:
-                    if resp.status == 401:
-                        raise ParseError(
-                            "Invalid Brave API key.",
-                            retryable=False,
-                        )
-                    if resp.status == 429:
-                        raise RateLimitError("Brave Search rate limit exceeded.")
-                    resp.raise_for_status()
-                    data = await resp.json()
+            async with aiohttp.ClientSession(headers=headers) as session, session.get(url) as resp:
+                if resp.status == 401:
+                    raise ParseError(
+                        "Invalid Brave API key.",
+                        retryable=False,
+                    )
+                if resp.status == 429:
+                    raise RateLimitError("Brave Search rate limit exceeded.")
+                resp.raise_for_status()
+                data = await resp.json()
         except Exception as exc:
-            raise NetworkError(f"Brave Search request failed: {exc}", retryable=True)
+            raise NetworkError(f"Brave Search request failed: {exc}", retryable=True) from exc
 
         results: list[SearchResult] = []
         web_results = data.get("web", {}).get("results", [])

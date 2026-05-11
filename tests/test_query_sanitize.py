@@ -1,6 +1,5 @@
 """Tests for query_sanitize — stale year removal."""
 
-import pytest
 
 from maru_deep_pro_search.utils.query_sanitize import sanitize_query
 

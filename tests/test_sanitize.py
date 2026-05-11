@@ -1,10 +1,10 @@
 """Tests for prompt injection defense via metadata tagging + agent delegation."""
 
 from maru_deep_pro_search.utils.sanitize import (
-    analyze_content,
-    wrap_external_content,
-    sanitize_for_llm,
     RiskReport,
+    analyze_content,
+    sanitize_for_llm,
+    wrap_external_content,
 )
 
 

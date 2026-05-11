@@ -11,15 +11,15 @@ import re
 import time
 from dataclasses import dataclass, field
 
-from ..engines.base import SearchResult, PageContent, ContentType, ExtractionQuality
+from ..engines.base import ExtractionQuality, PageContent, SearchResult
 from ..engines.registry import SearchEngineRegistry
-from ..exceptions import MaruSearchError, NetworkError, ParseError
-from ..utils.url import should_skip_url, deduplicate_urls, is_authority_domain, get_domain
-from ..utils.retry import with_retry
+from ..exceptions import NetworkError, ParseError
 from ..extraction.content import truncate_for_llm
+from ..utils.retry import with_retry
+from ..utils.url import deduplicate_urls, get_domain, is_authority_domain, should_skip_url
 from .expander import expand_query, extract_keywords
-from .ranker import merge_results, rank_pages, RankedResult, _jaccard_similarity
 from .gap_detector import detect_gaps
+from .ranker import _jaccard_similarity, merge_results, rank_pages
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +286,7 @@ async def deep_research(
     high_quality = 0
     blocked = 0
 
-    for i, rr in enumerate(ranked[:max_sources], 1):
+    for _i, rr in enumerate(ranked[:max_sources], 1):
         sr = rr.result
         matched = next(
             (p for p in pages if normalize_url(p.url) == normalize_url(sr.url)),
@@ -511,7 +511,7 @@ def _extract_key_sentences(text: str, query_keywords: set[str], max_sentences: i
                 ]
                 if candidates:
                     sims = SemanticRanker.query_sentence_similarity_batch(query, candidates)
-                    for sent, sim in zip(candidates, sims):
+                    for sent, sim in zip(candidates, sims, strict=False):
                         semantic_sims[sent] = sim
         except Exception:
             pass
@@ -692,7 +692,7 @@ def _allocate_tokens(
     sources_summarized = 0
     sources_dropped = 0
 
-    for src, score in scored_sources:
+    for src, _score in scored_sources:
         if src.quality == "blocked":
             continue
 
@@ -722,7 +722,7 @@ def _extractive_summarize(markdown: str, max_tokens: int, query: str = "") -> st
 
     Query-aware: sections containing query keywords retain more sentences.
     """
-    from ..extraction.content import extract_headings, estimate_token_count
+    from ..extraction.content import estimate_token_count
 
     if estimate_token_count(markdown) <= max_tokens:
         return markdown
@@ -1007,7 +1007,7 @@ def format_for_llm(
 
         if src.external_links:
             link_preview = ", ".join(
-                f"[{l['text'][:40]}]({l['url']})" for l in src.external_links[:5]
+                f"[{link['text'][:40]}]({link['url']})" for link in src.external_links[:5]
             )
             lines.append(f"_Links: {link_preview}_")
 

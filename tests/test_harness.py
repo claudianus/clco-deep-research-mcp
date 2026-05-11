@@ -2,13 +2,10 @@
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from maru_deep_pro_search.harness.persistence import KnowledgeEntry, KnowledgeStore
+from maru_deep_pro_search.harness.persistence import KnowledgeStore
 from maru_deep_pro_search.harness.project import HarnessProject, init_project
 from maru_deep_pro_search.harness.workflow import (
     WorkflowEngine,
@@ -87,7 +84,7 @@ class TestHarnessProject:
     def test_init_project_creates_files(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            result = init_project(path=root, agents=None, create_agents_md=True, create_gitignore=True)
+            init_project(path=root, agents=None, create_agents_md=True, create_gitignore=True)
             assert (root / ".maru" / "knowledge.db").exists()
             assert (root / "AGENTS.md").exists()
             assert (root / ".gitignore").exists()

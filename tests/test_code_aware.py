@@ -1,11 +1,9 @@
 """Tests for code-aware content analysis."""
 
-import pytest
 from maru_deep_pro_search.extraction.code import (
+    analyze_code_content,
     detect_language,
     extract_api_signatures,
-    analyze_code_content,
-    CodeAwareStats,
 )
 
 

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .persistence import KnowledgeStore, KnowledgeEntry
+from .persistence import KnowledgeEntry, KnowledgeStore
 from .project import HarnessProject, init_project
 from .workflow import WorkflowEngine, WorkflowPhase
 

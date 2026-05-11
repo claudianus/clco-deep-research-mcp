@@ -1,13 +1,11 @@
 """Tests for intelligent ranking engine."""
 
-import pytest
 
-from maru_deep_pro_search.engines.base import SearchResult, ContentType
+from maru_deep_pro_search.engines.base import ContentType, SearchResult
 from maru_deep_pro_search.research.ranker import (
+    _score_metadata,
     merge_results,
     rank_pages,
-    _score_metadata,
-    RankedResult,
 )
 
 
@@ -124,7 +122,7 @@ class TestRankPages:
         assert rank_pages([], "test") == []
 
     def test_quality_preference(self):
-        from maru_deep_pro_search.engines.base import PageContent, ExtractionQuality
+        from maru_deep_pro_search.engines.base import ExtractionQuality, PageContent
 
         pages = [
             PageContent(url="https://low.com", text="some text", quality=ExtractionQuality.LOW, title="Low"),

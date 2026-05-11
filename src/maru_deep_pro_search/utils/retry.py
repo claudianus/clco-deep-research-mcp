@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import random
-from typing import Callable, Tuple, Type
+from collections.abc import Callable
 
 from ..exceptions import MaruSearchError
 
@@ -18,7 +18,7 @@ async def with_retry(
     max_attempts: int = 3,
     base_delay: float = 1.0,
     max_delay: float = 30.0,
-    retryable_exceptions: Tuple[Type[Exception], ...] = (Exception,),
+    retryable_exceptions: tuple[type[Exception], ...] = (Exception,),
     **kwargs,
 ):
     """Call an async function with exponential backoff retry.

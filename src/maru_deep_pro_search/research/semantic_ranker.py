@@ -75,7 +75,6 @@ class SemanticRanker:
             return [0.0] * len(results)
 
         try:
-            import numpy as np
             from sentence_transformers.util import cos_sim
 
             query_emb = bi.encode([query], convert_to_tensor=False, show_progress_bar=False)
@@ -145,7 +144,7 @@ class SemanticRanker:
             unique: list[str] = []
             for i, sent in enumerate(sentences):
                 is_dup = False
-                for j, existing in enumerate(unique):
+                for j, _existing in enumerate(unique):
                     if sim_matrix[i][j] > threshold:
                         is_dup = True
                         break

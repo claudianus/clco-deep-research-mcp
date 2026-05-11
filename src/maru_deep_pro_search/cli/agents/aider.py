@@ -5,9 +5,9 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from .base import AgentAdapter
 from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
 from ..prompts import get_protocol_for_agent
+from .base import AgentAdapter
 
 
 def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
@@ -23,9 +23,8 @@ def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
         elif shutil.which("pylint"):
             tools["python_lint"] = "pylint"
 
-        if (root / "pytest.ini").exists() or (root / "pyproject.toml").exists():
-            if shutil.which("pytest"):
-                tools["python_test"] = "pytest"
+        if ((root / "pytest.ini").exists() or (root / "pyproject.toml").exists()) and shutil.which("pytest"):
+            tools["python_test"] = "pytest"
 
     # JavaScript / TypeScript
     if (root / "package.json").exists():
@@ -102,9 +101,8 @@ def _detect_quality_tools(root: Path = Path(".")) -> dict[str, str]:
         tools["dart_test"] = "dart test"
 
     # Scala
-    if (root / "build.sbt").exists():
-        if shutil.which("sbt"):
-            tools["scala_test"] = "sbt test"
+    if (root / "build.sbt").exists() and shutil.which("sbt"):
+        tools["scala_test"] = "sbt test"
 
     # TypeScript (Deno, Biome)
     if (root / "deno.json").exists() or (root / "deno.jsonc").exists():

@@ -7,10 +7,10 @@ from urllib.parse import quote_plus
 
 from scrapling import AsyncFetcher, StealthyFetcher
 
-from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
-from ..exceptions import NetworkError, ParseError, BlockedError
-from ..utils.url import get_domain, should_skip_url, resolve_redirect
+from ..exceptions import BlockedError, NetworkError, ParseError
 from ..utils.retry import with_retry
+from ..utils.url import get_domain, resolve_redirect, should_skip_url
+from .base import ContentType, PageContent, SearchEngine, SearchResult
 
 logger = logging.getLogger(__name__)
 

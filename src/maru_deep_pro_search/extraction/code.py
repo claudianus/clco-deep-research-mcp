@@ -9,7 +9,6 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-
 # Language signatures — fast regex over full lexer
 _LANG_SIGNATURES: list[tuple[str, re.Pattern]] = [
     ("python", re.compile(r"\b(def |class |import |from \w+ import|async def |await |elif |__init__|self\.)", re.MULTILINE)),

@@ -6,7 +6,7 @@ Supports environment variables and sensible defaults.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass
@@ -27,7 +27,7 @@ class SearchConfig:
     position_weight: float = 0.5
 
     @classmethod
-    def from_env(cls) -> "SearchConfig":
+    def from_env(cls) -> SearchConfig:
         """Load configuration from environment variables."""
         return cls(
             default_engine=os.getenv("MARU_SEARCH_ENGINE", "duckduckgo_lite"),

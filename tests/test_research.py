@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from maru_deep_pro_search.research.deep import _probe_network, _filter_slow_domains
 from maru_deep_pro_search.engines.duckduckgo import DuckDuckGoEngine
+from maru_deep_pro_search.research.deep import _filter_slow_domains, _probe_network
 
 
 class TestProbeNetwork:

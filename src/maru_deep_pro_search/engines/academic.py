@@ -8,14 +8,12 @@ if both APIs fail.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import xml.etree.ElementTree as ET
-from urllib.parse import quote_plus, urljoin
+from urllib.parse import quote_plus
 
-from .base import SearchEngine, SearchResult, PageContent, ContentType, ExtractionQuality
-from ..exceptions import NetworkError, ParseError
-from ..utils.url import get_domain, should_skip_url
+from ..exceptions import ParseError
+from .base import ContentType, ExtractionQuality, PageContent, SearchEngine, SearchResult
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +80,8 @@ class AcademicEngine(SearchEngine):
             return []
 
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as session:
-                async with session.get(url) as resp:
-                    text = await resp.text()
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as session, session.get(url) as resp:
+                text = await resp.text()
         except Exception as exc:
             logger.debug("ArXiv request failed: %s", exc)
             return []
@@ -111,7 +108,7 @@ class AcademicEngine(SearchEngine):
                 continue
 
             # Prefer abstract URL, fallback to PDF
-            pdf_url = arxiv_url.replace("/abs/", "/pdf/") + ".pdf"
+            arxiv_url.replace("/abs/", "/pdf/") + ".pdf"
 
             results.append(SearchResult(
                 title=f"[arXiv] {title}",
@@ -142,12 +139,11 @@ class AcademicEngine(SearchEngine):
             return []
 
         try:
-            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as session:
-                async with session.get(url) as resp:
-                    if resp.status == 429:
-                        logger.debug("Semantic Scholar rate limited")
-                        return []
-                    data = await resp.json()
+            async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15)) as session, session.get(url) as resp:
+                if resp.status == 429:
+                    logger.debug("Semantic Scholar rate limited")
+                    return []
+                data = await resp.json()
         except Exception as exc:
             logger.debug("Semantic Scholar request failed: %s", exc)
             return []
@@ -188,10 +184,9 @@ class AcademicEngine(SearchEngine):
             html_url = url.replace("/abs/", "/html/")
             try:
                 import aiohttp
-                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=int(timeout))) as session:
-                    async with session.get(html_url) as resp:
-                        text = await resp.text()
-                        return PageContent(
+                async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=int(timeout))) as session, session.get(html_url) as resp:
+                    text = await resp.text()
+                    return PageContent(
                             url=url,
                             final_url=str(resp.url),
                             title="arXiv Paper",

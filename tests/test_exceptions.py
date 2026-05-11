@@ -1,14 +1,10 @@
 """Tests for exception hierarchy."""
 
-import pytest
 from maru_deep_pro_search.exceptions import (
+    BlockedError,
     MaruSearchError,
     NetworkError,
-    RateLimitError,
-    BlockedError,
-    ParseError,
     NoResultsError,
-    ExtractionError,
 )
 
 

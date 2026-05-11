@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from .expander import extract_keywords
 
-
 # Predefined angles that are commonly missing from initial searches
 _FOLLOWUP_ANGLES = [
     "benchmark",
@@ -52,7 +51,7 @@ def detect_gaps(query: str, sources: list) -> list[str]:
         return []
 
     # 1. Extract keywords from the original query
-    query_keywords = set(extract_keywords(query))
+    set(extract_keywords(query))
 
     # 2. Collect all text from sources
     source_texts: list[str] = []
