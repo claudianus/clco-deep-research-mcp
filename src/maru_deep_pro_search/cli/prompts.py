@@ -50,6 +50,29 @@ KIMI_SKILL_PROMPT = RESEARCH_PROTOCOL
 WINDSURF_RULES_APPENDIX = CURSOR_RULES_APPENDIX
 
 
+AIDER_CONVENTIONS_APPENDIX = f"""
+# Aider Coding Conventions — Research-First Development
+
+{RESEARCH_PROTOCOL}
+
+## Additional Aider-Specific Rules
+- Before any /code or /add command, ensure deep_research has been run.
+- Use /test to verify implementation against research findings.
+- Do not use /commit until all citations [1], [2] are verified.
+"""
+
+COPILOT_INSTRUCTIONS_APPENDIX = f"""
+# GitHub Copilot Instructions — Research-First Coding
+
+{RESEARCH_PROTOCOL}
+
+## Copilot-Specific Guidance
+- When suggesting completions, prioritize patterns found in deep_research results.
+- Inline comments should reference research citations when explaining technical decisions.
+- Do not suggest deprecated APIs or patterns contradicted by research.
+"""
+
+
 def get_protocol_for_agent(agent: str) -> str:
     """Return the research protocol formatted for the given agent."""
     mapping = {
@@ -60,5 +83,7 @@ def get_protocol_for_agent(agent: str) -> str:
         "antigravity": RESEARCH_PROTOCOL,
         "kilo": RESEARCH_PROTOCOL,
         "opencode": RESEARCH_PROTOCOL,
+        "aider": AIDER_CONVENTIONS_APPENDIX,
+        "copilot": COPILOT_INSTRUCTIONS_APPENDIX,
     }
     return mapping.get(agent, RESEARCH_PROTOCOL)

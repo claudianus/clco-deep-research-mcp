@@ -1,8 +1,7 @@
-"""Cursor adapter."""
+"""Cursor adapter — supports .cursorrules, .cursor/mcp.json, settings, commands."""
 
 from __future__ import annotations
 
-import json
 import shutil
 from pathlib import Path
 
@@ -32,14 +31,24 @@ class CursorAdapter(AgentAdapter):
             return Path(".cursorrules")
         return Path.home() / ".cursorrules"
 
+    def _settings_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".cursor") / "settings.json"
+        return Path.home() / ".cursor" / "settings.json"
+
+    def _commands_dir(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".cursor") / "commands"
+        return Path.home() / ".cursor" / "commands"
+
     def backup(self) -> list[Path]:
-        paths = [self._mcp_path("user"), self._rules_path("user")]
+        paths = [self._mcp_path("user"), self._rules_path("user"), self._settings_path("user")]
         backups = [backup_file(p) for p in paths]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._mcp_path("user"), self._rules_path("user")]:
+        for p in [self._mcp_path("user"), self._rules_path("user"), self._settings_path("user")]:
             backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
@@ -59,13 +68,25 @@ class CursorAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
-        path = self._rules_path(scope)
-        content = read_text_safe(path)
+        # 1. .cursorrules
+        rules_path = self._rules_path(scope)
+        content = read_text_safe(rules_path)
         protocol = get_protocol_for_agent(self.name)
 
-        if protocol in content:
-            return True  # Already injected
+        if protocol not in content:
+            content += f"\n\n# maru-deep-pro-search Research Protocol\n{protocol}\n"
+            write_text_safe(rules_path, content)
 
-        content += f"\n\n{protocol}\n"
-        write_text_safe(path, content)
+        # 2. .cursor/settings.json — enable MCP tools by default
+        settings_path = self._settings_path(scope)
+        settings = read_json_safe(settings_path)
+        if "mcp" not in settings:
+            settings["mcp"] = {}
+        if "autoEnableTools" not in settings["mcp"]:
+            settings["mcp"]["autoEnableTools"] = True
+        write_json_safe(settings_path, settings)
+
+        # 3. Cursor commands (if supported in future versions)
+        cmds_dir = self._commands_dir(scope)
+        cmds_dir.mkdir(parents=True, exist_ok=True)
         return True

@@ -56,13 +56,16 @@ def init_project(
     agents: list[str] | None = None,
     create_agents_md: bool = True,
     create_gitignore: bool = True,
+    create_harness_yaml: bool = True,
 ) -> dict[str, Any]:
     """Initialize a project with the maru harness.
 
     Creates:
         .maru/knowledge.db   — local knowledge cache
+        .maru/harness.yaml   — declarative harness spec (AHS)
         AGENTS.md            — project-specific agent instructions (if requested)
         .gitignore additions — exclude harness artifacts
+        Agent-native configs — .claude/settings.json, .aider.conf.yml, etc.
 
     Args:
         path: Project root directory.
@@ -70,6 +73,7 @@ def init_project(
                 If None, auto-detect installed agents.
         create_agents_md: Whether to create AGENTS.md.
         create_gitignore: Whether to append harness entries to .gitignore.
+        create_harness_yaml: Whether to create `.maru/harness.yaml`.
 
     Returns:
         Summary dict with created paths and status.
@@ -80,19 +84,53 @@ def init_project(
 
     created: list[str] = []
 
-    # 1. Knowledge store (lazy-created on first access, but we ensure dir)
+    # 1. Knowledge store
     store = KnowledgeStore(db_path=maru_dir / "knowledge.db")
     store._connect()  # ensure schema exists
     created.append(str(maru_dir / "knowledge.db"))
 
-    # 2. AGENTS.md
+    # 2. Harness Spec (.maru/harness.yaml)
+    if create_harness_yaml:
+        harness_yaml = maru_dir / "harness.yaml"
+        if not harness_yaml.exists():
+            from .spec import HarnessSpec
+
+            spec = HarnessSpec.default()
+            # Write a minimal readable YAML
+            yaml_content = f"""# Agent Harness Specification (AHS) — maru-deep-pro-search
+# This file declaratively defines how AI agents should behave in this project.
+# The setup CLI translates this into agent-native config files.
+
+mcp_servers:
+  maru-deep-pro-search:
+    command: python3
+    args: [-m, maru_deep_pro_search.server]
+
+research_protocol: |
+{chr(10).join('  ' + line for line in spec.research_protocol.splitlines())}
+
+tool_priority:
+{chr(10).join(f'  - {t}' for t in spec.tool_priority)}
+
+commands:
+{chr(10).join(f'  - name: {c.name}' + chr(10) + f'    description: {c.description}' + chr(10) + f'    prompt: {c.prompt}' for c in spec.commands)}
+
+conventions:
+{chr(10).join(f'  - {c}' for c in spec.conventions)}
+
+knowledge_db_path: {spec.knowledge_db_path}
+"""
+            harness_yaml.write_text(yaml_content, encoding="utf-8")
+            created.append(str(harness_yaml))
+
+    # 3. AGENTS.md
     if create_agents_md:
         agents_md = root / "AGENTS.md"
         if not agents_md.exists():
             agents_md.write_text(DEFAULT_AGENTS_MD, encoding="utf-8")
             created.append(str(agents_md))
 
-    # 3. .gitignore
+    # 4. .gitignore
     if create_gitignore:
         gitignore = root / ".gitignore"
         if gitignore.exists():
@@ -105,9 +143,8 @@ def init_project(
             gitignore.write_text(DEFAULT_GITIGNORE + "\n", encoding="utf-8")
             created.append(str(gitignore))
 
-    # 4. Agent configs at project scope
+    # 5. Agent configs at project scope (agent-native files)
     if agents:
-        from ..cli.agents.base import AgentAdapter
         from ..cli.setup import ADAPTER_REGISTRY
 
         for name in agents:

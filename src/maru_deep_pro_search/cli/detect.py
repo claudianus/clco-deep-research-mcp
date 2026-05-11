@@ -67,6 +67,20 @@ def _detect_windsurf() -> bool:
     )
 
 
+# ── Aider ────────────────────────────────────────────────────
+def _detect_aider() -> bool:
+    return shutil.which("aider") is not None
+
+
+# ── GitHub Copilot ───────────────────────────────────────────
+def _detect_copilot() -> bool:
+    return (
+        shutil.which("code") is not None
+        or shutil.which("gh") is not None
+        or Path.home().joinpath(".vscode", "extensions").exists()
+    )
+
+
 # ── Registry ─────────────────────────────────────────────────
 AGENT_DETECTORS: dict[str, AgentDetector] = {
     "claude": _detect_claude_code,
@@ -76,6 +90,8 @@ AGENT_DETECTORS: dict[str, AgentDetector] = {
     "kilo": _detect_kilo,
     "opencode": _detect_opencode,
     "windsurf": _detect_windsurf,
+    "aider": _detect_aider,
+    "copilot": _detect_copilot,
 }
 
 

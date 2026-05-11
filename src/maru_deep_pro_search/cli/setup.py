@@ -21,6 +21,8 @@ from .agents.antigravity import AntiGravityAdapter
 from .agents.kilo import KiloAdapter
 from .agents.opencode import OpenCodeAdapter
 from .agents.windsurf import WindsurfAdapter
+from .agents.aider import AiderAdapter
+from .agents.copilot import CopilotAdapter
 
 ADAPTER_REGISTRY = {
     "claude": ClaudeAdapter,
@@ -30,6 +32,8 @@ ADAPTER_REGISTRY = {
     "kilo": KiloAdapter,
     "opencode": OpenCodeAdapter,
     "windsurf": WindsurfAdapter,
+    "aider": AiderAdapter,
+    "copilot": CopilotAdapter,
 }
 
 
