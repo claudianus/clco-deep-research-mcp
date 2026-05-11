@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>maru-deep-pro-search — Perplexity급 웹 리서치, 0 API 키</title>
-<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 7엔진 폴오버, BM25+시맨틱 랭킹, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
+<meta name="description" content="AI 코딩 에이전트를 위한 Perplexity급 웹 리서치 MCP 서버. 10엔진 폴오버, BM25+시맨틱 랭킹, 네이티브 인용, 프롬프트 인젝션 방어. 100% 물방아.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
@@ -117,7 +117,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <span class="en hidden">Force Your AI Agent<br>to <span class="gradient-text">Research First</span></span>
     </h1>
     <p class="text-xl md:text-2xl text-gray-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-      <span class="ko">내장 웹 검색이 아닌, <span class="text-white font-semibold">7엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용</span>을 탑재한 검색 MCP 서버</span>
+      <span class="ko">내장 웹 검색이 아닌, <span class="text-white font-semibold">10엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용</span>을 탑재한 검색 MCP 서버</span>
       <span class="en hidden">Not a toy search tool. A <span class="text-white font-semibold">7-engine failover · BM25+semantic ranking · citation-native</span> search MCP server with harness setup tools.</span>
     </p>
     <div class="h-8 mb-10">
@@ -237,7 +237,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-maru-500">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 rounded-lg bg-maru-500/20 flex items-center justify-center"><i class="fas fa-network-wired text-maru-400"></i></div>
-          <h3 class="text-lg font-bold ko">7엔진 자동 폴오버</h3><h3 class="text-lg font-bold en hidden">7-Engine Failover</h3>
+          <h3 class="text-lg font-bold ko">10엔진 자동 폴오버</h3><h3 class="text-lg font-bold en hidden">10-Engine Failover</h3>
         </div>
         <p class="text-gray-400 text-sm ko">DuckDuckGo · Bing · Google · Naver · Qwant · Startpage · SearXNG. 하나가 망가지면 다음이 즉시 이어받습니다. 장애에 강인합니다.</p>
         <p class="text-gray-400 text-sm en hidden">Seven engines with automatic failover. One goes down, the next picks up instantly. Resilient by design.</p>
@@ -378,6 +378,13 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="text-center text-gray-500 mb-4 en hidden">MCP Client Layer</div>
       <div class="flex justify-center gap-3 mb-4 flex-wrap">
         <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Claude Code</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Cursor</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Zed</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">JetBrains</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Cody</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Devin</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Amazon Q</span>
+        <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Tabnine</span>
         <span class="px-3 py-1 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 text-xs">Cursor</span>
         <span class="px-3 py-1 rounded-lg bg-pink-500/10 border border-pink-500/20 text-pink-300 text-xs">Kimi</span>
         <span class="px-3 py-1 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs">Windsurf</span>
@@ -401,7 +408,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="text-center text-maru-300 mb-4 font-bold">▼</div>
       <div class="grid md:grid-cols-3 gap-4">
         <div class="border border-blue-500/20 rounded-xl p-3 bg-blue-950/20">
-          <div class="text-blue-300 font-bold text-xs mb-2 ko">7엔진 스크래퍼</div>
+          <div class="text-blue-300 font-bold text-xs mb-2 ko">10엔진 스크래퍼</div>
           <div class="text-blue-300 font-bold text-xs mb-2 en hidden">7-Engine Scraper</div>
           <div class="flex flex-wrap gap-1">
             <span class="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-gray-400">DDG</span>
@@ -593,7 +600,7 @@ animateParticles();
 
 // Typing Effect
 const koTexts = [
-  "7엔진 폴오버로 장애 없는 검색...",
+  "10엔진 폴오버로 장애 없는 검색...",
   "BM25 + 시맨틱으로 최고의 소스만 선별...",
   "[1], [2] 네이티브 인용으로 환각 차단...",
   "리서치 우선 규칙으로 에이전트 강제...",
