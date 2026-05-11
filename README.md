@@ -11,8 +11,9 @@
 
 <p align="center">
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/v/maru-deep-pro-search?style=flat-square&color=blue" alt="PyPI"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/actions"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/publish.yml?style=flat-square&label=CI" alt="CI"></a>
-  <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/tests/"><img src="https://img.shields.io/badge/tests-193%20passing-brightgreen?style=flat-square" alt="Tests"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/test.yml?style=flat-square&label=tests" alt="Tests"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/lint.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/lint.yml?style=flat-square&label=lint" alt="Lint"></a>
+  <a href="https://github.com/claudianus/maru-deep-pro-search/actions/workflows/publish.yml"><img src="https://img.shields.io/github/actions/workflow/status/claudianus/maru-deep-pro-search/publish.yml?style=flat-square&label=CI" alt="CI"></a>
   <a href="https://pypi.org/project/maru-deep-pro-search/"><img src="https://img.shields.io/pypi/pyversions/maru-deep-pro-search?style=flat-square" alt="Python"></a>
   <a href="https://github.com/claudianus/maru-deep-pro-search/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-brightgreen?style=flat-square" alt="License"></a>
   <a href="#docker"><img src="https://img.shields.io/badge/Docker-ready-blue?style=flat-square&logo=docker" alt="Docker"></a>
