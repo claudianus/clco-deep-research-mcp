@@ -45,6 +45,7 @@
 - [Performance](#performance-characteristics)
 - [Configuration](#configuration-reference)
 - [Before & After](#before--after)
+- [Known Limitations](#known-limitations)
 - [Troubleshooting](#troubleshooting)
 - [FAQ](#faq)
 - [Tech Stack](#tech-stack)
@@ -698,6 +699,20 @@ All environment variables are optional. Runtime config is loaded via `pydantic-s
 | **Ranking** | Raw engine ordering | BM25 + semantic + metadata hybrid |
 | **Resilience** | Single point of failure | 10-engine failover + smart fallback |
 | **Persistence** | Stateless | Project-level SQLite knowledge store |
+
+---
+
+## Known Limitations
+
+| Limitation | Why | Workaround |
+|------------|-----|------------|
+| **Search engines may block scrapers** | Google, Bing aggressively rate-limit scrapers | 10-engine failover handles this automatically |
+| **Semantic model loads slowly on first use** | `sentence-transformers` initializes on demand | ~2s one-time cost; stays warm afterwards |
+| **No JavaScript rendering by default** | Most engines use static HTTP fetch | Use `stealthy_fetch` tool for JS-heavy sites |
+| **KnowledgeStore is local-only** | SQLite per project, no cloud sync | Mount `.maru/` directory in Docker for persistence |
+| **Academic engine requires aiohttp** | ArXiv/Semantic Scholar use async HTTP | `pip install aiohttp` or use `[semantic]` extra |
+| **Some sites block all scrapers** | Cloudflare, captcha, bot detection | Stealth fetcher helps but can't guarantee access |
+| **Korean content quality varies** | Naver blocks non-browser requests | Fallback to DuckDuckGo Korean results |
 
 ---
 
