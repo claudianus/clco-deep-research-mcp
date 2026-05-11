@@ -18,6 +18,7 @@ def _green(text: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Initialize maru harness in the current project."""
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search init",
         description="Initialize maru harness in the current project.",

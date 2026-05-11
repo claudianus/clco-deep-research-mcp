@@ -58,6 +58,7 @@ def cmd_stats(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Display KnowledgeStore statistics and health."""
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search stats",
         description="Display KnowledgeStore statistics, cache health, and usage metrics.",

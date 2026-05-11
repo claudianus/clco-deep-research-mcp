@@ -67,6 +67,7 @@ def cmd_generate_workflow(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Generate CI/CD workflow templates for automated research."""
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search workflow",
         description="Generate CI/CD workflow templates for automated research pipelines.",
