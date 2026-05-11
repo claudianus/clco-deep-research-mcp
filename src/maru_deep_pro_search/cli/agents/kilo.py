@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from ..backup import backup_file, read_json_safe, restore_file, write_json_safe
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -54,13 +54,11 @@ class KiloAdapter(AgentAdapter):
     def inject_rules(self, scope: str = "user") -> bool:
         path = self._config_path(scope)
         config = read_json_safe(path)
-        if "systemPrompt" not in config:
-            config["systemPrompt"] = ""
 
         protocol = get_protocol_for_agent(self.name)
-        if protocol in config.get("systemPrompt", ""):
-            return True
-
-        config["systemPrompt"] = config.get("systemPrompt", "") + f"\n\n{protocol}"
-        write_json_safe(path, config)
+        current = config.get("systemPrompt", "")
+        new_prompt = inject_protocol(current, protocol)
+        if new_prompt != current:
+            config["systemPrompt"] = new_prompt
+            write_json_safe(path, config)
         return True

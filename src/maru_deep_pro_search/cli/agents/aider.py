@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -170,9 +170,9 @@ class AiderAdapter(AgentAdapter):
         protocol = get_protocol_for_agent(self.name)
 
         content = read_text_safe(conv_path)
-        if protocol not in content:
-            header = "# maru-deep-pro-search Research Protocol\n\n"
-            write_text_safe(conv_path, content + "\n\n" + header + protocol + "\n")
+        new_content = inject_protocol(content, protocol)
+        if new_content != content:
+            write_text_safe(conv_path, new_content)
 
         # 2. .aider.conf.yml — with auto-detected quality gates
         config_path = self._config_path(scope)

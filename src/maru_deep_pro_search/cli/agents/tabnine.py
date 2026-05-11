@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -60,7 +60,7 @@ class TabnineAdapter(AgentAdapter):
         protocol = get_protocol_for_agent(self.name)
         content = read_text_safe(path)
 
-        if protocol not in content:
-            header = "# maru-deep-pro-search Research Protocol\n\n"
-            write_text_safe(path, content + "\n\n" + header + protocol + "\n")
+        new_content = inject_protocol(content, protocol)
+        if new_content != content:
+            write_text_safe(path, new_content)
         return True

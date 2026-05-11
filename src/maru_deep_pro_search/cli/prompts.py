@@ -3,14 +3,18 @@
 from __future__ import annotations
 
 import datetime
+import re
 
 _CURRENT_YEAR = datetime.datetime.now(tz=datetime.timezone.utc).year
 
+# Unique markers that wrap the protocol so adapters can surgically replace it
+# even when the language or content changes between versions.
+PROTOCOL_START_MARKER = "<!-- MARU-RESEARCH-PROTOCOL-START -->"
+PROTOCOL_END_MARKER = "<!-- MARU-RESEARCH-PROTOCOL-END -->"
+
 # The unified research-first protocol injected as system prompt / rules.
 # English only — token-efficient and optimal for all LLMs.
-RESEARCH_PROTOCOL = f"""═══════════════════════════════════════════════════════════════
-MANDATORY RESEARCH PROTOCOL — DO NOT VIOLATE
-═══════════════════════════════════════════════════════════════
+_RESEARCH_PROTOCOL_BODY = f"""MANDATORY RESEARCH PROTOCOL — DO NOT VIOLATE
 
 Rule 1: Before answering ANY technical question, you MUST call
         maru-deep-pro-search's deep_research(query) tool.
@@ -34,9 +38,20 @@ Rule 6: For code / library questions, verify the latest version and API
         via deep_research BEFORE writing any code.
 
 Rule 7: Your training data is stale. The web is current.
-        Always verify freshness with deep_research.
+        Always verify freshness with deep_research."""
 
-═══════════════════════════════════════════════════════════════"""
+RESEARCH_PROTOCOL = (
+    f"{PROTOCOL_START_MARKER}\n"
+    f"{_RESEARCH_PROTOCOL_BODY}\n"
+    f"{PROTOCOL_END_MARKER}"
+)
+
+# Regex that matches ANY previously injected protocol block (Korean or English,
+# old or new) so adapters can remove it before inserting the latest version.
+_PROTOCOL_BLOCK_RE = re.compile(
+    re.escape(PROTOCOL_START_MARKER) + r".*?" + re.escape(PROTOCOL_END_MARKER),
+    re.DOTALL,
+)
 
 
 # Agent-specific wrappers (if an agent needs the protocol formatted differently)
@@ -77,6 +92,46 @@ COPILOT_INSTRUCTIONS_APPENDIX = f"""
 - Inline comments should reference research citations when explaining technical decisions.
 - Do not suggest deprecated APIs or patterns contradicted by research.
 """
+
+
+def strip_existing_protocol(text: str) -> str:
+    """Remove any previously injected research protocol block from *text*.
+
+    This handles both the new marker-wrapped protocol and legacy Korean
+    protocol that was injected before the marker system existed.  It is
+    deliberately forgiving so that minor formatting changes between
+    versions do not cause duplicate injection.
+    """
+    # 1. Remove any block wrapped in our official markers (works for any language).
+    cleaned = _PROTOCOL_BLOCK_RE.sub("", text)
+
+    # 2. Heuristic: remove the old Korean protocol header + body.
+    #    The old protocol started with "═══..." and contained "필수 리서치 프로토콜".
+    #    We strip from the first "═" border line to the last one.
+    if "필수 리서치 프로토콜" in cleaned or "MANDATORY RESEARCH PROTOCOL" in cleaned:
+        # Remove content between ═══ border lines that contain protocol keywords
+        cleaned = re.sub(
+            r"═+\n?[^═]*(?:필수 리서치 프로토콜|MANDATORY RESEARCH PROTOCOL)[^═]*═+.*?═+",
+            "",
+            cleaned,
+            flags=re.DOTALL,
+        )
+        # Also clean up stray border-only blocks left behind
+        cleaned = re.sub(r"═+\s*", "", cleaned)
+
+    # Normalise excessive blank lines left behind by the removal
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned.strip()
+
+
+def inject_protocol(content: str, protocol: str) -> str:
+    """Return *content* with *protocol* injected, replacing any old version.
+
+    This is the canonical helper that every adapter should use in
+    ``inject_rules()`` instead of manual ``if protocol not in content`` checks.
+    """
+    cleaned = strip_existing_protocol(content)
+    return f"{cleaned}\n\n{protocol}\n" if cleaned else f"{protocol}\n"
 
 
 def get_protocol_for_agent(agent: str) -> str:

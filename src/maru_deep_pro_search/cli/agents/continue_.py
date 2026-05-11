@@ -6,7 +6,7 @@ import shutil
 from pathlib import Path
 
 from ..backup import backup_file, read_json_safe, restore_file, write_json_safe
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -79,10 +79,10 @@ class ContinueAdapter(AgentAdapter):
             })
 
         # Inject system message
-        if "system_message" not in config:
-            config["system_message"] = ""
-        if protocol not in config["system_message"]:
-            config["system_message"] += "\n\n" + protocol
+        current = config.get("system_message", "")
+        new_prompt = inject_protocol(current, protocol)
+        if new_prompt != current:
+            config["system_message"] = new_prompt
 
         write_json_safe(path, config)
 

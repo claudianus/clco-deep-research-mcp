@@ -14,7 +14,7 @@ from ..backup import (
     write_json_safe,
     write_text_safe,
 )
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -96,11 +96,9 @@ class ClaudeAdapter(AgentAdapter):
         md_path = self._claude_md_path(scope)
         protocol = get_protocol_for_agent(self.name)
         content = read_text_safe(md_path)
-
-        if protocol in content:
-            pass  # Already present
-        else:
-            write_text_safe(md_path, content + "\n\n" + protocol + "\n")
+        new_content = inject_protocol(content, protocol)
+        if new_content != content:
+            write_text_safe(md_path, new_content)
 
         # 2. Custom commands
         self._write_commands(scope)

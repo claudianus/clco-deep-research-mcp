@@ -13,7 +13,7 @@ from ..backup import (
     write_json_safe,
     write_text_safe,
 )
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -80,9 +80,9 @@ class CursorAdapter(AgentAdapter):
         content = read_text_safe(rules_path)
         protocol = get_protocol_for_agent(self.name)
 
-        if protocol not in content:
-            content += f"\n\n# maru-deep-pro-search Research Protocol\n{protocol}\n"
-            write_text_safe(rules_path, content)
+        new_content = inject_protocol(content, protocol)
+        if new_content != content:
+            write_text_safe(rules_path, new_content)
 
         # 2. .cursor/settings.json — enable MCP tools by default
         settings_path = self._settings_path(scope)

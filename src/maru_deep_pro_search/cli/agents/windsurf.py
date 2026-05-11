@@ -13,7 +13,7 @@ from ..backup import (
     write_json_safe,
     write_text_safe,
 )
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
 
@@ -69,9 +69,7 @@ class WindsurfAdapter(AgentAdapter):
         content = read_text_safe(path)
         protocol = get_protocol_for_agent(self.name)
 
-        if protocol in content:
-            return True
-
-        content += f"\n\n{protocol}\n"
-        write_text_safe(path, content)
+        new_content = inject_protocol(content, protocol)
+        if new_content != content:
+            write_text_safe(path, new_content)
         return True
