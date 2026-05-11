@@ -83,7 +83,7 @@ Modern AI coding agents ship with "web search" tools. They sound convenient — 
 
 ### What maru-deep-pro-search does differently
 
-This isn't a search tool. It's a **research enforcement platform**.
+This isn't a standalone search tool. It's a **search MCP server with harness setup tools** — it provides the search/fetch tools and injects the research-first rules into your agent.
 
 - **7-engine failover** — DuckDuckGo, Bing, Google, Naver, Qwant, Startpage, SearXNG. One fails? The next one picks up instantly.
 - **Perplexity-grade ranking** — BM25 relevance + semantic similarity + authority / freshness / code-density scoring. The best sources float to the top.
