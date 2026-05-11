@@ -11,6 +11,17 @@
 
 set -e
 
+# When this script is run via pipe (curl | bash), child processes inherit the
+# same pipe as stdin.  That breaks MCP servers which read JSON-RPC from stdin.
+# Fix: dump the script to a temp file and re-exec from there so children get
+# a clean stdin (the real TTY or /dev/null, not the script stream).
+if [ ! -t 0 ] && [ -p /dev/stdin ]; then
+    _tmp=$(mktemp)
+    cat > "$_tmp"
+    chmod +x "$_tmp"
+    exec bash "$_tmp" "$@"
+fi
+
 MIN_PY_MAJOR=3
 MIN_PY_MINOR=10
 TARGET_PY="${MIN_PY_MAJOR}.${MIN_PY_MINOR}"
