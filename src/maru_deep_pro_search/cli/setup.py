@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 
 from .agents.aider import AiderAdapter
@@ -122,8 +123,42 @@ def cmd_setup(args: argparse.Namespace) -> int:
         print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
     else:
         print(f"\n  {yellow('!')} semantic search 미설치")
-        print(f"     설치 시 검색 품질 ↑: {bold('pip install sentence-transformers')}")
-        print(f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}")
+        if sys.stdin.isatty():
+            try:
+                choice = input(
+                    f"     {bold('sentence-transformers를 지금 설치하시겠습니까?')} [Y/n]: "
+                )
+            except (EOFError, KeyboardInterrupt):
+                choice = "n"
+            if not choice or choice.strip().lower() in ("y", "yes"):
+                print("     설치 중...")
+                try:
+                    subprocess.run(
+                        [
+                            sys.executable,
+                            "-m",
+                            "pip",
+                            "install",
+                            "sentence-transformers>=3.0.0",
+                        ],
+                        check=True,
+                    )
+                    print(f"     {green('✓')} sentence-transformers 설치 완료")
+                except subprocess.CalledProcessError as exc:
+                    print(f"     {yellow('!')} 설치 실패: {exc}")
+                    print(
+                        f"     수동 설치: {bold('pip install sentence-transformers>=3.0.0')}"
+                    )
+            else:
+                print("     설치를 생략합니다.")
+                print(
+                    f"     나중에 설치: {bold('pip install sentence-transformers>=3.0.0')}"
+                )
+        else:
+            print(f"     설치 시 검색 품질 ↑: {bold('pip install sentence-transformers>=3.0.0')}")
+            print(
+                f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}"
+            )
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
     print(f"   되돌리려면: {bold('maru-deep-pro-search setup --restore')}")
