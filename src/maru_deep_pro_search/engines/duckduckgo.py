@@ -94,6 +94,7 @@ class DuckDuckGoEngine(SearchEngine):
     reliability_score = 0.95
 
     def __init__(self, variant: str = "duckduckgo_lite"):
+        super().__init__()
         self.variant = variant
         self._session = None
         self._stealth_session = None

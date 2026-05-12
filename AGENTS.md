@@ -51,7 +51,7 @@ Before creating a new release tag:
 - [ ] Update version badge in `docs/index.html` (hero badge)
 - [ ] Update test count in `docs/index.html` if changed
 - [ ] Update test count in `README.md` if changed
-- [ ] Update test count in `AGENTS.md` if changed
+- [ ] Update test count in `AGENTS.md` if changed (current: 203)
 - [ ] Update engine list in `AGENTS.md` if engines added/removed
 - [ ] Run full test suite: `pytest tests/ -v` (all must pass)
 - [ ] Commit all changes
@@ -108,7 +108,7 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 202 tests, all passing.
+**Current requirement**: 203 tests, all passing.
 
 ## Key Architecture Decisions
 
@@ -128,6 +128,50 @@ pytest tests/ -v
 14. **Three-layer rate limiting** — `asyncio.Semaphore(3)` (concurrency cap) + `EngineRateLimiter` (per-engine cooldowns, auto-wrapped via `__init_subclass__`) + `TokenBucket` (global QPS). Prevents 429 storms on Google/Baidu.
 15. **Session-reuse stealth** — Google/Startpage use `AsyncStealthySession` (browser reuse + cookie persistence) instead of `StealthyFetcher` (new browser per call). Dramatically reduces rate limit hits.
 16. **Obfuscated DOM resilience** — Naver's hashed CSS classes (`sds-comps-*`) bypassed via SSR container detection. Baidu's AI widgets filtered via `result-op` class exclusion.
+
+## Inheritance Initialization Safety (MANDATORY)
+
+### The Bug Pattern
+
+**ALL subclasses that override `__init__` MUST call `super().__init__()` as the FIRST statement**, unless the parent is `object` or the override is explicitly documented with a `# noqa: super-init-not-called` justification comment.
+
+**What happened:** `DuckDuckGoEngine`, `BaiduEngine`, `BingEngine`, `NaverEngine`, `YahooEngine`, `EcosiaEngine`, `StartpageEngine`, and `GoogleEngine` all overrode `__init__` without calling `super().__init__()`. The base class `SearchEngine.__init__()` initializes `self._circuit_breaker` and `self._last_request_time`. When these were missing, the `__init_subclass__`-wrapped `search()` method crashed at runtime with:
+
+```
+'DuckDuckGoEngine' object has no attribute '_circuit_breaker'
+```
+
+This was a **silent failure at import time** — it only exploded when `deep_research` actually tried to execute a subquery.
+
+### Prevention Checklist (Apply to EVERY class hierarchy change)
+
+- [ ] **Rule INHERIT-1**: If a subclass defines `def __init__(self, ...):`, the FIRST line MUST be `super().__init__()` (or `super().__init__(...)` with required args).
+- [ ] **Rule INHERIT-2**: When modifying a base class `__init__`, grep ALL subclasses and verify they still call `super().__init__()` correctly.
+- [ ] **Rule INHERIT-3**: Every new `SearchEngine` subclass MUST include an instantiation test in `tests/test_engines.py` that asserts:
+  ```python
+  engine = SomeNewEngine()
+  assert hasattr(engine, '_circuit_breaker')
+  assert hasattr(engine, '_last_request_time')
+  ```
+- [ ] **Rule INHERIT-4**: Every new ABC that initializes state in `__init__` MUST also have a test that instantiates each concrete subclass and verifies all parent-initialized attributes exist.
+- [ ] **Rule INHERIT-5**: If `__init_subclass__` wraps methods that access instance attributes set in the parent `__init__`, add a `test_all_subclasses_initializable` test that loops over `cls.__subclasses__()` and performs the attribute check.
+
+### Existing Enforcement
+
+The `tests/test_engines.py` already validates all 8 active engines. **Any new engine added without this test is a BLOCKING defect.** Run:
+
+```bash
+pytest tests/test_engines.py -v
+```
+
+### Code Review Trigger Words
+
+When reviewing PRs, REJECT if you see any of these patterns without `super().__init__()`:
+- `class XEngine(SearchEngine):` + `def __init__(self):`
+- `class X(SomeBaseWithState):` + `def __init__(self):`
+- Base class adds `self._new_attr = ...` in `__init__` but not all subclasses were updated.
+
+---
 
 ## Forcing Agents to Research Before Coding
 

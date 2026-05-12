@@ -67,3 +67,21 @@ class TestSearchEngineRegistry:
         assert SearchEngineRegistry.is_registered("ecosia")
         assert SearchEngineRegistry.is_registered("baidu")
         assert not SearchEngineRegistry.is_registered("nonexistent")
+
+    def test_all_engines_have_parent_initialized_attrs(self):
+        """INHERIT-3/5: Every SearchEngine subclass must inherit parent __init__ state.
+
+        Regression guard: subclasses that override __init__ without calling
+        super().__init__() silently break _circuit_breaker and _last_request_time,
+        which crashes at runtime when __init_subclass__ wraps search().
+        """
+        for name in SearchEngineRegistry.list_engines():
+            engine = SearchEngineRegistry.create(name)
+            assert hasattr(engine, "_circuit_breaker"), (
+                f"{name}: missing _circuit_breaker — "
+                f"did __init__ forget super().__init__()?"
+            )
+            assert hasattr(engine, "_last_request_time"), (
+                f"{name}: missing _last_request_time — "
+                f"did __init__ forget super().__init__()?"
+            )

@@ -44,6 +44,7 @@ class EcosiaEngine(SearchEngine):
     reliability_score = 0.85
 
     def __init__(self):
+        super().__init__()
         self._fetcher = AsyncFetcher()
 
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:

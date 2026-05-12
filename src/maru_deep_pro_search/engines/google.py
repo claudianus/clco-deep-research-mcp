@@ -56,6 +56,7 @@ class GoogleEngine(SearchEngine):
     reliability_score = 0.75
 
     def __init__(self):
+        super().__init__()
         self._session: AsyncStealthySession | None = None
         self._session_started = False
         StealthyFetcher.configure(adaptive=True, adaptive_domain="google.com")
