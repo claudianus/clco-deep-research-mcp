@@ -73,7 +73,7 @@ class ZedAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
-        # Zed uses assistant.md for system prompt injection
+        # 1. Zed uses assistant.md for system prompt injection
         md_path = self._assistant_path(scope)
         protocol = get_protocol_for_agent(self.name)
         content = read_text_safe(md_path)
@@ -81,4 +81,17 @@ class ZedAdapter(AgentAdapter):
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(md_path, new_content)
+
+        # 2. settings.json — default model + instructions hint
+        settings_path = self._settings_path(scope)
+        config: dict[str, Any] = read_json_safe(settings_path)
+        if "assistant" not in config:
+            config["assistant"] = {}
+        # Hint in settings for future Zed versions that support tool instructions
+        config["assistant"]["default_instructions"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(settings_path, config)
+
         return True

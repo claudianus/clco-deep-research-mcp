@@ -69,13 +69,26 @@ class ContinueAdapter(AgentAdapter):
         if "custom_commands" not in config:
             config["custom_commands"] = []
 
-        # Add /research command if not exists
+        # Add /research and /verify commands if not exists
         existing_names = [c.get("name", "") for c in config["custom_commands"]]
         if "research" not in existing_names:
             config["custom_commands"].append({
                 "name": "research",
-                "description": "Run deep research with citations",
-                "prompt": "Call deep_research with the user's current intent and return a cited summary.",
+                "description": "Run deep research before any code change",
+                "prompt": (
+                    "Before writing or modifying any code, call deep_research "
+                    "with the user's request as the query. Summarize findings and "
+                    "wait for confirmation before proceeding."
+                ),
+            })
+        if "verify" not in existing_names:
+            config["custom_commands"].append({
+                "name": "verify",
+                "description": "Verify research was completed for this session",
+                "prompt": (
+                    "Check if deep_research has been called in this session. "
+                    "If not, refuse to proceed and instruct the user to run /research first."
+                ),
             })
 
         # Inject system message
