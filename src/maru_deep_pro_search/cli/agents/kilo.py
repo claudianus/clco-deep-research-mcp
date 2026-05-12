@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ..backup import backup_file, read_json_safe, restore_file, write_json_safe
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_command_list
 
 
 class KiloAdapter(AgentAdapter):
@@ -45,7 +45,7 @@ class KiloAdapter(AgentAdapter):
 
         config["mcp"]["maru-deep-pro-search"] = {
             "type": "local",
-            "command": ["python3", "-m", "maru_deep_pro_search.server"],
+            "command": get_mcp_server_command_list(),
             "enabled": True,
         }
         write_json_safe(path, config)

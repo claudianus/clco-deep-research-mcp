@@ -2,9 +2,49 @@
 
 from __future__ import annotations
 
+import shutil
+import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
+
+
+def get_mcp_server_command() -> dict[str, Any]:
+    """Return the MCP server command configuration for JSON-based agents.
+
+    Tries to find the installed ``maru-deep-pro-search`` binary first.
+    Falls back to ``sys.executable`` with the module path.
+    """
+    binary = shutil.which("maru-deep-pro-search")
+    if binary:
+        return {"command": binary, "args": []}
+    return {"command": sys.executable, "args": ["-m", "maru_deep_pro_search.server"]}
+
+
+def get_mcp_server_command_list() -> list[str]:
+    """Return the MCP server command as a list for agents using list format."""
+    binary = shutil.which("maru-deep-pro-search")
+    if binary:
+        return [binary]
+    return [sys.executable, "-m", "maru_deep_pro_search.server"]
+
+
+def get_mcp_server_yaml() -> str:
+    """Return the MCP server YAML block for Hermes-style configs."""
+    binary = shutil.which("maru-deep-pro-search")
+    if binary:
+        return (
+            f"  maru-deep-pro-search:\n"
+            f"    command: {binary}\n"
+            f"    args: []\n"
+        )
+    return (
+        f"  maru-deep-pro-search:\n"
+        f"    command: {sys.executable}\n"
+        f"    args:\n"
+        f"      - -m\n"
+        f"      - maru_deep_pro_search.server\n"
+    )
 
 
 class AgentAdapter(ABC):

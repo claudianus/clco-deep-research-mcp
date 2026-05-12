@@ -15,7 +15,7 @@ from ..backup import (
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_command
 
 
 class ClaudeAdapter(AgentAdapter):
@@ -79,11 +79,7 @@ class ClaudeAdapter(AgentAdapter):
         if "mcpServers" not in config:
             config["mcpServers"] = {}
 
-        config["mcpServers"]["maru-deep-pro-search"] = {
-            "command": "python3",
-            "args": ["-m", "maru_deep_pro_search.server"],
-            "env": {},
-        }
+        config["mcpServers"]["maru-deep-pro-search"] = get_mcp_server_command()
         write_json_safe(path, config)
 
         # Also write .claude/settings.json with hooks + hook scripts

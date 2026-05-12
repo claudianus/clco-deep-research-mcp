@@ -37,7 +37,7 @@ from ..backup import (
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_yaml
 
 
 class HermesAdapter(AgentAdapter):
@@ -96,14 +96,7 @@ class HermesAdapter(AgentAdapter):
 
         marker = "# maru-deep-pro-search MCP"
         if marker not in content:
-            content += (
-                f"\n{marker}\n"
-                "  maru-deep-pro-search:\n"
-                "    command: python3\n"
-                "    args:\n"
-                "      - -m\n"
-                "      - maru_deep_pro_search.server\n"
-            )
+            content += f"\n{marker}\n" + get_mcp_server_yaml()
             write_text_safe(config_path, content)
 
         return True

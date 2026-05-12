@@ -12,7 +12,7 @@ from ..backup import (
     write_json_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
-from .base import AgentAdapter
+from .base import AgentAdapter, get_mcp_server_command
 
 
 class KimiAdapter(AgentAdapter):
@@ -50,10 +50,7 @@ class KimiAdapter(AgentAdapter):
         if "mcpServers" not in config:
             config["mcpServers"] = {}
 
-        config["mcpServers"]["maru-deep-pro-search"] = {
-            "command": "python3",
-            "args": ["-m", "maru_deep_pro_search.server"],
-        }
+        config["mcpServers"]["maru-deep-pro-search"] = get_mcp_server_command()
         write_json_safe(path, config)
         return True
 
