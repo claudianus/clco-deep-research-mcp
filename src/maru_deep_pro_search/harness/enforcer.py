@@ -91,15 +91,9 @@ class SessionEnforcer:
     """Tracks every MCP session and enforces research-before-action policies."""
 
     # Tools that REQUIRE deep_research to have been called first.
-    RESEARCH_DEPENDENT_TOOLS: set[str] = {
-        "fetch_page",
-        "fetch_bulk",
-        "stealthy_fetch",
-        "web_search",
-        "search_with_citations",
-        "answer",
-        "parallel_search",
-    }
+    # Previously gated all search tools; now only code generation is gated
+    # via validate_code_generation() in the generate_code tool itself.
+    RESEARCH_DEPENDENT_TOOLS: set[str] = {}
 
     # Tools that can be called WITHOUT prior research.
     RESEARCH_EXEMPT_TOOLS: set[str] = {

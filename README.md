@@ -278,8 +278,9 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 
 **Layer 1 — Server-side (`SessionEnforcer`)**
 - Every MCP connection gets a `session_id`
-- `deep_research()` marks the session as "researched" with a timestamp
-- Any other tool checks the session state first; if research is missing or stale → `ResearchRequiredError`
+- `deep_research()` marks the session with a `research_id` + timestamp + citations
+- `web_search`, `answer`, `fetch_page` 등은 **자유롭게 사용 가능** — research 없이도 호출됨
+- `generate_code(research_id=...)`만 세션의 `research_id` 일치 여부를 검증
 - Research TTL: 30 minutes (configurable via `MARU_RESEARCH_TTL` env var)
 
 **Layer 2 — Client-side Hooks**
@@ -292,10 +293,10 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 | **Hermes** | `pre_tool_call` plugin | Python plugin via `hermes_agent.plugins` entry point | Hook returns block action |
 | **Others** | Protocol injection | `RESEARCH_PROTOCOL` injected into agent config | Best-effort (Layer 1 enforces) |
 
-**Layer 3 — Tool Dependency (Roadmap)**
-- Future `generate_code()` tool will require `research_id` parameter
-- The research ID must match a completed session with valid citations
-- Code without citations from research is rejected
+**Layer 3 — Tool Dependency (`generate_code`)**
+- `generate_code(research_id=..., proposed_code=...)` requires a valid `research_id` from `deep_research`
+- `proposed_code` must contain at least one citation `[N]` from the research result
+- Returns detailed validation report on failure (missing citations, research_id mismatch, expired research)
 
 ### Why Three Layers?
 

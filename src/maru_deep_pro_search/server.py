@@ -355,7 +355,6 @@ def research_workflow() -> str:
 # ═══════════════════════════════════════════════════════════════
 
 @mcp.tool()
-@_with_enforcement("answer")
 async def answer(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -369,7 +368,6 @@ async def answer(
 
 
 @mcp.tool()
-@_with_enforcement("web_search")
 async def web_search(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -382,7 +380,6 @@ async def web_search(
 
 
 @mcp.tool()
-@_with_enforcement("search_with_citations")
 async def search_with_citations(
     query: str,
     engine: str = "duckduckgo_lite",
@@ -395,7 +392,6 @@ async def search_with_citations(
 
 
 @mcp.tool()
-@_with_enforcement("fetch_page")
 async def fetch_page(
     url: str,
     stealth: bool = False,
@@ -408,7 +404,6 @@ async def fetch_page(
 
 
 @mcp.tool()
-@_with_enforcement("fetch_bulk")
 async def fetch_bulk(
     urls: list[str],
     stealth: bool = False,
@@ -443,7 +438,6 @@ async def deep_research(
 
 
 @mcp.tool()
-@_with_enforcement("stealthy_fetch")
 async def stealthy_fetch(
     url: str,
     max_tokens: int = 6000,
@@ -455,7 +449,6 @@ async def stealthy_fetch(
 
 
 @mcp.tool()
-@_with_enforcement("parallel_search")
 async def parallel_search(
     queries: list[str],
     engine: str = "duckduckgo_lite",

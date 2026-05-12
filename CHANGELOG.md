@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **3-Layer Real Research Enforcement Architecture**: Technical gatekeeping beyond prompt injection
-  - **Layer 1 (Server)**: `SessionEnforcer` — per-session research tracking with 30min TTL. Gated tools return hard error if `deep_research` not called.
+  - **Layer 1 (Server)**: `SessionEnforcer` — `deep_research` 호출 시 세션에 `research_id` 마킹 + 30min TTL. 나머지 툴은 자유롭게 사용 가능. `generate_code` 툴에서만 `research_id` 검증.
   - **Layer 2 (Client Hooks)**: Physical blocking before agent acts:
     - **Claude Code**: `PreToolUse` hook script (`~/.claude/hooks/maru-enforce-research.sh`) exits 2 to block Write/Edit
     - **Aider**: `lint-cmd` gate script (`~/.maru/aider_research_gate.py`) fails if research incomplete
@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - `/research` and `/verify` slash commands
       - `hermes maru status` CLI command
       - Gateway hooks + skills registration
-  - **Layer 3 (Tool Dependency)**: Roadmap — `generate_code(research_id=...)` requiring valid session tokens
+  - **Layer 3 (Tool Dependency)**: `generate_code(research_id=...)` — code generation gated by valid research tokens + citation verification
 - **`~/.maru/session_research.json`**: Filesystem marker written by `SessionEnforcer` for client-side hooks to verify research state
 
 ### Fixed
