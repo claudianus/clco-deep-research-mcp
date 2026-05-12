@@ -170,7 +170,8 @@ This isn't a standalone search tool. It's a **search MCP server with harness set
 ┌──────────────────────────────────────────────────────────────────────┐
 │                         MCP Client Layer                              │
 │  (Claude Code, Cursor, Zed, JetBrains, Cody, Devin, Amazon Q,         │
-│   Tabnine, Codeium, Kimi, Windsurf, Aider, Copilot, Cline, ...)       │
+│   Tabnine, Codeium, Kimi, Windsurf, Aider, Copilot, Cline,            │
+│   Hermes, Continue, Supermaven, OpenCode, Kilo, AntiGravity)            │
 └───────────────────────────────┬───────────────────────────────────────┘
                                 │ JSON-RPC 2.0 / stdio
                                 ▼
@@ -262,6 +263,7 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 │  • Claude Code: PreToolUse hook (exit 2) blocks Write/Edit            │
 │  • Aider: lint-cmd gate script fails if research incomplete           │
 │  • Cursor: .cursorrules + custom /research, /verify slash commands    │
+│  • Hermes: pre_tool_call plugin hook blocks un-researched tools       │
 │  Physical blocking — the agent CANNOT proceed even if it wants to.    │
 ├──────────────────────────────────────────────────────────────────────┤
 │                    LAYER 1: Server-Side Enforcement                   │
@@ -287,6 +289,7 @@ The server contains **zero generative LLMs**. Synthesis is rule-based; your agen
 | **Claude Code** | `PreToolUse` | Shell script checks `~/.maru/session_research.json` | Exit code 2 blocks Write/Edit |
 | **Aider** | `lint-cmd` | Python gate script in `~/.maru/aider_research_gate.py` | Lint failure aborts edit |
 | **Cursor** | `.cursorrules` + commands | Custom `/research` and `/verify` slash commands | Rules + MCP auto-enable |
+| **Hermes** | `pre_tool_call` plugin | Python plugin via `hermes_agent.plugins` entry point | Hook returns block action |
 | **Others** | Protocol injection | `RESEARCH_PROTOCOL` injected into agent config | Best-effort (Layer 1 enforces) |
 
 **Layer 3 — Tool Dependency (Roadmap)**

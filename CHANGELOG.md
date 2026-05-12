@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Windsurf**: `settings.json` with MCP autoEnable + defaultInstructions
     - **Zed**: `settings.json` assistant.default_instructions hint
     - **Continue**: `/verify` custom command alongside existing `/research`
+    - **Hermes**: Full plugin-based enforcement via `hermes_agent.plugins` entry point
+      - `pre_tool_call` hook blocks un-researched tools with reason
+      - `post_tool_call` hook for audit logging
+      - `on_session_start` hook resets gate + injects system message
+      - `/research` and `/verify` slash commands
+      - `hermes maru status` CLI command
+      - Gateway hooks + skills registration
   - **Layer 3 (Tool Dependency)**: Roadmap — `generate_code(research_id=...)` requiring valid session tokens
 - **`~/.maru/session_research.json`**: Filesystem marker written by `SessionEnforcer` for client-side hooks to verify research state
 

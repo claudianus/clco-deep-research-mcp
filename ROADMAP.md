@@ -40,7 +40,7 @@ This document outlines planned features and improvements. For the latest shipped
 - [x] 72-layer prompt injection defense
 - [x] MCP audit logging with anomaly detection
 - [x] Docker sandbox support
-- [x] 19 agent adapters
+- [x] 20 agent adapters (including Hermes with full plugin-based enforcement)
 - [x] 3-layer real research enforcement (server + client hooks)
 - [x] KnowledgeStore SQLite caching
 - [x] BM25 + semantic hybrid ranking

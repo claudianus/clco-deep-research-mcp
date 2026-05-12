@@ -36,6 +36,7 @@ This project implements multiple defense layers:
   - **Claude Code**: `PreToolUse` hook (exit code 2) blocks `Write`/`Edit`
   - **Aider**: `lint-cmd` gate script fails if research is incomplete
   - **Cursor**: Custom `/research` and `/verify` slash commands + `.cursorrules`
+  - **Hermes**: `pre_tool_call` plugin hook blocks un-researched tools; `post_tool_call` hook audits; `on_session_start` resets gate
 - **Layer 3 — Tool dependency** (roadmap): Future `generate_code()` will require a `research_id` parameter matching a completed research session.
 
 ### Input Defense
