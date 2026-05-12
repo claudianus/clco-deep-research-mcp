@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **3-Layer Real Research Enforcement Architecture**: Technical gatekeeping beyond prompt injection
+  - **Layer 1 (Server)**: `SessionEnforcer` — per-session research tracking with 30min TTL. Gated tools return hard error if `deep_research` not called.
+  - **Layer 2 (Client Hooks)**: Physical blocking before agent acts:
+    - **Claude Code**: `PreToolUse` hook script (`~/.claude/hooks/maru-enforce-research.sh`) exits 2 to block Write/Edit
+    - **Aider**: `lint-cmd` gate script (`~/.maru/aider_research_gate.py`) fails if research incomplete
+    - **Cursor**: Custom `/research` and `/verify` slash commands + `.cursorrules` + `settings.json` defaultInstructions
+    - **Windsurf**: `settings.json` with MCP autoEnable + defaultInstructions
+    - **Zed**: `settings.json` assistant.default_instructions hint
+    - **Continue**: `/verify` custom command alongside existing `/research`
+  - **Layer 3 (Tool Dependency)**: Roadmap — `generate_code(research_id=...)` requiring valid session tokens
+- **`~/.maru/session_research.json`**: Filesystem marker written by `SessionEnforcer` for client-side hooks to verify research state
+
+### Fixed
+- **Python 3.9 compatibility**: Removed `zip(..., strict=False)` in `sanitize.py:322` (strict kwarg added in 3.10)
+- **Build**: Removed deprecated `License :: OSI Approved :: MIT License` classifier (setuptools no longer supports classifier-style licenses)
+
 ## [0.9.2] - 2025-05-12
 
 ### Added

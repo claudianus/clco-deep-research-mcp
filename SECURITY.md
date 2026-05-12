@@ -27,6 +27,19 @@ You can expect:
 
 This project implements multiple defense layers:
 
+### Research Enforcement (3-Layer Architecture)
+
+> **This is not prompt injection.** LLMs can ignore text. These are technical gates.
+
+- **Layer 1 — Server-side gate**: `SessionEnforcer` tracks every MCP session. Tools like `fetch_page`, `web_search`, `answer` return a hard error if `deep_research` hasn't been called first. Research expires after 30 minutes.
+- **Layer 2 — Client-side hooks**: Physical blocking before the agent can act:
+  - **Claude Code**: `PreToolUse` hook (exit code 2) blocks `Write`/`Edit`
+  - **Aider**: `lint-cmd` gate script fails if research is incomplete
+  - **Cursor**: Custom `/research` and `/verify` slash commands + `.cursorrules`
+- **Layer 3 — Tool dependency** (roadmap): Future `generate_code()` will require a `research_id` parameter matching a completed research session.
+
+### Input Defense
+
 - **72 prompt injection signatures** covering 10+ languages
 - **MCP-specific attack detection**: tool poisoning, rug pulls, shadowing, MPMA
 - **Content sanitization**: zero-width character stripping, token neutralization
