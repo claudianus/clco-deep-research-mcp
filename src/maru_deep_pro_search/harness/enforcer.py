@@ -115,8 +115,9 @@ class SessionEnforcer:
         with self._lock:
             state = self.get_or_create(session_id)
             state.mark_research(query, result)
-            # Also touch filesystem marker so client-side hooks can check it
+            # Also update filesystem markers so client-side hooks can check it
             self._touch_research_marker()
+            self._write_session_research_marker(query)
             return state
 
     @staticmethod
@@ -127,6 +128,26 @@ class SessionEnforcer:
         marker = pathlib.Path.home() / ".maru" / "last_research"
         marker.parent.mkdir(parents=True, exist_ok=True)
         marker.touch()
+
+    @staticmethod
+    def _write_session_research_marker(query: str) -> None:
+        """Write a structured session research marker for client-side hooks.
+
+        Aider, Cursor, and other adapters read this file to verify
+        research was completed before allowing edits.
+        """
+        import json
+        import pathlib
+        from datetime import datetime, timezone
+
+        marker = pathlib.Path.home() / ".maru" / "session_research.json"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        data = {
+            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "research_id": f"RSCH-{int(time.time())}",
+            "query": query,
+        }
+        marker.write_text(json.dumps(data, indent=2))
 
     def check_research(self, session_id: str, tool_name: str) -> SessionState:
         """Verify that research was done before allowing a dependent tool.

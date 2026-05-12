@@ -36,6 +36,7 @@
   - [vs Alternatives](#vs-alternatives)
 - [Why built-in search isn't enough](#why-your-agents-built-in-web-search-isnt-enough)
 - [Architecture](#architecture)
+- [Real Enforcement Architecture](#real-enforcement-architecture)
 - [8 Tools](#8-tools)
 - [How It Works](#how-it-works)
 - [Technical Deep Dives](#technical-deep-dives)
@@ -244,6 +245,63 @@ This isn't a standalone search tool. It's a **search MCP server with harness set
 ```
 
 The server contains **zero generative LLMs**. Synthesis is rule-based; your agent's LLM handles reasoning. Optional semantic scoring uses an embedding model (bi-encoder only, no generation).
+
+---
+
+## 🔒 Real Enforcement Architecture
+
+> **This is not prompt injection.** Previous "enforcement" was just text appended to system prompts — LLMs can ignore text. This is **technical gatekeeping** with three independent layers.
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                    LAYER 3: Tool Dependency Gate                      │
+│  Code generation tools require a research_id parameter that must      │
+│  match a valid, completed research session. No ID → no code.          │
+├──────────────────────────────────────────────────────────────────────┤
+│                    LAYER 2: Client-Side Hooks                         │
+│  • Claude Code: PreToolUse hook (exit 2) blocks Write/Edit            │
+│  • Aider: lint-cmd gate script fails if research incomplete           │
+│  • Cursor: .cursorrules + custom /research, /verify slash commands    │
+│  Physical blocking — the agent CANNOT proceed even if it wants to.    │
+├──────────────────────────────────────────────────────────────────────┤
+│                    LAYER 1: Server-Side Enforcement                   │
+│  SessionEnforcer tracks every MCP session. Gated tools                │
+│  (fetch_page, web_search, answer, ...) return a hard error            │
+│  with exit code if deep_research hasn't been called first.            │
+│  Research expires after 30 minutes — stale research is rejected.      │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### How Each Layer Works
+
+**Layer 1 — Server-side (`SessionEnforcer`)**
+- Every MCP connection gets a `session_id`
+- `deep_research()` marks the session as "researched" with a timestamp
+- Any other tool checks the session state first; if research is missing or stale → `ResearchRequiredError`
+- Research TTL: 30 minutes (configurable via `MARU_RESEARCH_TTL` env var)
+
+**Layer 2 — Client-side Hooks**
+
+| Agent | Hook Type | Mechanism | Block Action |
+|-------|-----------|-----------|-------------|
+| **Claude Code** | `PreToolUse` | Shell script checks `~/.maru/session_research.json` | Exit code 2 blocks Write/Edit |
+| **Aider** | `lint-cmd` | Python gate script in `~/.maru/aider_research_gate.py` | Lint failure aborts edit |
+| **Cursor** | `.cursorrules` + commands | Custom `/research` and `/verify` slash commands | Rules + MCP auto-enable |
+| **Others** | Protocol injection | `RESEARCH_PROTOCOL` injected into agent config | Best-effort (Layer 1 enforces) |
+
+**Layer 3 — Tool Dependency (Roadmap)**
+- Future `generate_code()` tool will require `research_id` parameter
+- The research ID must match a completed session with valid citations
+- Code without citations from research is rejected
+
+### Why Three Layers?
+
+A single layer can be bypassed:
+- **Prompt-only** → LLM ignores it (proven by our audit)
+- **Server-only** → Agent could call tools directly without MCP
+- **Client-only** → Agent could use a different client
+
+Three layers with different trust boundaries means an attacker must compromise **server + client + tool contract** simultaneously.
 
 ---
 

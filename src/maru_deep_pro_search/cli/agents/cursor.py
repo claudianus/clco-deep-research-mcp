@@ -93,7 +93,53 @@ class CursorAdapter(AgentAdapter):
             settings["mcp"]["autoEnableTools"] = True
         write_json_safe(settings_path, settings)
 
-        # 3. Cursor commands (if supported in future versions)
+        # 3. Cursor commands (0.45+ supports custom slash commands)
         cmds_dir = self._commands_dir(scope)
         cmds_dir.mkdir(parents=True, exist_ok=True)
+
+        _write_cursor_command(
+            cmds_dir / "research.json",
+            name="research",
+            description="Run deep research before any code change",
+            prompt=(
+                "Before writing or modifying any code, you MUST run deep_research "
+                "with the user's request as the query. Summarize findings and wait "
+                "for user confirmation before proceeding."
+            ),
+        )
+        _write_cursor_command(
+            cmds_dir / "verify.json",
+            name="verify",
+            description="Verify research was completed for this session",
+            prompt=(
+                "Check if deep_research has been called in this session. "
+                "If not, refuse to proceed and instruct the user to run /research first."
+            ),
+        )
+
+        # 4. .cursor/settings.json — research enforcement hints
+        settings_path = self._settings_path(scope)
+        settings = read_json_safe(settings_path)
+        if "agent" not in settings:
+            settings["agent"] = {}
+        # Hint to agent that it should always research first
+        settings["agent"]["defaultInstructions"] = (
+            "You MUST call deep_research before any code generation, file edit, "
+            "or architecture decision. This is enforced by the MCP server."
+        )
+        write_json_safe(settings_path, settings)
+
         return True
+
+
+def _write_cursor_command(path: Path, name: str, description: str, prompt: str) -> None:
+    """Write a Cursor custom slash command definition."""
+    cmd = {
+        "name": name,
+        "description": description,
+        "prompt": prompt,
+    }
+    import json
+
+    if not path.exists() or json.loads(path.read_text()).get("prompt") != prompt:
+        path.write_text(json.dumps(cmd, indent=2) + "\n")
