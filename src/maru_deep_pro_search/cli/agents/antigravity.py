@@ -19,6 +19,9 @@ class AntiGravityAdapter(AgentAdapter):
     def _mcp_path(self, scope: str) -> Path:
         return Path.home() / ".gemini" / "antigravity" / "mcp_config.json"
 
+    def _config_path(self, scope: str) -> Path:
+        return Path.home() / ".gemini" / "antigravity" / "config.json"
+
     def backup(self) -> list[Path]:
         path = self._mcp_path("user")
         b = backup_file(path)
@@ -56,6 +59,17 @@ class AntiGravityAdapter(AgentAdapter):
         config.setdefault("_maru_deep_pro_search_notes", {})
         config["_maru_deep_pro_search_notes"]["research_protocol"] = protocol
         write_json_safe(path, config)
+
+        # Also store in a separate config file for future AntiGravity versions
+        config_path = self._config_path(scope)
+        ag_config = read_json_safe(config_path)
+        if "instructions" not in ag_config:
+            ag_config["instructions"] = {}
+        ag_config["instructions"]["research_first"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(config_path, ag_config)
 
         # AntiGravity doesn't have a direct system prompt file we can edit.
         # Return False to signal that manual steps may be needed.

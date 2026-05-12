@@ -7,8 +7,10 @@ from pathlib import Path
 
 from ..backup import (
     backup_file,
+    read_json_safe,
     read_text_safe,
     restore_file,
+    write_json_safe,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
@@ -56,6 +58,7 @@ class CodyAdapter(AgentAdapter):
         return self.inject_rules(scope)
 
     def inject_rules(self, scope: str = "user") -> bool:
+        # 1. prompts.md
         path = self._prompts_path(scope)
         protocol = get_protocol_for_agent(self.name)
         content = read_text_safe(path)
@@ -63,4 +66,16 @@ class CodyAdapter(AgentAdapter):
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(path, new_content)
+
+        # 2. config.json — hint for future Cody versions
+        config_path = self._config_path(scope)
+        config = read_json_safe(config_path)
+        if "instructions" not in config:
+            config["instructions"] = {}
+        config["instructions"]["research_first"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(config_path, config)
+
         return True

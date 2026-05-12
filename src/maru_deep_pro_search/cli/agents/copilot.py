@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
+from ..backup import backup_file, read_json_safe, read_text_safe, restore_file, write_json_safe, write_text_safe
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
@@ -27,6 +27,11 @@ class CopilotAdapter(AgentAdapter):
             return Path(".github") / "copilot-instructions.md"
         return Path.home() / ".github" / "copilot-instructions.md"
 
+    def _settings_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".github") / "copilot-settings.json"
+        return Path.home() / ".github" / "copilot-settings.json"
+
     def backup(self) -> list[Path]:
         path = self._instructions_path("user")
         b = backup_file(path)
@@ -45,6 +50,7 @@ class CopilotAdapter(AgentAdapter):
         return self.inject_rules(scope)
 
     def inject_rules(self, scope: str = "user") -> bool:
+        # 1. copilot-instructions.md
         path = self._instructions_path(scope)
         protocol = get_protocol_for_agent(self.name)
 
@@ -52,4 +58,16 @@ class CopilotAdapter(AgentAdapter):
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(path, new_content)
+
+        # 2. copilot-settings.json — hint for future Copilot versions
+        settings_path = self._settings_path(scope)
+        settings = read_json_safe(settings_path)
+        if "instructions" not in settings:
+            settings["instructions"] = {}
+        settings["instructions"]["research_first"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(settings_path, settings)
+
         return True

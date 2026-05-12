@@ -62,6 +62,9 @@ maru-deep-pro-search-setup = "maru_deep_pro_search.cli.setup:main"
 maru-deep-pro-search-init = "maru_deep_pro_search.cli.init_cmd:main"
 maru-deep-pro-search-plugin = "maru_deep_pro_search.cli.plugin_cmd:main"
 
+[project.entry-points."hermes_agent.plugins"]
+maru-research-gate = "maru_deep_pro_search.cli.agents.hermes_plugin:register"
+
 [tool.uvx]
 python = "3.12"
 quiet = true

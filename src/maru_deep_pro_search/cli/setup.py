@@ -16,6 +16,7 @@ from .agents.continue_ import ContinueAdapter
 from .agents.copilot import CopilotAdapter
 from .agents.cursor import CursorAdapter
 from .agents.devin import DevinAdapter
+from .agents.hermes import HermesAdapter
 from .agents.jetbrains import JetBrainsAdapter
 from .agents.kilo import KiloAdapter
 from .agents.kimi import KimiAdapter
@@ -53,6 +54,7 @@ ADAPTER_REGISTRY = {
     "amazon_q": AmazonQAdapter,
     "devin": DevinAdapter,
     "tabnine": TabnineAdapter,
+    "hermes": HermesAdapter,
 }
 
 

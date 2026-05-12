@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
+from ..backup import backup_file, read_json_safe, read_text_safe, restore_file, write_json_safe, write_text_safe
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
@@ -30,6 +30,11 @@ class JetBrainsAdapter(AgentAdapter):
         # we use a marker in the home directory.
         return Path.home() / ".jetbrains-ai" / "maru-protocol.md"
 
+    def _settings_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".idea") / "maru-settings.json"
+        return Path.home() / ".jetbrains-ai" / "maru-settings.json"
+
     def backup(self) -> list[Path]:
         paths = [self._ai_assistant_path("user")]
         backups = [backup_file(p) for p in paths]
@@ -49,6 +54,7 @@ class JetBrainsAdapter(AgentAdapter):
         return self.inject_rules(scope)
 
     def inject_rules(self, scope: str = "user") -> bool:
+        # 1. ai-assistant.xml / maru-protocol.md
         path = self._ai_assistant_path(scope)
         protocol = get_protocol_for_agent(self.name)
         content = read_text_safe(path)
@@ -56,4 +62,16 @@ class JetBrainsAdapter(AgentAdapter):
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(path, new_content)
+
+        # 2. maru-settings.json — hint for future JetBrains AI versions
+        settings_path = self._settings_path(scope)
+        settings = read_json_safe(settings_path)
+        if "instructions" not in settings:
+            settings["instructions"] = {}
+        settings["instructions"]["research_first"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(settings_path, settings)
+
         return True

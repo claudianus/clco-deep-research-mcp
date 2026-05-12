@@ -31,6 +31,11 @@ class ClineAdapter(AgentAdapter):
             return Path(".cline", "mcp.json")
         return Path.home() / ".cline" / "mcp.json"
 
+    def _settings_path(self, scope: str) -> Path:
+        if scope == "project":
+            return Path(".cline") / "settings.json"
+        return Path.home() / ".cline" / "settings.json"
+
     def backup(self) -> list[Path]:
         paths = [self._rules_path("user"), self._mcp_path("user")]
         backups = [backup_file(p) for p in paths]
@@ -60,6 +65,7 @@ class ClineAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
+        # 1. .clinerules
         path = self._rules_path(scope)
         content = read_text_safe(path)
         protocol = get_protocol_for_agent(self.name)
@@ -67,4 +73,18 @@ class ClineAdapter(AgentAdapter):
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(path, new_content)
+
+        # 2. .cline/settings.json — default instructions hint
+        settings_path = self._settings_path(scope)
+        from ..backup import read_json_safe, write_json_safe
+
+        settings = read_json_safe(settings_path)
+        if "agent" not in settings:
+            settings["agent"] = {}
+        settings["agent"]["defaultInstructions"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(settings_path, settings)
+
         return True

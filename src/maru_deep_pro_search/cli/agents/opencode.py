@@ -65,6 +65,7 @@ class OpenCodeAdapter(AgentAdapter):
         return True
 
     def inject_rules(self, scope: str = "user") -> bool:
+        # 1. AGENTS.md
         path = self._agents_md_path(scope)
         content = read_text_safe(path)
         protocol = get_protocol_for_agent(self.name)
@@ -72,4 +73,16 @@ class OpenCodeAdapter(AgentAdapter):
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(path, new_content)
+
+        # 2. opencode.json — default instructions hint
+        config_path = self._config_path(scope)
+        config = read_json_safe(config_path)
+        if "agent" not in config:
+            config["agent"] = {}
+        config["agent"]["defaultInstructions"] = (
+            "You MUST call deep_research before any code generation or file edits. "
+            "This is enforced by the maru-deep-pro-search MCP server."
+        )
+        write_json_safe(config_path, config)
+
         return True
