@@ -195,7 +195,7 @@ class SearchEngine(ABC):
             try:
                 results = await original_search(self, query, max_results)
                 self._record_success()
-                return results
+                return results  # type: ignore[no-any-return]
             except Exception:
                 self._record_failure()
                 raise

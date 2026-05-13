@@ -46,13 +46,16 @@ class AuditLogger:
     _instances: dict[str, AuditLogger] = {}
     _lock = threading.Lock()
 
+    _db_path: str
+    _conn: sqlite3.Connection | None
+
     def __new__(cls, db_path: str | Path | None = None) -> AuditLogger:
         path = str(db_path or cls._default_db_path())
         with cls._lock:
             if path not in cls._instances:
                 instance = super().__new__(cls)
                 instance._db_path = path
-                instance._conn: sqlite3.Connection | None = None
+                instance._conn = None
                 cls._instances[path] = instance
             return cls._instances[path]
 
@@ -91,6 +94,17 @@ class AuditLogger:
             """
         )
         conn.commit()
+
+    def log_tool_call(
+        self,
+        tool_name: str,
+        parameters: dict[str, Any],
+        result_preview: str = "",
+        session_id: str = "",
+        duration_ms: float = 0.0,
+    ) -> ToolInvocation:
+        """Alias for ``log()`` that matches the interface expected by plugins."""
+        return self.log(tool_name, parameters, len(result_preview), duration_ms)
 
     def log(
         self,

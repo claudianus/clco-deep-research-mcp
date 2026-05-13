@@ -38,7 +38,7 @@ def _get_installed_version() -> str:
             if pyproject.exists():
                 with pyproject.open("rb") as f:
                     data = tomllib.load(f)
-                    return data["project"]["version"]
+                    return str(data["project"]["version"])
         except Exception:
             pass
     return "0.0.0"
@@ -56,7 +56,7 @@ def _get_latest_version() -> str | None:
         )
         with urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            return data["info"]["version"]
+            return str(data["info"]["version"])
     except Exception as exc:
         logger.debug("Failed to check latest version: %s", exc)
         return None

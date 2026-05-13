@@ -150,7 +150,7 @@ knowledge_db_path: {spec.knowledge_db_path}
         for name in agents:
             adapter_cls = ADAPTER_REGISTRY.get(name)
             if adapter_cls:
-                adapter = adapter_cls()
+                adapter = adapter_cls()  # type: ignore[abstract]
                 adapter.configure(scope="project")
                 logger.info("Configured %s for project scope", name)
 

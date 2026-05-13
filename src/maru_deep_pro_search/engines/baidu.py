@@ -178,7 +178,7 @@ def _extract_text(el) -> str:
     """Safely extract cleaned text from a scrapling element."""
     if el is None:
         return ""
-    txt = el.get_all_text().replace("\n", " ").strip()
+    txt = str(el.get_all_text()).replace("\n", " ").strip()
     # Baidu often inserts extra spaces around highlighted terms
     while "  " in txt:
         txt = txt.replace("  ", " ")

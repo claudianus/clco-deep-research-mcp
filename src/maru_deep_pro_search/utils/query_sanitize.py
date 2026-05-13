@@ -65,10 +65,10 @@ def sanitize_query(query: str, current_year: int | None = None) -> str:
     def _replace_year(match: re.Match) -> str:
         matched_year = int(match.group(1))
         if matched_year >= year:
-            return match.group(0)  # Keep current/future years
+            return str(match.group(0))  # Keep current/future years
         return "latest"
 
-    result = stale_pattern.sub(_replace_year, result)
+    result = stale_pattern.sub(_replace_year, result)  # type: ignore[no-any-return]
 
     # Clean up double "latest" occurrences
     result = re.sub(r"\blatest\s+latest\b", "latest", result, flags=re.IGNORECASE)

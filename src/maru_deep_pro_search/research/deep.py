@@ -123,9 +123,9 @@ async def deep_research(
     async def _search_one(eng_name: str, sq: str) -> tuple[str, list[SearchResult]]:
         async with _search_semaphore:
             try:
-                eng = SearchEngineRegistry.create(eng_name)
+                search_engine = SearchEngineRegistry.create(eng_name)
                 results = await with_retry(
-                    eng.search,
+                    search_engine.search,
                     sq,
                     max_results=max_sources * 2,
                     max_attempts=2,
@@ -140,8 +140,8 @@ async def deep_research(
     available_engines: list[str] = []
     for eng_name in engines:
         try:
-            eng = SearchEngineRegistry.create(eng_name)
-            if await eng._check_circuit():
+            search_engine = SearchEngineRegistry.create(eng_name)
+            if await search_engine._check_circuit():
                 available_engines.append(eng_name)
             else:
                 logger.info("Skipping %s (circuit breaker open)", eng_name)
@@ -155,8 +155,8 @@ async def deep_research(
     for eng_name in engines:
         search_tasks.append(asyncio.create_task(_search_one(eng_name, query)))
     for i, sq in enumerate(subqueries[1:]):
-        eng = engines[i % len(engines)]
-        search_tasks.append(asyncio.create_task(_search_one(eng, sq)))
+        sub_eng = engines[i % len(engines)]
+        search_tasks.append(asyncio.create_task(_search_one(sub_eng, sq)))
 
     all_results = await asyncio.gather(*search_tasks, return_exceptions=True)
     for res in all_results:
@@ -201,8 +201,8 @@ async def deep_research(
             continue
         seen_urls.add(sr.url)
 
-        for eng in sr.engines_found:
-            search_coverage[eng] = search_coverage.get(eng, 0) + 1
+        for engine_name in sr.engines_found:
+            search_coverage[engine_name] = search_coverage.get(engine_name, 0) + 1
 
         sources.append(
             CitedSource(

@@ -31,7 +31,7 @@ def _clean_urls(raw: str) -> list[str]:
     raw = raw.strip()
     if raw.startswith("["):
         try:
-            return json.loads(raw)
+            return [str(u) for u in json.loads(raw)]
         except json.JSONDecodeError:
             pass
     return [u.strip() for u in raw.split("\n") if u.strip() and u.startswith("http")]
@@ -60,11 +60,11 @@ async def tool_web_search(
 
     # Check cache
     cache = get_search_cache()
-    key = cache_key("web_search", engine, max_results, query)
+    key = cache_key("web_search", engine, str(max_results), query)
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for web_search: %s", query)
-        return cached
+        return cached  # type: ignore[no-any-return]
 
     try:
         search_engine = SearchEngineRegistry.create(engine)
@@ -166,11 +166,11 @@ async def tool_fetch_page(url: str, stealth: bool = False, max_tokens: int = 600
     """
     # Check cache
     cache = get_fetch_cache()
-    key = cache_key("fetch", url, stealth)
+    key = cache_key("fetch", url, str(stealth))
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for fetch: %s", url)
-        return cached
+        return cached  # type: ignore[no-any-return]
 
     engine = SearchEngineRegistry.create("duckduckgo")
     try:
@@ -383,12 +383,12 @@ async def tool_deep_research(
     # Check cache
     cache = get_search_cache()
     key = cache_key(
-        "deep_research", engine, max_sources, expand_queries, primary_sources_only, query
+        "deep_research", engine, str(max_sources), str(expand_queries), str(primary_sources_only), query
     )
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for deep_research: %s", query)
-        return cached
+        return cached  # type: ignore[no-any-return]
 
     try:
         result = await asyncio.wait_for(
@@ -672,9 +672,9 @@ async def tool_parallel_search(
                 continue
             # Title: lines like '1. **Title** [1] [type]'
             if not first_title and "**" in line:
-                m = re.search(r"\*\*(.*?)\*\*", line)
-                if m:
-                    first_title = m.group(1).strip()[:40]
+                title_match = re.search(r"\*\*(.*?)\*\*", line)
+                if title_match:
+                    first_title = title_match.group(1).strip()[:40]
             # URL: indented lines
             if line.startswith("   http") and not first_url:
                 first_url = line.strip()
