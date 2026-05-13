@@ -1,456 +1,279 @@
-# Agent Instructions for maru-deep-pro-search
+# Agent Instructions — maru-deep-pro-search
 
-> **CRITICAL REMINDER**: PyPI deployment is handled **automatically by GitHub Actions**. Do NOT attempt manual PyPI uploads via `twine`.
+> **CRITICAL**: PyPI deployment is **AUTOMATED** by GitHub Actions on git tag push. DO NOT run `twine upload` manually.
 
-## Deployment Workflow
-
-### PyPI Publishing (AUTOMATED)
-
-The project uses **GitHub Actions** to deploy to PyPI automatically:
-
-- **Trigger**: Push a git tag starting with `v` (e.g., `v0.5.0`)
-- **Workflow**: `.github/workflows/publish.yml`
-- **Method**: Uses `PYPI_API_TOKEN` secret if available, falls back to trusted publishing
-
-**To release a new version:**
+## Quick Start
 
 ```bash
-# 1. Update version in pyproject.toml
-# 2. Update CHANGELOG.md
-# 3. Commit on a release branch and open a PR
-git checkout -b release/v0.5.0
-git add -A && git commit -m "feat: v0.5.0 - description"
-git push -u origin release/v0.5.0
-gh pr create --title "release: v0.5.0" --body "Version bump and changelog"
+# Setup
+uv sync
+source .venv/bin/activate
 
-# 4. After PR is merged to main, create and push a version tag (triggers PyPI deployment)
-git checkout main && git pull
-git tag v0.5.0
-git push origin v0.5.0
+# Single-file checks (fast feedback)
+uv run ruff check src/maru_deep_pro_search/<file>.py
+uv run ruff format --check src/maru_deep_pro_search/<file>.py
+uv run mypy src/maru_deep_pro_search/<file>.py
+
+# Full validation
+uv run ruff check . && uv run ruff format --check . && uv run mypy src/
+uv run pytest tests/ -q
+
+# Run MCP server locally
+uv run python -m maru_deep_pro_search.server
 ```
 
-**What happens next:**
-1. GitHub Actions workflow `publish.yml` triggers automatically
-2. Builds sdist and wheel with `uv build`
-3. Publishes to PyPI with `uv publish` (token or trusted publishing)
-4. Package appears on https://pypi.org/project/maru-deep-pro-search/
+**Definition of Done** — Before declaring a task complete, verify:
+- [ ] `ruff check .` passes with zero errors
+- [ ] `ruff format --check .` passes
+- [ ] `mypy src/maru_deep_pro_search` passes (0 errors)
+- [ ] `pytest tests/ -q` passes (273 tests)
+- [ ] `__version__` in `__init__.py` matches `pyproject.toml` if version changed
+- [ ] Direct push to `main` is PROHIBITED — open a PR
 
-### DO NOT
+---
 
-- ❌ Run `twine upload` manually
-- ❌ Run `twine upload` manually
-- ❌ Attempt direct uploads from local machine
+## Tech Stack
 
-### GitHub Pages Deployment
+- **Python**: 3.12
+- **Package Manager**: uv (replaces pip/poetry)
+- **Formatter/Linter**: ruff (line length 100)
+- **Type Checker**: mypy (strict)
+- **Test**: pytest + pytest-asyncio + pytest-cov
+- **Search Scrapers**: scrapling (DuckDuckGo, Google, Bing, Baidu, Naver, Yahoo, Ecosia, Startpage, Bing)
+- **API**: MCP (Model Context Protocol) server with 10 tools
+- **CI**: GitHub Actions (lint, test, CodeQL, PyPI publish)
 
-GitHub Pages is automatically deployed from the `docs/` directory when changes to `docs/` are merged to `main`. The site is a single static HTML file (`docs/index.html`) — no build step needed.
+---
 
-## Version Bump Checklist
+## Setup Commands
 
-Before creating a new release tag:
+### File-scoped (preferred — fast feedback)
 
-- [ ] Update `version` in `pyproject.toml`
-- [ ] **Update `__version__` in `src/maru_deep_pro_search/__init__.py`** — Easy to miss; PyPI shows correct version but runtime `import pkg; pkg.__version__` will lie if skipped.
-- [ ] Update `CHANGELOG.md` with new version section
-- [ ] Update version badge in `docs/index.html` (hero badge)
-- [ ] Update test count in `docs/index.html` if changed
-- [ ] Update test count in `README.md` if changed
-- [ ] Update test count in `AGENTS.md` if changed (current: 273)
-- [ ] Update engine list in `AGENTS.md` if engines added/removed
-- [ ] Run full test suite: `pytest tests/ -v` (all must pass)
-- [ ] Run lint + mypy: `ruff check . && ruff format --check . && mypy src/`
-- [ ] Commit all changes on a `release/vX.Y.Z` branch
-- [ ] Open PR and merge to `main`
-- [ ] Create and push version tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
-- [ ] Verify GitHub Actions workflow succeeds
-- [ ] Verify PyPI page shows new version
-- [ ] Verify `python -c "import maru_deep_pro_search; print(maru_deep_pro_search.__version__)"` matches tag
+```bash
+# Type-check a single file
+uv run mypy src/maru_deep_pro_search/<file>.py
 
-## Project Structure Reminders
+# Lint a single file
+uv run ruff check src/maru_deep_pro_search/<file>.py
+uv run ruff format --check src/maru_deep_pro_search/<file>.py
 
+# Run one test file
+uv run pytest tests/test_<name>.py -v
 ```
-src/maru_deep_pro_search/
-├── __init__.py            # Version info
-├── server.py              # MCP server + prompts (8 tools)
-├── tools.py               # 8 MCP tools + TOOL_GUIDANCE + TOOLS registry
-├── config.py              # Runtime configuration
-├── exceptions.py          # Structured exception hierarchy
-├── engines/               # Search engine implementations + registry (9 active)
-│   ├── base.py            # SearchEngine ABC, cooldown wrapping, shared helpers
-│   ├── registry.py        # SearchEngineRegistry (factory pattern)
-│   ├── duckduckgo.py      # DuckDuckGoEngine (default, SSR)
-│   ├── duckduckgo_lite.py # DuckDuckGo Lite fallback
-│   ├── bing.py            # BingEngine (locale-pinned HTML scrape)
-│   ├── google.py          # GoogleEngine (session-reuse stealth)
-│   ├── yahoo.py           # YahooEngine (redirect decoding)
-│   ├── ecosia.py          # EcosiaEngine (organic results)
-│   ├── baidu.py           # BaiduEngine (noise-filtered Chinese search)
-│   ├── startpage.py       # StartpageEngine (JS-rendered Google proxy)
-│   └── naver.py           # NaverEngine (obfuscated DOM recovery)
-├── extraction/            # Content extraction utilities
-│   ├── code.py            # 21-language detection, API extraction
-│   └── content.py         # truncate_for_llm, headings, token estimation
-├── research/              # Deep research pipeline
-│   ├── deep.py            # Deep research + answer synthesis + citations
-│   ├── expander.py        # Query expansion (template-based)
-│   ├── ranker.py          # BM25 + semantic hybrid cross-engine ranking
-│   ├── semantic_ranker.py # Bi-Encoder dense vector similarity (optional)
-│   └── gap_detector.py    # Research gap detection
-├── harness/               # Project-level knowledge persistence & workflow
-│   ├── persistence.py     # KnowledgeStore (SQLite + semantic search)
-│   ├── project.py         # init_project(), HarnessProject
-│   └── workflow.py        # WorkflowEngine with 7-phase generator
-└── utils/                 # URL, retry utilities
-    ├── retry.py           # Exponential backoff with jitter
-    └── url.py             # URL normalization, filtering, deduplication
+
+### Full suite (only when explicitly requested)
+
+```bash
+uv run ruff check . && uv run ruff format --check . && uv run mypy src/
+uv run pytest tests/ -v
 ```
+
+---
+
+## Code Style
+
+- **Formatting**: ruff, line length 100
+- **Imports**: `from __future__ import annotations` at top; sorted by `ruff check --fix`
+- **Types**: Full type hints required; `Any` only with `# type: ignore[no-any-return]` if runtime validation is impossible
+- **Naming**: snake_case for functions/variables, PascalCase for classes
+- **Docstrings**: Google style for public APIs
+
+### Inheritance Safety (MANDATORY)
+
+**ALL subclasses overriding `__init__` MUST call `super().__init__()` as the FIRST statement.**
+
+The `SearchEngine` base class initializes `self._circuit_breaker` and `self._last_request_time` in `__init__`. Skipping `super().__init__()` causes silent failures that only explode at runtime when `search()` is called:
+
+```python
+# ❌ WRONG
+class XEngine(SearchEngine):
+    def __init__(self):
+        self.x = 1  # _circuit_breaker missing!
+
+# ✅ CORRECT
+class XEngine(SearchEngine):
+    def __init__(self):
+        super().__init__()  # FIRST line
+        self.x = 1
+```
+
+Every new `SearchEngine` subclass MUST include an instantiation test:
+```python
+engine = SomeNewEngine()
+assert hasattr(engine, '_circuit_breaker')
+assert hasattr(engine, '_last_request_time')
+```
+
+---
 
 ## Testing
 
-Always run tests before committing:
-
 ```bash
-source .venv/bin/activate
-pytest tests/ -v
+# All tests (273 total)
+uv run pytest tests/ -v
+
+# Specific test
+uv run pytest tests/test_engines.py -v
 ```
 
-**Current requirement**: 273 tests, all passing.
+**Integration tests** (`test_tool_integration.py`) call real search engines. They may flake if engines are down — this is **acceptable**; it means we notice when engines break.
+
+**Output format invariants** (do NOT break without updating tests):
+- `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`
+- `web_search`: `Search:`, numbered results `1. **Title** [N]`, indented URLs
+- `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`
+- `parallel_search`: `### Comparison Summary`, `| Query | Top Source | Type | Primary |`
+
+---
+
+## Project Structure
+
+```
+src/maru_deep_pro_search/
+├── server.py          # MCP server + 10 tools + prompts
+├── tools.py           # MCP tool implementations + TOOL_GUIDANCE
+├── config.py          # Runtime configuration
+├── exceptions.py      # Structured exception hierarchy
+├── engines/           # 9 search engines + registry
+│   ├── base.py        # SearchEngine ABC + circuit breaker wrapping
+│   ├── registry.py    # SearchEngineRegistry (factory)
+│   └── duckduckgo.py  # Default engine (DuckDuckGo SSR)
+├── research/          # Deep research pipeline
+│   ├── deep.py        # Search-only deep research (319 lines)
+│   └── semantic_ranker.py  # Optional sentence-transformers
+├── harness/           # KnowledgeStore (SQLite) + workflow engine
+└── utils/             # retry, url, query sanitize
+```
+
+---
+
+## Architecture Decisions
+
+1. **100% FREE — No paid APIs ever** — All search, ranking, extraction work with zero API keys. Only direct scraping and local computation.
+2. **Engine registry pattern** — `SearchEngineRegistry` enables multi-engine failover (all free scrapers).
+3. **BM25 + metadata ranking** — Perplexity-level quality using only local computation.
+4. **Citation-native output** — All results include `[1]`, `[2]` citation IDs without external services.
+5. **Research-first enforcement** — MCP prompts, tool descriptions, and `TOOL_GUIDANCE` FORCE agents to research before coding.
+6. **Prompt injection defense** — Fetched content is sanitized (zero-width chars removed, chat tokens neutralized).
+7. **Three-layer rate limiting** — `asyncio.Semaphore(3)` + per-engine cooldowns + global token bucket.
+8. **Session-reuse stealth** — Google/Startpage use `AsyncStealthySession` (browser reuse) instead of new browser per call.
+9. **MCP tools provide DATA, not INTELLIGENCE** — `deep_research` returns ranked URLs + metadata only. The agent's LLM decides which sources to read and how to synthesize.
+
+---
+
+## Security
+
+- **Secrets**: Use environment variables; never hardcode credentials
+- **urllib3**: Pinned to `>=2.7.0` (CVE-2026-44431)
+- **Fetched content**: Always sanitized before LLM injection
+- **GitGuardian**: Runs on every PR to catch leaked secrets
+
+---
+
+## Things to Avoid (Gotchas)
+
+### ❌ `__version__` is NOT auto-synced with `pyproject.toml`
+`src/maru_deep_pro_search/__init__.py` contains hard-coded `__version__`. PyPI can show `0.11.3` while runtime reports `0.9.2`. **Always verify both files on version bumps.**
+
+### ❌ PyPI does NOT allow re-uploading the same version
+Once a tag is pushed, the wheel is immutable. If a bug is discovered post-release, you MUST cut a new version (e.g., `0.11.2` → `0.11.3`).
+
+### ❌ cubic's AI commits can still break lint
+cubic pushes commits but does NOT run `ruff check` first. After ANY cubic push, run lint locally or wait for CI and push a follow-up fix.
+
+### ❌ dependabot dismiss requires reading the FULL advisory
+The summary often understates the required version. CVE-2026-44431 summary suggested `>=2.2.2`; the full text required `>=2.7.0`.
+
+### ❌ `hasattr()` hides intent
+Prefer explicit dataclass contracts. `hasattr(src, "markdown")` silently returns `False` after refactors instead of failing loud.
+
+### ❌ Dead code is worse than no code
+Always verify computed values are actually consumed. `urls_to_prioritize()` in `deep.py` was computed but never used.
+
+---
+
+## Release Workflow
+
+```bash
+# 1. Update version in BOTH files
+#    pyproject.toml: version = "X.Y.Z"
+#    src/maru_deep_pro_search/__init__.py: __version__ = "X.Y.Z"
+
+# 2. Update CHANGELOG.md with new version section
+
+# 3. Update docs/index.html hero badge
+
+# 4. Run full validation
+uv run ruff check . && uv run ruff format --check . && uv run mypy src/
+uv run pytest tests/ -v
+
+# 5. Commit on main (via PR)
+git checkout -b release/vX.Y.Z
+git add -A && git commit -m "release: vX.Y.Z"
+# Open PR → cubic AI review → merge
+
+# 6. Tag triggers PyPI auto-deploy
+git checkout main && git pull
+git tag vX.Y.Z && git push origin vX.Y.Z
+
+# 7. Verify
+gh run watch --workflow=publish.yml
+python -c "import maru_deep_pro_search; print(maru_deep_pro_search.__version__)"
+```
+
+---
 
 ## Code Review & Merge Workflow
 
 ### Required: PR-based development
 
-**All changes to `main` must go through a Pull Request** so that cubic AI review can run. Direct pushes to `main` are not permitted — including version bumps and release commits (use a `release/vX.Y.Z` branch). The only direct push allowed is version tags (`git push origin vX.Y.Z`).
-
-### Workflow
+**Direct pushes to `main` are PROHIBITED.** All changes must go through a Pull Request so cubic AI review can run.
 
 ```
-1. feature/fix 브랜치 생성 (main 기준)
-   git checkout -b feat/description
-
-2. 로컬에서 작업 + 커밋
-   git commit -m "feat: description"
-
-3. (선택) 로컬에서 cubic CLI 사전 검증
-   cubic review --base main
-
-4. push → PR 오픈
-   git push -u origin feat/description
-   gh pr create --title "feat: description" --body "..."
-
-5. cubic AI가 PR 자동 리뷰
-   - 인라인 코멘트 (버그 / 개선 제안)
-   - PR 요약 피드백
-   - 수정 후 @cubic-dev-ai 멘션으로 재리뷰 요청
-
-6. 피드백 반영 후 push
-   git commit --amend   # 또는 추가 커밋
-   git push --force-with-lease
-
-7. 머지 조건 (모두 충족 시에만)
-   - CI 전체 통과 (lint + tests + mypy)
-   - cubic AI 리뷰 resolved (또는 명시적 dismiss)
-   - 1개 이상의 approving review
+1. git checkout -b feat/description
+2. 작업 + 커밋
+3. (선택) cubic review --base main   # 로컬 사전 검증
+4. git push -u origin feat/description
+5. gh pr create --title "feat: description" --body "..."
+6. cubic AI가 PR 자동 리뷰
+7. 피드백 반영 후 push
+8. 머지 조건: CI 전체 통과 + cubic resolved + 1 approving review
 ```
 
-### cubic 동작 방식
+### Post-cubic-push checklist
 
-| 방식 | 트리거 | 결과 위치 |
-|------|--------|----------|
-| GitHub App | PR 오픈 / push | PR 인라인 코멘트 + 요약 |
-| 로컬 CLI | `cubic review` | 터미널 / JSON 출력 |
-
-**주의**: cubic GitHub App은 PR에서만 동작합니다. `main`에 직접 push하면 AI 리뷰가 실행되지 않으므로 반드시 PR 방식을 사용하세요.
-
-## Key Architecture Decisions
-
-1. **100% FREE — No external paid APIs ever** — This is the core principle. All search, ranking, extraction, and synthesis must work with zero API keys. No OpenAI, no Anthropic, no Google Search API, no Bing API. Only direct scraping and local computation.
-2. **No manual PyPI uploads** — GitHub Actions handles this
-3. **Trusted publishing** — Modern secure PyPI authentication (no tokens)
-4. **uv for build/publish** — Fast, reliable Python packaging
-5. **Tag-based releases** — Semantic versioning via git tags
-6. **Engine registry pattern** — `SearchEngineRegistry` enables multi-engine support (all free scrapers)
-7. **BM25 + metadata ranking** — Perplexity-level result quality using only local computation
-8. **Citation-native output** — All results include citation IDs [1], [2] without external services
-9. **Research-first enforcement** — MCP prompts, tool descriptions, and TOOL_GUIDANCE are all designed to FORCE the agent to research before coding. See below.
-10. **Prompt injection defense** — All fetched content is sanitized before LLM injection (zero-width chars removed, chat tokens neutralized, suspicious patterns flagged and replaced).
-11. **Semantic hybrid ranking** — Optional `sentence-transformers` integration adds dense vector similarity on top of BM25 for significantly better relevance. Falls back gracefully when not installed.
-12. **Smart fallback engine** — Error-type-aware responses (dns/network/ssl/blocked/not_found) with per-type strategy. Stealth auto-retry, network health probe, domain history filter.
-13. **Harness platform** — Project-level knowledge persistence (`KnowledgeStore`) and structured workflow engine (`WorkflowEngine`) for research-coding loops.
-14. **Three-layer rate limiting** — `asyncio.Semaphore(3)` (concurrency cap) + `EngineRateLimiter` (per-engine cooldowns, auto-wrapped via `__init_subclass__`) + `TokenBucket` (global QPS). Prevents 429 storms on Google/Baidu.
-15. **Session-reuse stealth** — Google/Startpage use `AsyncStealthySession` (browser reuse + cookie persistence) instead of `StealthyFetcher` (new browser per call). Dramatically reduces rate limit hits.
-16. **Obfuscated DOM resilience** — Naver's hashed CSS classes (`sds-comps-*`) bypassed via SSR container detection. Baidu's AI widgets filtered via `result-op` class exclusion.
-
-## Inheritance Initialization Safety (MANDATORY)
-
-### The Bug Pattern
-
-**ALL subclasses that override `__init__` MUST call `super().__init__()` as the FIRST statement**, unless the parent is `object` or the override is explicitly documented with a `# noqa: super-init-not-called` justification comment.
-
-**What happened:** `DuckDuckGoEngine`, `BaiduEngine`, `BingEngine`, `NaverEngine`, `YahooEngine`, `EcosiaEngine`, `StartpageEngine`, and `GoogleEngine` all overrode `__init__` without calling `super().__init__()`. The base class `SearchEngine.__init__()` initializes `self._circuit_breaker` and `self._last_request_time`. When these were missing, the `__init_subclass__`-wrapped `search()` method crashed at runtime with:
-
-```
-'DuckDuckGoEngine' object has no attribute '_circuit_breaker'
-```
-
-This was a **silent failure at import time** — it only exploded when `deep_research` actually tried to execute a subquery.
-
-### Prevention Checklist (Apply to EVERY class hierarchy change)
-
-- [ ] **Rule INHERIT-1**: If a subclass defines `def __init__(self, ...):`, the FIRST line MUST be `super().__init__()` (or `super().__init__(...)` with required args).
-- [ ] **Rule INHERIT-2**: When modifying a base class `__init__`, grep ALL subclasses and verify they still call `super().__init__()` correctly.
-- [ ] **Rule INHERIT-3**: Every new `SearchEngine` subclass MUST include an instantiation test in `tests/test_engines.py` that asserts:
-  ```python
-  engine = SomeNewEngine()
-  assert hasattr(engine, '_circuit_breaker')
-  assert hasattr(engine, '_last_request_time')
-  ```
-- [ ] **Rule INHERIT-4**: Every new ABC that initializes state in `__init__` MUST also have a test that instantiates each concrete subclass and verifies all parent-initialized attributes exist.
-- [ ] **Rule INHERIT-5**: If `__init_subclass__` wraps methods that access instance attributes set in the parent `__init__`, add a `test_all_subclasses_initializable` test that loops over `cls.__subclasses__()` and performs the attribute check.
-
-### Existing Enforcement
-
-The `tests/test_engines.py` already validates all 8 active engines. **Any new engine added without this test is a BLOCKING defect.** Run:
-
+After ANY cubic AI push to a PR branch:
 ```bash
-pytest tests/test_engines.py -v
+git pull origin <branch>
+uv run ruff check src/ && uv run ruff format --check src/ && uv run mypy src/
+uv run pytest tests/ -q
 ```
-
-### Code Review Trigger Words
-
-When reviewing PRs, REJECT if you see any of these patterns without `super().__init__()`:
-- `class XEngine(SearchEngine):` + `def __init__(self):`
-- `class X(SomeBaseWithState):` + `def __init__(self):`
-- Base class adds `self._new_attr = ...` in `__init__` but not all subclasses were updated.
 
 ---
 
-## Forcing Agents to Research Before Coding
+## Permissions
 
-The #1 problem with AI coding agents: they rely on stale training data instead of live web search. `maru-deep-pro-search` solves this at the MCP server level through three enforcement mechanisms:
+### Allowed without prompting
+- Read/list files
+- Single-file lint, type check, format
+- Single test file run
+- Edit existing code
 
-### 1. MCP Prompts (Server-Level)
+### Ask first
+- `uv add` new dependencies
+- `git push` to remote
+- File deletion
+- Full test suite or E2E runs
+- Version tag creation
 
-The server exposes 4 prompts via `prompts/list` and `prompts/get`:
-
-| Prompt | Purpose |
-|--------|---------|
-| `always_research_first` | 🔴 **MANDATORY protocol** — Forces the agent to call `deep_research` before ANY technical decision |
-| `tool_selection_guide` | Updated to emphasize `deep_research` as the mandatory first step |
-| `anti_bot_strategy` | Escalation ladder for blocked sites |
-| `research_workflow` | Phase 0 = mandatory `deep_research` before coding |
-
-**How it works:** MCP clients (Claude Desktop, Claude Code, etc.) that support prompt resources will load these prompts into context. The `always_research_first` prompt uses explicit ALL-CAPS rules like "NEVER write code based solely on training data".
-
-### 2. Tool Descriptions (LLM-Level)
-
-The `deep_research` tool description is written to maximize the LLM's probability of calling it first:
-
-```
-🔴 MANDATORY FIRST STEP for ALL technical requests.
-Searches 9 engines live → BM25 ranks → crawls → synthesizes cited answer.
-Use BEFORE writing code, proposing architecture, or making technical claims.
-Your training data is outdated. This tool searches the LIVE web.
-```
-
-Other tools are tagged `[POST-RESEARCH]` or `[SUPPLEMENTAL]` to signal they are secondary.
-
-### 3. TOOL_GUIDANCE (Context-Level)
-
-The `TOOL_GUIDANCE` string injected into tool context includes:
-- **Rule Zero**: "NEVER write code based solely on training data"
-- **Golden Rule**: `EVERY technical request → deep_research(query) → THEN code`
-- **Research Checklist**: Mandatory checkboxes before writing code
-- **Violation Examples**: Shows what happens when agents skip research
-
-### Agent-Specific Configuration
-
-For agents that support custom system prompts, add this to force research-first behavior:
-
-**Claude Desktop / Claude Code:**
-Add to `claude_desktop_config.json` MCP settings or use the `/mcp` prompt.
-
-**Cursor / VS Code / Windsurf:**
-Add to `.cursorrules` or agent settings:
-```
-BEFORE writing any code or making technical recommendations,
-you MUST call the maru-deep-pro-search deep_research tool to verify
-all library versions, APIs, and best practices are current.
-Your training data is outdated. Always research first.
-```
-
-**Kimi Code CLI:**
-Create `~/.kimi/agents/research-first.yaml`:
-```yaml
-version: 1
-agent:
-  extend: default
-  name: research-first
-  system_prompt_path: ./research-prompt.md
-```
-
-With `research-prompt.md`:
-```markdown
-# Research-First Agent
-
-For EVERY user request — no matter how simple — follow:
-1. Call deep_research(query) from maru-deep-pro-search MCP
-2. Verify all information is current
-3. THEN write code or answer
-
-Your training data has a cutoff date. The web does not.
-```
-
-Then run: `kimi --agent-file ~/.kimi/agents/research-first.yaml`
+---
 
 ## Documentation
 
-Operational knowledge is split across two companion documents:
-
 | Document | Purpose |
 |----------|---------|
-| [`docs/engine_insights.md`](docs/engine_insights.md) | 10 focused scraping insights (selectors, DOM quirks, API traps) |
-| [`docs/lessons_learned.md`](docs/lessons_learned.md) | **Comprehensive session log** — rate limit architecture, anti-bot strategies, obfuscated DOM recovery, session vs fetcher decision matrix |
+| `docs/engine_insights.md` | 10 scraping insights (selectors, DOM quirks) |
+| `docs/lessons_learned.md` | Rate limit architecture, anti-bot strategies, obfuscated DOM recovery |
+| `AGENT_COMPATIBILITY.md` | Per-agent setup (Claude, Cursor, Kimi, etc.) |
 
-**When modifying engines:** Read `lessons_learned.md` first. It contains the rationale for every cooldown value, why `AsyncStealthySession` beats `StealthyFetcher`, and which selectors are proven to work.
-
----
-
-## SKILL.md vs AGENTS.md: Effectiveness Evaluation
-
-This project uses **AGENTS.md** as its primary instruction layer for AI coding agents. Here is an honest assessment of its effectiveness compared to the SKILL.md pattern.
-
-### Why AGENTS.md instead of SKILL.md
-
-| Dimension | AGENTS.md (this project) | SKILL.md (MCP pattern) |
-|---|---|---|
-| **Discovery** | Read automatically when agents traverse the filesystem | Requires explicit MCP `skills/list` + `skills/get` calls |
-| **Overhead** | Zero tool calls | 2+ MCP tool calls per session |
-| **Freshness** | Version-controlled with code | Loaded from external skill registry |
-| **Depth** | Project-specific deployment rules, architecture decisions, testing requirements | Generic, reusable across projects |
-| **Scope** | Can be nested per-directory | Global or user-scoped only |
-
-### Strengths observed
-
-1. **Deployment guardrails work**: The `CRITICAL REMINDER` at the top has prevented multiple accidental manual PyPI uploads during development sessions.
-2. **Test gatekeeping**: The explicit "202 tests, all passing" requirement acts as a commit barrier — agents consistently run tests before committing because the number is stated.
-3. **Architecture alignment**: New features (e.g., gap detector, query sanitizer) naturally follow the existing architectural patterns documented here because the decisions are co-located with the codebase.
-4. **No MCP dependency**: Works even when the MCP server is not running or the client does not support skills.
-
-### Limitations acknowledged
-
-1. **Not discoverable via MCP-only clients**: Agents that exclusively use MCP tools without filesystem access (rare, but possible in sandboxed environments) will never see AGENTS.md.
-2. **No structured metadata**: Unlike SKILL.md, there is no schema for declaring dependencies, capabilities, or version compatibility. This is mitigated by `pyproject.toml` and inline documentation.
-3. **Manual synchronization**: When architecture changes, AGENTS.md must be updated manually. The Version Bump Checklist helps but does not eliminate this.
-4. **Limited to filesystem access**: Requires the agent to have read access to the project directory. Cloud IDE agents with virtualized file systems may need explicit prompting.
-
-### Recommendation
-
-Use **AGENTS.md** for project-specific operational rules (deployment, testing, architecture, enforcement mechanisms). Use **SKILL.md** for reusable cross-project capabilities (e.g., a generic "Python testing" skill). This project relies on AGENTS.md alone because its agent instructions are tightly coupled to the codebase and deployment workflow — a SKILL.md would be either too generic to be useful or too specific to be reusable.
-
----
-
-## Architecture Decision Log
-
-### [2026-05-13] v0.11.0 — `deep_research` becomes search-only
-
-**Decision**: Remove fetch/extract/synthesize from `deep_research`. Return ranked URLs + metadata only. Delegate content reading and synthesis to the agent's LLM via `fetch_page` / `fetch_bulk`.
-
-**Why**: After 3 weeks of production testing, every major failure mode traced back to "we try to do too much":
-- Circuit breaker storms from 25 concurrent fetch requests
-- DuckDuckGo SERP scraper breaking under fetch load
-- Recency gate misclassifying 1-year-old docs as "stale news"
-- Rule-based `_synthesize_answer` producing thin, repetitive output
-- 18s response times vs 2–3s for search-only
-
-**Lesson**: MCP tools should provide **data**, not **intelligence**. The agent's LLM is better at deciding which sources to read, how to synthesize, and what's relevant. Our job is finding the best URLs with the highest confidence.
-
-**What was removed**:
-- `_fetch_pages`, `_probe_network`, `_filter_slow_domains`
-- `_allocate_tokens`, `_extractive_summarize`, `_synthesize_answer`
-- Recency gate, `follow_links`, knowledge-store full-content persistence
-- `CitedSource` fields: `content`, `markdown`, `fetch_ms`, `github_meta`, etc.
-
-**What stayed** (our actual moat):
-- Multi-engine search (9 engines) with auto-failover
-- Intent-based query expansion (7 intents, 25+ templates)
-- Cross-engine BM25 + authority ranking
-- Source type classification + spam domain filtering
-
-**Code impact**: `deep.py` 1,194 → 319 lines (-73%). Tests: 262 → 273 (+11 integration tests for output format).
-
----
-
-## Lessons Learned (Hard-Won)
-
-### 1. Dead code is worse than no code
-`urls_to_prioritize()` in `deep.py` was computed but **never used** in the result loop. It looked like spam filtering worked, but `merge_results()` already handled it. Took a CTO audit to catch. **Always verify computed values are actually consumed.**
-
-### 2. `hasattr()` is not a substitute for clean contracts
-`gap_detector.py` used `hasattr(src, "markdown")` and `hasattr(src, "content")` to handle both old and new `CitedSource`. After the refactor, these always return False. Works, but hides intent. Prefer explicit dataclass contracts.
-
-### 3. Integration tests must call real tools
-Unit tests with mocked search results don't catch output format regressions. `test_tool_integration.py` (18 tests) now calls actual `tool_deep_research`, `tool_web_search`, etc. and asserts on real output structure. This caught the `parallel_search` comparison table bug.
-
-### 4. Engine deduplication by class is subtle
-`duckduckgo` and `duckduckgo_lite` share the same `DuckDuckGoEngine` class but register separately. `recommend_engines()` deduplicates by class, keeping only the first. This is correct but non-obvious — document it.
-
-### 5. Token bloat kills perceived quality
-Old `format_for_llm()` embedded full markdown per source (10,000+ chars). New format is ~1,500 chars of URLs + snippets. Agents don't read 10k chars anyway. **Concise metadata > verbose content.**
-
-### 6. `__version__` is NOT auto-synced with `pyproject.toml`
-`src/maru_deep_pro_search/__init__.py` contains a hard-coded `__version__ = "X.Y.Z"`. It does NOT read from `pyproject.toml`. We shipped v0.11.2 and v0.11.3 to PyPI with `__version__` still at `0.9.2`. This was caught during final integration testing, not by any CI check. **Always verify `__version__` explicitly after updating `pyproject.toml`.**
-
-### 7. PyPI does NOT allow re-uploading the same version
-Once `v0.11.2` was tagged and pushed, the wheels were immutable. When we discovered the urllib3 CVE required `>=2.7.0` (not `>=2.2.2`), we could not overwrite v0.11.2. We had to cut v0.11.3. **Triple-check security advisories before tagging.**
-
-### 8. cubic's AI commits can still break lint
-cubic-dev-ai pushed a commit (`afc901c`) that fixed AGENTS.md wording, but it introduced an ruff `I001` import-sort error in `duckduckgo.py` and a format drift in `tools.py`. cubic does NOT run `ruff check` before pushing. **Always run lint locally after any cubic push, or trust CI and push a follow-up fix immediately.**
-
-### 9. dependabot dismiss requires reading the FULL advisory
-cubic suggested `urllib3>=2.2.2` as a fix. We dismissed both alerts with `fix_started`. Only AFTER dismissing did we read the full CVE-2026-44431 text, which stated the fix was `>=2.7.0`, not `>=2.2.2`. **Read the advisory description before dismissing — the summary is often insufficient.**
-
----
-
-## Operational Notes for Future Agents
-
-### Test count gatekeeping
-Current requirement: **273 tests, all passing** (was 262 before v0.11.0). Update this number in:
-- `agents.md` (this file)
-- `docs/index.html` (hero stats + footer)
-- `README.md` (if mentioned)
-
-### Integration test policy
-Any change to tool output format MUST update or add tests in `test_tool_integration.py`. These tests call real tools, so they may flake if search engines are down. That's **acceptable** — it means we notice when engines break.
-
-### Output format invariants (do not break)
-- `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`, `🔒 authority`, `✓N engines`
-- `web_search`: `Search:`, numbered results `1. **Title** [N]`, indented URLs
-- `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`, `🔒 EXTERNAL CONTENT` / `🔓 END EXTERNAL CONTENT`
-- `parallel_search` (comparison): `### Comparison Summary`, `| Query | Top Source | Type | Primary |` table
-
-### DuckDuckGo circuit breaker
-DuckDuckGo Lite's circuit breaker opens after 3 consecutive failures (60s recovery). This is **expected behavior** under heavy load. Bing/Ecosia serve as automatic backups. Do NOT try to "fix" the circuit breaker — it protects the engine from getting blocked entirely.
-
-### Post-cubic-push checklist
-cubic AI may push commits directly to the PR branch (e.g., `--force-with-lease` fixes). After ANY cubic push:
-```bash
-git pull origin <branch>
-ruff check src/ && ruff format --check src/ && mypy src/maru_deep_pro_search
-pytest tests/ -q
-```
-
-### GitHub API vs browser for PR state
-GitHub's SPA renders PR comments asynchronously. Playwright snapshots often miss cubic reviews and CI status. **Prefer `gh pr view` and `gh pr checks` over browser scraping** for reliable PR state inspection.
-
-### Release burn-down order
-When cutting a release, follow this exact order:
-1. Update `pyproject.toml` version
-2. Update `src/maru_deep_pro_search/__init__.py` `__version__`
-3. Update `CHANGELOG.md`
-4. Update `docs/index.html` badge
-5. Run full lint + test + mypy
-6. Commit → PR → merge to `main`
-7. `git tag vX.Y.Z && git push origin vX.Y.Z`
-8. Watch `gh run watch` for PyPI publish success
-9. `python -c "import maru_deep_pro_search; print(maru_deep_pro_search.__version__)"`
+**When modifying engines**: Read `docs/lessons_learned.md` first. It contains the rationale for every cooldown value and proven selector.
