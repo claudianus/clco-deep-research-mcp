@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.2] - 2026-05-13
+
+### Security
+- **urllib3>=2.2.2** — Explicitly pin urllib3 to patched version addressing 2 high-severity CVEs (sensitive header forwarding & decompression bomb bypass).
+
+### Fixed
+- **mypy type errors** — Resolved 57→0 errors across 16 files. No `# type: ignore[no-any-return]` without runtime validation.
+- **cubic AI review workflow** — AGENTS.md now enforces PR-based development with cubic AI review as mandatory merge gate.
+
 ## [0.11.1] - 2026-05-13
 
 ### Added

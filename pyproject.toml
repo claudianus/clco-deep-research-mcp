@@ -1,6 +1,6 @@
 [project]
 name = "maru-deep-pro-search"
-version = "0.11.1"
+version = "0.11.2"
 description = "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers."
 readme = "README.md"
 license = "MIT"
@@ -47,6 +47,7 @@ dependencies = [
     "scrapling[fetchers]>=0.2.99",
     "trafilatura>=2.0.0",
     "rank-bm25>=0.2.2",
+    "urllib3>=2.2.2",
 ]
 
 [project.urls]
