@@ -277,3 +277,42 @@ uv run pytest tests/ -q
 | `AGENT_COMPATIBILITY.md` | Per-agent setup (Claude, Cursor, Kimi, etc.) |
 
 **When modifying engines**: Read `docs/lessons_learned.md` first. It contains the rationale for every cooldown value and proven selector.
+
+---
+
+## Skills (SKILL.md)
+
+Modular skills for MCP-compatible agents. Each skill provides domain-specific guidance:
+
+| Skill | Purpose | Trigger |
+|-------|---------|---------|
+| `skills/deep-research/SKILL.md` | How to use `deep_research` effectively | Before technical decisions |
+| `skills/web-search/SKILL.md` | How to use `web_search` + engine selection | Quick lookups |
+| `skills/fetch-page/SKILL.md` | Safe content fetching + risk levels | Reading external sources |
+| `skills/parallel-search/SKILL.md` | Comparative multi-query search | Technology comparisons |
+
+Load skills via `skills-mcp` or include directly in agent context.
+
+---
+
+## Benchmarks
+
+Search quality is measured against TREC-standard IR metrics:
+
+```bash
+# Run search quality benchmark (10 queries, web_search vs deep_research)
+uv run python benchmark/search_quality_benchmark.py
+```
+
+Metrics: Precision@K, Recall@K, NDCG@K, MRR, response time.
+
+**Latest result** (10 queries, Bing single vs multi-engine cross-ranking):
+
+| Metric | web_search | deep_research | Delta |
+|--------|-----------|---------------|-------|
+| Precision@5 | 0.140 | **0.260** | **+86%** |
+| NDCG@10 | 0.488 | **0.668** | **+36%** |
+| MRR | 0.483 | **0.603** | **+25%** |
+
+Multi-engine cross-ranking outperforms single-engine on all relevance metrics.
+Trade-off: ~2× response time (multi-engine search overhead).
