@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.3] - 2026-05-13
+
+### Security
+- **urllib3>=2.7.0** — Bump from >=2.2.2 to >=2.7.0 to fully address CVE-2026-44431 (sensitive headers in proxied redirects).
+
 ## [0.11.2] - 2026-05-13
 
 ### Security
