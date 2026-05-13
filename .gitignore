@@ -68,3 +68,4 @@ deployed-*.png
 preview-*.png
 docs/dist/
 docs/layouts/default-backup.vue
+.maru/

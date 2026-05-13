@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 
 from .engines.registry import SearchEngineRegistry
 from .exceptions import MaruSearchError
@@ -101,12 +102,16 @@ async def tool_web_search(
     lines = [f"Search: **{query}**  _engine={engine}_\n"]
     for r in results:
         type_badge = f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        source_badge = ""
+        if r.source_type and r.source_type.value != "unknown":
+            source_badge = f" [{r.source_type.value.upper().replace('_', '-')}]"
+        primary_badge = " [PRIMARY]" if r.is_primary else ""
         auth_badge = " [AUTHORITY]" if any(d in r.domain for d in [
             "docs.python.org", "developer.mozilla.org", "github.com",
             "stackoverflow.com", "arxiv.org"
         ]) else ""
         cite = f" [{r.citation_id}]"
-        lines.append(f"{r.position}. **{r.title}**{cite}{type_badge}{auth_badge}")
+        lines.append(f"{r.position}. **{r.title}**{cite}{type_badge}{source_badge}{primary_badge}{auth_badge}")
         lines.append(f"   {r.url}")
         if r.snippet:
             lines.append(f"   > {r.snippet[:300]}")
@@ -326,6 +331,7 @@ async def tool_deep_research(
     max_tokens_per_source: int = 2500,
     max_total_tokens: int = 20000,
     summarize: bool = False,
+    primary_sources_only: bool = False,
 ) -> str:
     """End-to-end deep research pipeline with query expansion and citations.
 
@@ -342,6 +348,10 @@ async def tool_deep_research(
     - max_total_tokens: Total output budget (default: 20000)
     - summarize: Enable extractive summarization for over-budget (default: False)
 
+    Source Filtering:
+    - primary_sources_only: Keep only official docs, GitHub, registries,
+      academic papers, and Stack Overflow. Drops blogs and aggregators.
+
     Smart allocation gives more tokens to high-quality sources.
     """
     query = sanitize_query(query)
@@ -351,7 +361,7 @@ async def tool_deep_research(
 
     # Check cache
     cache = get_search_cache()
-    key = cache_key("deep_research", engine, max_sources, follow_links, expand_queries, max_tokens_per_source, max_total_tokens, summarize, query)
+    key = cache_key("deep_research", engine, max_sources, follow_links, expand_queries, max_tokens_per_source, max_total_tokens, summarize, primary_sources_only, query)
     cached = cache.get(key)
     if cached is not None:
         logger.debug("Cache hit for deep_research: %s", query)
@@ -369,6 +379,7 @@ async def tool_deep_research(
                 max_total_tokens=max_total_tokens,
                 summarize=summarize,
                 synthesize_answer=True,
+                primary_sources_only=primary_sources_only,
             ),
             timeout=120.0,
         )
@@ -402,6 +413,7 @@ async def tool_answer(
     engine: str = "duckduckgo_lite",
     max_sources: int = 5,
     max_tokens: int = 8000,
+    primary_sources_only: bool = False,
 ) -> str:
     """Get a direct, citation-backed answer to a question.
 
@@ -434,6 +446,7 @@ async def tool_answer(
                 max_total_tokens=max_tokens,
                 summarize=True,
                 synthesize_answer=True,
+                primary_sources_only=primary_sources_only,
             ),
             timeout=60.0,
         )
@@ -462,10 +475,12 @@ async def tool_answer(
     for src in result.sources:
         freshness = ""
         if src.freshness_days is not None:
-            freshness = f" ({src.freshness_days}d ago)"
+            freshness = f" (age: {src.freshness_days}d)"
         elif src.published_date:
-            freshness = f" ({src.published_date})"
-        lines.append(f"[{src.citation_id}] {src.title} — {src.url}{freshness}")
+            freshness = f" (published: {src.published_date})"
+        primary = " [PRIMARY]" if src.is_primary else ""
+        st = f" [{src.source_type.upper().replace('_', '-')}]" if src.source_type != "unknown" else ""
+        lines.append(f"[{src.citation_id}] {src.title}{st}{primary} — {src.url}{freshness}")
 
     return "\n".join(lines)
 
@@ -528,11 +543,15 @@ async def tool_search_with_citations(
     lines = [f"## Citation Search: {query}\n"]
     for r in results:
         type_badge = f" [{r.likely_content_type.value}]" if r.likely_content_type.value != "unknown" else ""
+        source_badge = ""
+        if r.source_type and r.source_type.value != "unknown":
+            source_badge = f" [{r.source_type.value.upper().replace('_', '-')}]"
+        primary_badge = " [PRIMARY]" if r.is_primary else ""
         auth_badge = " [AUTHORITY]" if any(d in r.domain for d in [
             "docs.python.org", "developer.mozilla.org", "github.com",
             "stackoverflow.com", "arxiv.org"
         ]) else ""
-        lines.append(f"[{r.citation_id}] **{r.title}**{type_badge}{auth_badge}")
+        lines.append(f"[{r.citation_id}] **{r.title}**{type_badge}{source_badge}{primary_badge}{auth_badge}")
         lines.append(f"    URL: {r.url}")
         if r.snippet:
             lines.append(f"    > {r.snippet[:300]}")
@@ -574,8 +593,13 @@ async def tool_parallel_search(
     queries: list[str],
     engine: str = "duckduckgo_lite",
     max_results: int = 5,
+    comparison_mode: bool = False,
 ) -> str:
-    """Run multiple searches in parallel. Each query scrapes the search engine independently."""
+    """Run multiple searches in parallel. Each query scrapes the search engine independently.
+
+    comparison_mode: When True, attempts to organize results into a structured
+        comparison table with source type classification and primary source badges.
+    """
     queries = [sanitize_query(q) for q in queries]
 
     if engine not in SEARCH_ENGINES:
@@ -588,7 +612,71 @@ async def tool_parallel_search(
             return await tool_web_search(q, engine=engine, max_results=max_results)
 
     results = await asyncio.gather(*(_search_one(q) for q in queries))
-    return "\n\n---\n\n".join(results)
+
+    if not comparison_mode:
+        return "\n\n---\n\n".join(results)
+
+    # ── Comparison mode: renumber and structure ──
+    all_lines: list[str] = []
+    all_lines.append("## Parallel Search Results")
+    all_lines.append("")
+
+    global_id = 1
+    query_blocks: list[tuple[str, list[str]]] = []
+
+    for q, raw in zip(queries, results, strict=False):
+        block_lines: list[str] = []
+        # Renumber citation IDs in this block
+        id_map: dict[str, str] = {}
+        for m in re.finditer(r"\[(\d+)\]", raw):
+            old_id = m.group(1)
+            if old_id not in id_map:
+                id_map[old_id] = str(global_id)
+                global_id += 1
+
+        # Replace IDs — bind id_map via default arg to avoid closure issue
+        def _repl_id(m, _mapping=id_map):
+            return f"[{_mapping.get(m.group(1), m.group(1))}]"
+        renumbered = re.sub(r"\[(\d+)\]", _repl_id, raw)
+
+        # Add source type badges if missing
+        block_lines.append(f"### Query: {q}")
+        block_lines.append(renumbered)
+        query_blocks.append((q, block_lines))
+
+    # Build comparison summary table
+    all_lines.append("### Comparison Summary")
+    all_lines.append("")
+    all_lines.append("| Query | Top Source | Type | Primary |")
+    all_lines.append("|-------|-----------|------|---------|")
+
+    for _q, block_lines in query_blocks:
+        # Extract first source from block
+        first_title = ""
+        first_type = ""
+        first_primary = ""
+        for line in block_lines:
+            if line.startswith("URL:"):
+                pass  # URL exists but not needed for summary
+            if line.startswith("   ") and not first_title:
+                first_title = line.strip()[:40]
+            if "[OFFICIAL-DOCS]" in line or "[GITHUB-REPO]" in line:
+                first_type = line[line.find("["):line.find("]")+1]
+            if "[PRIMARY]" in line:
+                first_primary = "✓"
+        if not first_title:
+            first_title = "(no title)"
+        all_lines.append(f"| {q[:30]} | {first_title} | {first_type} | {first_primary} |")
+
+    all_lines.append("")
+    all_lines.append("---")
+    all_lines.append("")
+
+    for _q, block_lines in query_blocks:
+        all_lines.extend(block_lines)
+        all_lines.append("")
+
+    return "\n".join(all_lines)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -675,6 +763,8 @@ TOOLS = {
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
                 "max_sources": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
                 "max_tokens": {"type": "integer", "default": 8000, "minimum": 1000, "maximum": 15000},
+                "primary_sources_only": {"type": "boolean", "default": False,
+                                         "description": "Only official docs, GitHub, registries, papers, SO"},
             },
             "required": ["query"],
         },
@@ -753,7 +843,8 @@ TOOLS = {
         "Your training data is outdated. This tool searches the LIVE web. "
         "Returns comprehensive report with inline citations [1], [2] and quality scores. "
         "NOT FOR: When you already have specific URLs to read (use fetch_page instead). "
-        "Smart token management. Use summarize=True if output too large.",
+        "Smart token management. Use summarize=True if output too large. "
+        "Use primary_sources_only=True for citation-grade official sources only.",
         {
             "type": "object",
             "properties": {
@@ -766,6 +857,8 @@ TOOLS = {
                 "max_tokens_per_source": {"type": "integer", "default": 2500, "minimum": 500, "maximum": 5000},
                 "max_total_tokens": {"type": "integer", "default": 20000, "minimum": 2000, "maximum": 50000},
                 "summarize": {"type": "boolean", "default": False},
+                "primary_sources_only": {"type": "boolean", "default": False,
+                                         "description": "Only official docs, GitHub, registries, papers, SO"},
             },
             "required": ["query"],
         },
@@ -788,8 +881,9 @@ TOOLS = {
     "parallel_search": (
         tool_parallel_search,
         "Run multiple searches in parallel. "
-        "BEST FOR: Getting multiple perspectives fast. "
-        "Faster than calling web_search multiple times sequentially.",
+        "BEST FOR: Getting multiple perspectives fast or comparing topics. "
+        "Faster than calling web_search multiple times sequentially. "
+        "Use comparison_mode=True to generate a structured comparison table.",
         {
             "type": "object",
             "properties": {
@@ -797,6 +891,8 @@ TOOLS = {
                             "description": "Search queries to run in parallel"},
                 "engine": {"type": "string", "enum": SEARCH_ENGINES, "default": "duckduckgo_lite"},
                 "max_results": {"type": "integer", "default": 5, "minimum": 1, "maximum": 10},
+                "comparison_mode": {"type": "boolean", "default": False,
+                                    "description": "Generate structured comparison table with renumbered citations"},
             },
             "required": ["queries"],
         },

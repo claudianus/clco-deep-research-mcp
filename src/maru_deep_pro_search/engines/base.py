@@ -11,8 +11,8 @@ from enum import Enum
 from functools import wraps
 from urllib.parse import urlparse
 
-from ..utils.rate_limiter import CircuitBreaker
 from ..exceptions import NetworkError
+from ..utils.rate_limiter import CircuitBreaker
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,20 @@ class ContentType(str, Enum):
     FORUM = "forum"
     CODE = "code"
     SPAM = "spam"
+    UNKNOWN = "unknown"
+
+
+class SourceType(str, Enum):
+    """Classification of source origin for trust and citation quality."""
+
+    OFFICIAL_DOCS = "official_docs"
+    GITHUB_REPO = "github_repo"
+    BLOG_REVIEW = "blog_review"
+    TUTORIAL = "tutorial"
+    ACADEMIC_PAPER = "academic_paper"
+    FORUM = "forum"
+    PACKAGE_REGISTRY = "package_registry"
+    NEWS = "news"
     UNKNOWN = "unknown"
 
 
@@ -43,6 +57,8 @@ class SearchResult:
     snippet: str = ""
     position: int = 0
     likely_content_type: ContentType = ContentType.UNKNOWN
+    source_type: SourceType = SourceType.UNKNOWN
+    is_primary: bool = False
     domain: str = ""
     url_suggests_docs: bool = False
     engine: str = ""
@@ -77,6 +93,8 @@ class PageContent:
     error_message: str = ""
 
     published_date: str = ""
+    last_updated: str = ""
+    crawled_at: str = ""
     code_languages: list[str] = field(default_factory=list)
     api_signatures: list[dict] = field(default_factory=list)
     package_refs: list[dict] = field(default_factory=list)
@@ -85,6 +103,11 @@ class PageContent:
     is_api_reference: bool = False
     is_tutorial: bool = False
     is_error_solution: bool = False
+
+    # Source classification
+    source_type: SourceType = SourceType.UNKNOWN
+    is_primary: bool = False
+    github_meta: dict | None = None
 
     # Citation support for answer synthesis
     citation_id: int = 0
@@ -177,7 +200,7 @@ class SearchEngine(ABC):
                 results = await original_search(self, query, max_results)
                 self._record_success()
                 return results
-            except Exception as exc:
+            except Exception:
                 self._record_failure()
                 raise
 
@@ -235,7 +258,7 @@ def _guess_content_type(url: str, snippet: str = "") -> ContentType:
         "brunch.co.kr", "okky.kr",
     ]
     if any(ind in domain for ind in korean_indicators):
-        if domain.endswith("github.com"):
+        if "github.com" in domain:
             return ContentType.CODE
         return ContentType.ARTICLE
 
@@ -248,3 +271,21 @@ def _guess_content_type(url: str, snippet: str = "") -> ContentType:
     if any(k in lower for k in ["medium.com", "dev.to", "blog.", "/blog/", "tistory.com", "velog.io", "brunch.co.kr"]):
         return ContentType.ARTICLE
     return ContentType.UNKNOWN
+
+
+def guess_source_type_and_primary(url: str, snippet: str = "") -> tuple[SourceType, bool]:
+    """Guess source type and whether it is a primary source.
+
+    Returns (source_type, is_primary).
+    """
+    from ..utils.url import classify_source_type, is_primary_source
+
+    st_str = classify_source_type(url, snippet)
+    is_prim = is_primary_source(url, st_str)
+
+    try:
+        st = SourceType(st_str)
+    except ValueError:
+        st = SourceType.UNKNOWN
+
+    return st, is_prim

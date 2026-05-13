@@ -20,6 +20,8 @@ class SearchConfig:
     default_max_total_tokens: int = 20000
     fetch_timeout_seconds: float = 30.0
     retry_attempts: int = 3
+    # Auto-update settings
+    auto_check_updates: bool = True
     # Quality weights for ranking
     authority_weight: float = 2.0
     freshness_weight: float = 1.0
@@ -37,6 +39,7 @@ class SearchConfig:
             default_max_total_tokens=int(os.getenv("MARU_SEARCH_MAX_TOKENS_TOTAL", "20000")),
             fetch_timeout_seconds=float(os.getenv("MARU_SEARCH_TIMEOUT", "30.0")),
             retry_attempts=int(os.getenv("MARU_SEARCH_RETRIES", "3")),
+            auto_check_updates=os.getenv("MARU_SKIP_UPDATE_CHECK", "").lower() not in ("1", "true", "yes"),
         )
 
 

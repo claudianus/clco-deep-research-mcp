@@ -10,7 +10,7 @@ from scrapling import AsyncFetcher
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type, _text
+from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type, _text, guess_source_type_and_primary
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +117,7 @@ class NaverEngine(SearchEngine):
             seen.add(norm)
 
             domain = get_domain(result.url)
+            source_type, is_primary = guess_source_type_and_primary(result.url, result.snippet)
             results.append(
                 SearchResult(
                     title=result.title,
@@ -127,6 +128,8 @@ class NaverEngine(SearchEngine):
                     domain=domain,
                     url_suggests_docs=any(d in domain for d in _KOREAN_DOMAINS),
                     engine=self.name,
+                    source_type=source_type,
+                    is_primary=is_primary,
                 )
             )
 

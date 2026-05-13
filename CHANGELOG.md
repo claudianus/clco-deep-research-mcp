@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-05-13
+
+### Added
+- **Citation-Grade Source Quality Overhaul** — 7 prioritized improvements from production feedback
+  1. **Canonical URL Accuracy**: `resolve_redirect()` now handles Google (`/url?url=`), DuckDuckGo (`r.duckduckgo.com`), Bing (`/ck/a`), Yahoo (`/RU=`), Baidu, and generic `?redirect=` / `?target=` patterns. `resolve_canonical_url()` provides a second normalization pass that strips tracking params and resolves redirectors.
+  2. **Stable Citation IDs**: `deep_research` now renumbers sources sequentially after token allocation, eliminating gaps caused by dropped/blocked sources. `parallel_search` gains `comparison_mode=True` with global renumbering across all queries.
+  3. **Primary Source Filter**: New `primary_sources_only` parameter on `deep_research` and `answer`. Filters out blogs/aggregators and keeps only official docs, GitHub repos, package registries, academic papers, and Stack Overflow.
+  4. **GitHub Repo Metadata**: GitHub URLs automatically extract ⭐ stars, primary language, license, last push date, topics, and description into a structured `_GitHub: ..._` line.
+  5. **Separated Freshness Info**: Sources now display `published: YYYY-MM-DD | updated: YYYY-MM-DD | age: Nd` instead of a single ambiguous freshness badge.
+  6. **Explicit Source Type Classification**: Every result is tagged with `[OFFICIAL-DOCS]`, `[GITHUB-REPO]`, `[BLOG-REVIEW]`, `[TUTORIAL]`, `[ACADEMIC-PAPER]`, `[FORUM]`, `[PACKAGE-REGISTRY]`, `[NEWS]`, or `[UNKNOWN]`.
+  7. **Comparison Mode for `parallel_search`**: When `comparison_mode=True`, results are merged into a summary table (`| Query | Top Source | Type | Primary |`) with globally renumbered citations.
+- **Source Type Auto-Classification**: `guess_source_type_and_primary()` in `engines/base.py` + `classify_source_type()` / `is_primary_source()` in `utils/url.py` provide consistent classification across all 8 search engines.
+- **Self-Update System** (`v0.10.0` add-on):
+  - `maru-deep-pro-search update` — One-command self update (auto-detects `uv`, `pipx`, `pip`)
+  - `maru-deep-pro-search update --check` — Dry-run version check only
+  - `maru-deep-pro-search update --force` — Skip 24h cooldown
+  - Background update check on MCP server startup (logs warning if newer version exists)
+  - Cooldown stored in `~/.cache/maru-deep-pro-search/last_update_check`
+  - Disabled via `MARU_SKIP_UPDATE_CHECK=1` or `MARU_UPDATE_CHECK_INTERVAL_HOURS`
+- **49 new tests** covering URL canonicalization, source type classification, citation renumbering, primary source filtering, and updater logic.
+
+### Changed
+- `SearchResult` and `PageContent` now carry `source_type: SourceType` and `is_primary: bool` fields.
+- `CitedSource` extended with `source_type`, `is_primary`, `github_meta`, `last_updated`, `crawled_at`.
+- `format_for_llm()` output reorganized: source type badges appear before freshness, GitHub metadata gets its own line, `[PRIMARY]` badge highlights authoritative sources.
+
 ## [0.9.3] - 2026-05-13
 
 ### Added

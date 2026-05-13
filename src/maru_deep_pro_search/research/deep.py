@@ -11,7 +11,12 @@ import re
 import time
 from dataclasses import dataclass, field
 
-from ..engines.base import ExtractionQuality, PageContent, SearchResult
+from ..engines.base import (
+    ExtractionQuality,
+    PageContent,
+    SearchResult,
+    guess_source_type_and_primary,
+)
 from ..engines.registry import SearchEngineRegistry
 from ..exceptions import NetworkError, ParseError
 from ..extraction.content import truncate_for_llm
@@ -38,6 +43,8 @@ class CitedSource:
     fetch_ms: float = 0.0
     quality: str = ""
     content_type: str = ""
+    source_type: str = "unknown"
+    is_primary: bool = False
     internal_links: list[dict] = field(default_factory=list)
     external_links: list[dict] = field(default_factory=list)
     code_languages: list[str] = field(default_factory=list)
@@ -45,6 +52,8 @@ class CitedSource:
     package_refs: list[dict] = field(default_factory=list)
     code_to_text_ratio: float = 0.0
     published_date: str = ""
+    last_updated: str = ""
+    crawled_at: str = ""
     freshness_days: int | None = None
     is_api_reference: bool = False
     is_tutorial: bool = False
@@ -52,6 +61,7 @@ class CitedSource:
     relevance_score: float = 0.0
     authority_boost: bool = False
     engines_found: list[str] = field(default_factory=list)
+    github_meta: dict | None = None
 
 
 @dataclass
@@ -99,6 +109,7 @@ async def deep_research(
     summarize: bool = False,
     synthesize_answer: bool = True,
     use_knowledge_store: bool = True,
+    primary_sources_only: bool = False,
 ) -> ResearchResult:
     """End-to-end deep research pipeline with query expansion and multi-pass crawling.
 
@@ -114,6 +125,9 @@ async def deep_research(
         summarize: Enable extractive summarization for over-budget scenarios.
         synthesize_answer: Generate a synthesized answer from sources.
         use_knowledge_store: If True, check local knowledge cache first.
+        primary_sources_only: If True, filter out non-primary sources
+            (blogs, aggregators) and keep only official docs, GitHub repos,
+            package registries, academic papers, and Stack Overflow.
     """
     t0 = time.monotonic()
 
@@ -242,6 +256,19 @@ async def deep_research(
     # Phase 3: Deduplicate, score, and rank (multi-engine merge)
     ranked = merge_results(engine_results, query)
 
+    # Phase 3b: Primary source filtering
+    if primary_sources_only:
+        original_count = len(ranked)
+        ranked = [rr for rr in ranked if rr.result.is_primary]
+        logger.info(
+            "Primary source filter: %d -> %d results",
+            original_count, len(ranked),
+        )
+        if not ranked:
+            # Fallback: keep top authority-boosted results
+            ranked = [rr for rr in merge_results(engine_results, query)
+                      if rr.result.url_suggests_docs or is_authority_domain(rr.result.url)]
+
     # Phase 4: Crawl top pages (use primary engine for fetching)
     urls_to_fetch = _prioritize_urls([rr.result.url for rr in ranked[:max_sources]])
 
@@ -314,6 +341,8 @@ async def deep_research(
                 fetch_ms=matched.fetch_duration_ms,
                 quality=matched.quality.value if matched.quality else "",
                 content_type=matched.content_type.value if matched.content_type else "",
+                source_type=matched.source_type.value if matched.source_type else sr.source_type.value,
+                is_primary=matched.is_primary or sr.is_primary,
                 internal_links=matched.internal_links,
                 external_links=matched.external_links,
                 code_languages=matched.code_languages,
@@ -321,6 +350,8 @@ async def deep_research(
                 package_refs=getattr(matched, 'package_refs', []),
                 code_to_text_ratio=matched.code_to_text_ratio,
                 published_date=matched.published_date,
+                last_updated=matched.last_updated,
+                crawled_at=matched.crawled_at,
                 freshness_days=matched.freshness_days,
                 is_api_reference=matched.is_api_reference,
                 is_tutorial=matched.is_tutorial,
@@ -328,6 +359,7 @@ async def deep_research(
                 relevance_score=rr.final_score,
                 authority_boost=is_authority_domain(matched.url),
                 engines_found=sr.engines_found,
+                github_meta=matched.github_meta,
             ))
         elif sr.snippet:
             # Fallback to snippet-only source
@@ -338,6 +370,8 @@ async def deep_research(
                 snippet=sr.snippet,
                 quality="empty",
                 content_type=sr.likely_content_type.value if sr.likely_content_type else "",
+                source_type=sr.source_type.value,
+                is_primary=sr.is_primary,
                 relevance_score=rr.final_score,
                 authority_boost=is_authority_domain(sr.url),
                 engines_found=sr.engines_found,
@@ -366,6 +400,7 @@ async def deep_research(
                         high_quality += 1
 
                     next_id = len(sources) + 1
+                    source_type, is_primary = guess_source_type_and_primary(lp.url, lp.text[:300])
                     sources.append(CitedSource(
                         citation_id=next_id,
                         url=lp.final_url or lp.url,
@@ -376,6 +411,8 @@ async def deep_research(
                         fetch_ms=lp.fetch_duration_ms,
                         quality=lp.quality.value if lp.quality else "",
                         content_type=lp.content_type.value if lp.content_type else "",
+                        source_type=source_type.value,
+                        is_primary=is_primary,
                         internal_links=lp.internal_links,
                         external_links=lp.external_links,
                         code_languages=lp.code_languages,
@@ -383,12 +420,15 @@ async def deep_research(
                         package_refs=getattr(lp, 'package_refs', []),
                         code_to_text_ratio=lp.code_to_text_ratio,
                         published_date=lp.published_date,
+                        last_updated=lp.last_updated,
+                        crawled_at=lp.crawled_at,
                         freshness_days=lp.freshness_days,
                         is_api_reference=lp.is_api_reference,
                         is_tutorial=lp.is_tutorial,
                         is_error_solution=lp.is_error_solution,
                         relevance_score=0.5,
                         authority_boost=is_authority_domain(lp.url),
+                        github_meta=lp.github_meta,
                     ))
 
     elapsed = (time.monotonic() - t0) * 1000
@@ -408,7 +448,32 @@ async def deep_research(
             src.markdown = _extractive_summarize(src.markdown, budget, query)
         allocated_sources.append(src)
 
-    # Answer synthesis
+    # ── Citation renumbering: ensure sequential, stable IDs ──
+    if allocated_sources:
+        old_to_new: dict[int, int] = {}
+        for new_id, src in enumerate(allocated_sources, 1):
+            old_to_new[src.citation_id] = new_id
+            src.citation_id = new_id
+
+        # Update any synthesized answer that already exists (from cache)
+        # and prepare for fresh synthesis with stable IDs
+        def _renumber_citations(text: str, mapping: dict[int, int]) -> str:
+            if not text:
+                return text
+            def _repl(m):
+                try:
+                    old = int(m.group(1))
+                    new = mapping.get(old, old)
+                    return f"[{new}]"
+                except ValueError:
+                    return m.group(0)
+            return re.sub(r"\[(\d+)\]", _repl, text)
+
+        # If we had a cached answer, renumber it (not applicable here,
+        # but kept for completeness if answer synthesis changes)
+        pass  # Fresh synthesis below uses already-renumbered sources
+
+    # Answer synthesis (now with stable, sequential IDs)
     synthesized = ""
     if synthesize_answer and allocated_sources:
         synthesized = _synthesize_answer(query, allocated_sources)
@@ -974,14 +1039,26 @@ def format_for_llm(
             code_badges.append(f"[code-heavy {src.code_to_text_ratio:.0%}]")
         code_badge_str = " " + " ".join(code_badges) if code_badges else ""
 
-        # Freshness
-        freshness = ""
-        if src.freshness_days is not None and src.freshness_days > 365:
-            freshness = f" [STALE: {src.freshness_days // 30}mo old]"
-        elif src.freshness_days is not None:
-            freshness = f" [{src.freshness_days}d ago]"
-        elif src.published_date:
-            freshness = f" [{src.published_date}]"
+        # Source type badge
+        source_type_badge = ""
+        if src.source_type and src.source_type != "unknown":
+            source_type_badge = f" [{src.source_type.upper().replace('_', '-')}]"
+
+        # Primary source indicator
+        primary_badge = " [PRIMARY]" if src.is_primary else ""
+
+        # Freshness (separated)
+        freshness_parts: list[str] = []
+        if src.published_date:
+            freshness_parts.append(f"published: {src.published_date}")
+        if src.last_updated:
+            freshness_parts.append(f"updated: {src.last_updated}")
+        if src.freshness_days is not None:
+            if src.freshness_days > 365:
+                freshness_parts.append(f"age: {src.freshness_days // 30}mo")
+            else:
+                freshness_parts.append(f"age: {src.freshness_days}d")
+        freshness = f" [{' | '.join(freshness_parts)}]" if freshness_parts else ""
 
         authority = " [AUTHORITY]" if src.authority_boost else ""
         cross_engine = ""
@@ -989,9 +1066,26 @@ def format_for_llm(
             cross_engine = f" [✓ {len(src.engines_found)} engines]"
 
         lines.append(
-            f"#### [{src.citation_id}] {src.title}{badge}{type_hint}{code_badge_str}{freshness}{authority}{cross_engine}"
+            f"#### [{src.citation_id}] {src.title}{badge}{type_hint}{source_type_badge}{primary_badge}{code_badge_str}{freshness}{authority}{cross_engine}"
         )
         lines.append(f"URL: {src.url}")
+
+        # GitHub metadata table
+        if src.github_meta:
+            gm = src.github_meta
+            gh_parts: list[str] = []
+            if "stars" in gm:
+                gh_parts.append(f"⭐ {gm['stars']}")
+            if "primary_language" in gm:
+                gh_parts.append(f"lang: {gm['primary_language']}")
+            if "license" in gm:
+                gh_parts.append(f"license: {gm['license']}")
+            if "last_updated" in gm:
+                gh_parts.append(f"last push: {gm['last_updated'][:10]}")
+            if "topics" in gm:
+                gh_parts.append(f"topics: {', '.join(gm['topics'][:5])}")
+            if gh_parts:
+                lines.append(f"_GitHub: {' | '.join(gh_parts)}_")
 
         if src.relevance_score > 0:
             lines.append(f"_relevance: {src.relevance_score:.1f}_")

@@ -39,6 +39,10 @@ def blue(text: str) -> str:
     return _color("34", text)
 
 
+def cyan(text: str) -> str:
+    return _color("36", text)
+
+
 def current_python_version() -> tuple[int, int, int]:
     """Return (major, minor, micro) of the running interpreter."""
     return sys.version_info[:3]

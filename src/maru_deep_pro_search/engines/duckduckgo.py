@@ -6,11 +6,19 @@ import contextlib
 import logging
 import re
 import time
-from urllib.parse import quote_plus, urljoin, urlparse
+from urllib.parse import quote_plus, urljoin
 
 from ..exceptions import NetworkError, ParseError
-from ..utils.url import get_domain, resolve_redirect, should_skip_url
-from .base import ContentType, ExtractionQuality, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
+from ..utils.url import get_domain, resolve_canonical_url, resolve_redirect, should_skip_url
+from .base import (
+    ExtractionQuality,
+    PageContent,
+    SearchEngine,
+    SearchResult,
+    _first,
+    _guess_content_type,
+    guess_source_type_and_primary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -164,8 +172,12 @@ class DuckDuckGoEngine(SearchEngine):
 
             # Resolve redirects
             href = resolve_redirect(href, search_url)
+            # Second pass: ensure canonical destination
+            href = resolve_canonical_url(href)
 
             if not href or not title:
+                continue
+            if not href.startswith("http"):
                 continue
 
             domain = get_domain(href)
@@ -177,12 +189,15 @@ class DuckDuckGoEngine(SearchEngine):
                 continue
 
             seen.add(normalized)
+            source_type, is_primary = guess_source_type_and_primary(href, snippet)
             results.append(SearchResult(
                 title=title,
                 url=href,
                 snippet=snippet,
                 position=len(results) + 1,
                 likely_content_type=_guess_content_type(href, snippet),
+                source_type=source_type,
+                is_primary=is_primary,
                 domain=domain,
                 url_suggests_docs=any(d in domain for d in _DOCS_DOMAINS),
                 engine=self.variant,
@@ -333,6 +348,13 @@ class DuckDuckGoEngine(SearchEngine):
             except Exception as exc:
                 logger.warning("Enhanced extraction failed: %s", exc)
 
+        source_type, is_primary = guess_source_type_and_primary(url, plain[:300])
+
+        # Try to extract GitHub metadata
+        github_meta = None
+        if "github.com" in get_domain(url):
+            github_meta = _extract_github_meta(page, url, plain)
+
         return PageContent(
             url=url,
             final_url=final_url,
@@ -356,6 +378,9 @@ class DuckDuckGoEngine(SearchEngine):
             is_api_reference=_code_stats.is_api_reference if _code_stats else False,
             is_tutorial=_code_stats.is_tutorial if _code_stats else False,
             is_error_solution=_code_stats.is_error_solution if _code_stats else False,
+            source_type=source_type,
+            is_primary=is_primary,
+            github_meta=github_meta,
         )
 
 
@@ -475,6 +500,83 @@ def _clean_whitespace(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r" {2,}", " ", text)
     return text.strip()
+
+
+def _extract_github_meta(page, url: str, plain_text: str) -> dict | None:
+    """Extract structured metadata from a GitHub repository page.
+
+    Returns a dict with stars, license, language, last_updated, etc.
+    Falls back to empty dict if page is not a repo page or extraction fails.
+    """
+    meta: dict = {"repo_url": url}
+    try:
+        # Stars: look for stargazer link or social count
+        stars_el = None
+        for sel in ["a[href$='/stargazers']", ".js-social-count", "[href*='stargazers']"]:
+            els = page.css(sel)
+            if els:
+                stars_el = els[0]
+                break
+        if stars_el:
+            txt = str(stars_el.text).strip() if stars_el.text else ""
+            if not txt:
+                txt = stars_el.attrib.get("aria-label", "")
+            if txt:
+                meta["stars"] = txt
+
+        # License
+        for sel in [".repository-content .BorderGrid-cell", "[title*='License']", "a[href*='LICENSE']"]:
+            els = page.css(sel)
+            for el in els:
+                txt = str(el.text).strip() if el.text else ""
+                if "license" in txt.lower() or "mit" in txt.lower() or "apache" in txt.lower():
+                    meta["license"] = txt
+                    break
+            if "license" in meta:
+                break
+
+        # Primary language
+        lang_el = None
+        for sel in [".repository-content .Progress-item", ".text-bold[title]", "[data-testid='language']"]:
+            els = page.css(sel)
+            if els:
+                lang_el = els[0]
+                break
+        if lang_el:
+            txt = str(lang_el.text).strip() if lang_el.text else ""
+            if not txt:
+                txt = lang_el.attrib.get("title", "")
+            if txt:
+                meta["primary_language"] = txt
+
+        # Last updated / relative time
+        time_els = page.css("relative-time, time-ago, [datetime]")
+        if time_els:
+            dt = time_els[0].attrib.get("datetime", "")
+            if dt:
+                meta["last_updated"] = dt
+
+        # Topics / tags
+        topic_els = page.css("[data-testid='topic-name'], .topic-tag")
+        topics = []
+        for t in topic_els[:10]:
+            txt = str(t.text).strip() if t.text else ""
+            if txt:
+                topics.append(txt)
+        if topics:
+            meta["topics"] = topics
+
+        # Description from README or about section
+        desc_els = page.css("[data-testid='about-description'], .repository-content p")
+        if desc_els:
+            desc = str(desc_els[0].text).strip() if desc_els[0].text else ""
+            if desc and len(desc) > 10:
+                meta["description"] = desc[:200]
+
+    except Exception:
+        pass
+
+    return meta if len(meta) > 1 else None
 
 
 # Factory function for creating engines

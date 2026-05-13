@@ -5,13 +5,20 @@ from __future__ import annotations
 import logging
 from urllib.parse import quote_plus
 
-from scrapling.fetchers import AsyncStealthySession
 from scrapling import StealthyFetcher
+from scrapling.fetchers import AsyncStealthySession
 
 from ..exceptions import BlockedError, NetworkError, ParseError
 from ..utils.retry import with_retry
-from ..utils.url import get_domain, resolve_redirect, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type
+from ..utils.url import get_domain, resolve_canonical_url, resolve_redirect, should_skip_url
+from .base import (
+    PageContent,
+    SearchEngine,
+    SearchResult,
+    _first,
+    _guess_content_type,
+    guess_source_type_and_primary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +151,10 @@ class GoogleEngine(SearchEngine):
             snippet = snippet_el.get_all_text().replace("\n", " ").strip() if snippet_el else ""
 
             href = resolve_redirect(href, search_url)
+            href = resolve_canonical_url(href)
             if not href or not title:
+                continue
+            if not href.startswith("http"):
                 continue
             if should_skip_url(href):
                 continue
@@ -155,6 +165,7 @@ class GoogleEngine(SearchEngine):
             seen.add(norm)
 
             domain = get_domain(href)
+            source_type, is_primary = guess_source_type_and_primary(href, snippet)
             results.append(
                 SearchResult(
                     title=title,
@@ -162,6 +173,8 @@ class GoogleEngine(SearchEngine):
                     snippet=snippet,
                     position=len(results) + 1,
                     likely_content_type=_guess_content_type(href, snippet),
+                    source_type=source_type,
+                    is_primary=is_primary,
                     domain=domain,
                     url_suggests_docs=any(d in domain for d in _DOCS_DOMAINS),
                     engine=self.name,

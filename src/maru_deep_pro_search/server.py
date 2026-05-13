@@ -18,6 +18,31 @@ _stderr_handler.setFormatter(
 _logger.addHandler(_stderr_handler)
 _logger.propagate = False
 
+# ═══════════════════════════════════════════════════════════════
+# Update Notification State
+# ═══════════════════════════════════════════════════════════════
+
+_pending_update_notice: str | None = None
+_update_notice_shown: bool = False
+
+
+def _consume_update_notice() -> str | None:
+    """Return the pending update notice once, then clear it."""
+    global _pending_update_notice, _update_notice_shown
+    if _update_notice_shown or _pending_update_notice is None:
+        return None
+    _update_notice_shown = True
+    notice = _pending_update_notice
+    return notice
+
+
+def _inject_notice_into_response(response: str) -> str:
+    """Prepend a pending update notice to a tool response if available."""
+    notice = _consume_update_notice()
+    if notice is None:
+        return response
+    return f"{notice}\n\n{response}"
+
 
 # ═══════════════════════════════════════════════════════════════
 # Enforcement Layer — Session-level research gates
@@ -121,6 +146,7 @@ All search results and fetched pages are wrapped in `[EXTERNAL CONTENT]` blocks 
 4. **`web_search`** / **`search_with_citations`** — For targeted source gathering
 5. **`fetch_page`** / **`fetch_bulk`** — For reading known URLs
 6. **`stealthy_fetch`** — Last resort for blocked sites
+7. **`version`** — Check server version and available updates
 
 ## Research Checklist
 Before writing ANY code:
@@ -170,8 +196,10 @@ Have specific URLs to read?
 │       └── Still blocked? → stealthy_fetch (last resort)
 │
 Need citation-ready sources?
-└── search_with_citations
-```
+├── search_with_citations
+│
+Need to check version or updates?
+└── version
 
 ## Tool Details
 
@@ -207,6 +235,11 @@ Need citation-ready sources?
 ### stealthy_fetch
 **When to use**: fetch_page failed even with stealth=True.
 **Warning**: ~3-5x slower. Use as last resort.
+
+### version
+**When to use**: Check if the server is up to date, verify installation health.
+**Returns**: Current version, latest PyPI version, and update instructions if outdated.
+**Why useful**: The server may show an update notice in its first tool response — use `version()` to confirm and get the exact upgrade command.
 
 ## Performance Ranking
 1. **Fastest**: answer, web_search, fetch_page
@@ -360,11 +393,13 @@ async def answer(
     engine: str = "duckduckgo_lite",
     max_sources: int = 5,
     max_tokens: int = 8000,
+    primary_sources_only: bool = False,
     ctx: Context | None = None,
 ) -> str:
     """Quick answer with inline citations for simple factual questions."""
     from .tools import tool_answer
-    return await tool_answer(query, engine, max_sources, max_tokens)
+    result = await tool_answer(query, engine, max_sources, max_tokens, primary_sources_only)
+    return _inject_notice_into_response(result)
 
 
 @mcp.tool()
@@ -427,14 +462,16 @@ async def deep_research(
     max_tokens_per_source: int = 2500,
     max_total_tokens: int = 20000,
     summarize: bool = False,
+    primary_sources_only: bool = False,
     ctx: Context | None = None,
 ) -> str:
     """Full 7-phase research pipeline with query expansion and gap detection."""
     from .tools import tool_deep_research
-    return await tool_deep_research(
+    result = await tool_deep_research(
         query, engine, max_sources, follow_links, expand_queries,
-        max_tokens_per_source, max_total_tokens, summarize,
+        max_tokens_per_source, max_total_tokens, summarize, primary_sources_only,
     )
+    return _inject_notice_into_response(result)
 
 
 @mcp.tool()
@@ -453,11 +490,39 @@ async def parallel_search(
     queries: list[str],
     engine: str = "duckduckgo_lite",
     max_results: int = 5,
+    comparison_mode: bool = False,
     ctx: Context | None = None,
 ) -> str:
     """Run multiple searches simultaneously for comparative analysis."""
     from .tools import tool_parallel_search
-    return await tool_parallel_search(queries, engine, max_results)
+    return await tool_parallel_search(queries, engine, max_results, comparison_mode)
+
+
+@mcp.tool()
+async def version(
+    ctx: Context | None = None,
+) -> str:
+    """Return the current version of maru-deep-pro-search and check for updates.
+
+    BEST FOR:
+    - Checking if you're on the latest version
+    - Getting update instructions
+    - Verifying the MCP server is running correctly
+    """
+    from .utils.updater import check_for_update
+
+    result = check_for_update()
+    lines = [
+        f"maru-deep-pro-search v{result.current_version}",
+        "",
+    ]
+    if result.update_available and result.latest_version:
+        lines.append(f"🔄 Update available: {result.current_version} → {result.latest_version}")
+        lines.append("   Run: maru-deep-pro-search update")
+        lines.append("   Or:  pip install -U maru-deep-pro-search")
+    else:
+        lines.append("✅ Up to date.")
+    return "\n".join(lines)
 
 
 @mcp.tool()
@@ -542,6 +607,22 @@ def run() -> None:
         if sub == "workflow":
             from .cli.workflow_cmd import main as _workflow_main
             sys.exit(_workflow_main(sys.argv[2:]))
+        if sub == "update":
+            from .cli.update_cmd import main as _update_main
+            sys.exit(_update_main(sys.argv[2:]))
+
+    # Background update check on startup — store notice for user-facing display
+    global _pending_update_notice
+    try:
+        from .utils.updater import check_for_update, get_update_notice
+        result = check_for_update()
+        notice = get_update_notice(result)
+        if notice:
+            _pending_update_notice = notice
+            _logger.warning(notice)
+    except Exception:
+        pass  # Never block server startup for update checks
+
     try:
         mcp.run(transport="stdio")
     except Exception:

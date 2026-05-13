@@ -217,6 +217,14 @@ def merge_results(
     for r in merged:
         r.cross_engine_score = min(len(r.engines_found) * _CROSS_ENGINE_BOOST, 1.5)
 
+    # Phase 2b: Auto-classify source type for results missing it
+    for r in merged:
+        if r.source_type.value == "unknown" or not r.is_primary:
+            from ..engines.base import guess_source_type_and_primary
+            st, prim = guess_source_type_and_primary(r.url, r.snippet)
+            r.source_type = st
+            r.is_primary = prim
+
     # Phase 3: Compute BM25 scores
     bm25_scores = _compute_bm25_scores(query, merged)
 
