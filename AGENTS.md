@@ -73,7 +73,7 @@ uv run pytest tests/test_engines.py -v
 **Integration tests** (`test_tool_integration.py`) call real search engines. They may flake if engines are down — this is **acceptable**.
 
 **Output format invariants** (do NOT break without updating tests):
-- `deep_research`: `## Research:`, `### Sources`, `#### [N] Title`, `_score:`
+- `deep_research`: `## Research:`, `_engines:`, `### Sources`, `#### [N] Title`, `_score:`
 - `web_search`: `Search:`, numbered results `1. **Title** [N]`
 - `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`
 - `parallel_search`: `### Comparison Summary`, `| Query | Top Source | Type | Primary |`
