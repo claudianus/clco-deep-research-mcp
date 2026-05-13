@@ -30,13 +30,11 @@ from pathlib import Path
 
 from ..backup import (
     backup_file,
-    read_json_safe,
     read_text_safe,
     restore_file,
-    write_json_safe,
     write_text_safe,
 )
-from ..prompts import get_protocol_for_agent, inject_protocol
+from ..prompts import get_protocol_for_agent
 from .base import AgentAdapter, get_mcp_server_yaml
 
 
@@ -117,14 +115,31 @@ class HermesAdapter(AgentAdapter):
         if "MARU-RESEARCH-PROTOCOL-START" not in content:
             content = protocol_yaml + "\n" + content
 
-        # Enable our plugin
-        if "plugins:" not in content:
-            content += "\nplugins:\n  enabled:\n"
-        if "maru-research-gate" not in content:
-            content = content.replace(
-                "plugins:\n  enabled:\n",
-                "plugins:\n  enabled:\n    - maru-research-gate\n",
-            )
+        # Enable our plugin (idempotent: won't duplicate)
+        lines = content.splitlines()
+        plugins_idx = None
+        enabled_idx = None
+        maru_present = False
+
+        for i, line in enumerate(lines):
+            if line.rstrip() == "plugins:":
+                plugins_idx = i
+            if plugins_idx is not None and line.strip() == "enabled:":
+                enabled_idx = i
+            if "maru-research-gate" in line:
+                maru_present = True
+
+        if plugins_idx is None:
+            lines.append("plugins:")
+            lines.append("  enabled:")
+            lines.append("    - maru-research-gate")
+        elif enabled_idx is None:
+            lines.insert(plugins_idx + 1, "  enabled:")
+            lines.insert(plugins_idx + 2, "    - maru-research-gate")
+        elif not maru_present:
+            lines.insert(enabled_idx + 1, "    - maru-research-gate")
+
+        content = "\n".join(lines) + "\n"
 
         # Shell hooks for audit logging
         shell_hook_marker = "# maru-shell-hooks"
