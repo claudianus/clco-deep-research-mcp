@@ -34,11 +34,11 @@ jobs:
 
       - name: Install maru-deep-pro-search
         run: |
-          pip install git+https://github.com/marudev/maru-deep-pro-search.git
+          pip install maru-deep-pro-search
 
       - name: Run deep research
         env:
-          MARU_QUERY: ${{ github.event.inputs.query || github.event.pull_request.title }}
+          MARU_QUERY: ${{ github.event.inputs.query || github.event.pull_request.title || github.event.issue.title }}
         run: |
           python -m maru_deep_pro_search.server research "$MARU_QUERY" --output research-report.md
 

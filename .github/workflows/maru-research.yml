@@ -1,0 +1,40 @@
+name: Maru Deep Research
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  issues:
+    types: [opened]
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Research query"
+        required: true
+        default: "latest security best practices"
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install maru-deep-pro-search
+        run: |
+          pip install git+https://github.com/claudianus/maru-deep-pro-search.git@test/workflow-validation
+
+      - name: Run deep research
+        env:
+          MARU_QUERY: ${{ github.event.inputs.query || github.event.pull_request.title || github.event.issue.title }}
+        run: |
+          python -m maru_deep_pro_search.server research "$MARU_QUERY" --output research-report.md
+
+      - name: Upload research report
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-report
+          path: research-report.md
