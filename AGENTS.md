@@ -50,18 +50,21 @@ GitHub Pages is automatically deployed from the `docs/` directory when changes t
 Before creating a new release tag:
 
 - [ ] Update `version` in `pyproject.toml`
+- [ ] **Update `__version__` in `src/maru_deep_pro_search/__init__.py`** — Easy to miss; PyPI shows correct version but runtime `import pkg; pkg.__version__` will lie if skipped.
 - [ ] Update `CHANGELOG.md` with new version section
 - [ ] Update version badge in `docs/index.html` (hero badge)
 - [ ] Update test count in `docs/index.html` if changed
 - [ ] Update test count in `README.md` if changed
-- [ ] Update test count in `AGENTS.md` if changed (current: 203)
+- [ ] Update test count in `AGENTS.md` if changed (current: 273)
 - [ ] Update engine list in `AGENTS.md` if engines added/removed
 - [ ] Run full test suite: `pytest tests/ -v` (all must pass)
+- [ ] Run lint + mypy: `ruff check . && ruff format --check . && mypy src/`
 - [ ] Commit all changes on a `release/vX.Y.Z` branch
 - [ ] Open PR and merge to `main`
 - [ ] Create and push version tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
 - [ ] Verify GitHub Actions workflow succeeds
 - [ ] Verify PyPI page shows new version
+- [ ] Verify `python -c "import maru_deep_pro_search; print(maru_deep_pro_search.__version__)"` matches tag
 
 ## Project Structure Reminders
 
@@ -395,6 +398,18 @@ Unit tests with mocked search results don't catch output format regressions. `te
 ### 5. Token bloat kills perceived quality
 Old `format_for_llm()` embedded full markdown per source (10,000+ chars). New format is ~1,500 chars of URLs + snippets. Agents don't read 10k chars anyway. **Concise metadata > verbose content.**
 
+### 6. `__version__` is NOT auto-synced with `pyproject.toml`
+`src/maru_deep_pro_search/__init__.py` contains a hard-coded `__version__ = "X.Y.Z"`. It does NOT read from `pyproject.toml`. We shipped v0.11.2 and v0.11.3 to PyPI with `__version__` still at `0.9.2`. This was caught during final integration testing, not by any CI check. **Always verify `__version__` explicitly after updating `pyproject.toml`.**
+
+### 7. PyPI does NOT allow re-uploading the same version
+Once `v0.11.2` was tagged and pushed, the wheels were immutable. When we discovered the urllib3 CVE required `>=2.7.0` (not `>=2.2.2`), we could not overwrite v0.11.2. We had to cut v0.11.3. **Triple-check security advisories before tagging.**
+
+### 8. cubic's AI commits can still break lint
+cubic-dev-ai pushed a commit (`afc901c`) that fixed AGENTS.md wording, but it introduced an ruff `I001` import-sort error in `duckduckgo.py` and a format drift in `tools.py`. cubic does NOT run `ruff check` before pushing. **Always run lint locally after any cubic push, or trust CI and push a follow-up fix immediately.**
+
+### 9. dependabot dismiss requires reading the FULL advisory
+cubic suggested `urllib3>=2.2.2` as a fix. We dismissed both alerts with `fix_started`. Only AFTER dismissing did we read the full CVE-2026-44431 text, which stated the fix was `>=2.7.0`, not `>=2.2.2`. **Read the advisory description before dismissing — the summary is often insufficient.**
+
 ---
 
 ## Operational Notes for Future Agents
@@ -416,3 +431,26 @@ Any change to tool output format MUST update or add tests in `test_tool_integrat
 
 ### DuckDuckGo circuit breaker
 DuckDuckGo Lite's circuit breaker opens after 3 consecutive failures (60s recovery). This is **expected behavior** under heavy load. Bing/Ecosia serve as automatic backups. Do NOT try to "fix" the circuit breaker — it protects the engine from getting blocked entirely.
+
+### Post-cubic-push checklist
+cubic AI may push commits directly to the PR branch (e.g., `--force-with-lease` fixes). After ANY cubic push:
+```bash
+git pull origin <branch>
+ruff check src/ && ruff format --check src/ && mypy src/maru_deep_pro_search
+pytest tests/ -q
+```
+
+### GitHub API vs browser for PR state
+GitHub's SPA renders PR comments asynchronously. Playwright snapshots often miss cubic reviews and CI status. **Prefer `gh pr view` and `gh pr checks` over browser scraping** for reliable PR state inspection.
+
+### Release burn-down order
+When cutting a release, follow this exact order:
+1. Update `pyproject.toml` version
+2. Update `src/maru_deep_pro_search/__init__.py` `__version__`
+3. Update `CHANGELOG.md`
+4. Update `docs/index.html` badge
+5. Run full lint + test + mypy
+6. Commit → PR → merge to `main`
+7. `git tag vX.Y.Z && git push origin vX.Y.Z`
+8. Watch `gh run watch` for PyPI publish success
+9. `python -c "import maru_deep_pro_search; print(maru_deep_pro_search.__version__)"`
