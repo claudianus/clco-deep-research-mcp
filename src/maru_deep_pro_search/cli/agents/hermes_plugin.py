@@ -26,6 +26,7 @@ Usage
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from datetime import datetime, timedelta, timezone
@@ -143,10 +144,8 @@ def register(ctx) -> None:
         """Reset research gate at the start of a new session."""
         # Remove stale session marker so the user must re-research
         if SESSION_FILE.exists():
-            try:
+            with contextlib.suppress(Exception):
                 SESSION_FILE.unlink()
-            except Exception:
-                pass
         ctx.inject_message(
             "[MARU-RESEARCH-GATE] New session started. "
             "Run /research <query> before using any tools.",

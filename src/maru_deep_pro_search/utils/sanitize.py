@@ -319,7 +319,7 @@ def analyze_content(text: str) -> RiskReport:
     text_clean = _CHAT_TOKENS.sub(lambda m: m.group(0).replace("<", "‹").replace(">", "›"), text_clean)
 
     text_normalized = _normalize_lookalikes(text_clean)
-    lookalike_count = sum(1 for a, b in zip(text_clean, text_normalized) if a != b)
+    lookalike_count = sum(1 for a, b in zip(text_clean, text_normalized, strict=False) if a != b)
 
     if invisible_removed > 0:
         warnings.append(f"{invisible_removed} invisible/zero-width characters detected and removed")

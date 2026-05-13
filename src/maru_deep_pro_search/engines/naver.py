@@ -246,7 +246,7 @@ class _ParsedResult:
         self.snippet = snippet
 
 
-def _text(el) -> str:
+def _extract_text(el) -> str:
     """Safely extract text from a scrapling element."""
     if el.text is not None:
         return str(el.text).strip()

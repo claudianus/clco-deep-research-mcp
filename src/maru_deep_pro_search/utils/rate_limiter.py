@@ -99,13 +99,12 @@ class CircuitBreaker:
         async with self._lock:
             self._failure_count += 1
             self._last_failure_time = time.monotonic()
-            if self._failure_count >= self.failure_threshold:
-                if self._state != "open":
-                    self._state = "open"
-                    logger.warning(
-                        "Circuit breaker OPENED after %d consecutive failures",
-                        self._failure_count,
-                    )
+            if self._failure_count >= self.failure_threshold and self._state != "open":
+                self._state = "open"
+                logger.warning(
+                    "Circuit breaker OPENED after %d consecutive failures",
+                    self._failure_count,
+                )
 
     @property
     def state(self) -> str:
