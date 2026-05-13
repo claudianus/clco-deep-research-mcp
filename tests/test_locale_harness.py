@@ -1,10 +1,9 @@
 """Tests for locale-aware query optimization harness."""
 
-import pytest
 
 from maru_deep_pro_search.utils.locale_harness import (
-    optimize_for_engine,
     get_locale_hint,
+    optimize_for_engine,
 )
 
 

@@ -109,7 +109,6 @@ class TestDeepResearchIntegration:
         )
         assert result.total_sources > 0
         # At least one source should have multiple engines (cross-validation)
-        multi_engine = any(len(s.engines_found) > 1 for s in result.sources)
         # Not guaranteed with circuit breakers, so just check structure
         assert result.search_coverage
         assert result.elapsed_ms > 0
