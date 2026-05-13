@@ -17,11 +17,14 @@ The project uses **GitHub Actions** to deploy to PyPI automatically:
 ```bash
 # 1. Update version in pyproject.toml
 # 2. Update CHANGELOG.md
-# 3. Commit and push to main
+# 3. Commit on a release branch and open a PR
+git checkout -b release/v0.5.0
 git add -A && git commit -m "feat: v0.5.0 - description"
-git push origin main
+git push -u origin release/v0.5.0
+gh pr create --title "release: v0.5.0" --body "Version bump and changelog"
 
-# 4. Create and push a version tag (this triggers PyPI deployment)
+# 4. After PR is merged to main, create and push a version tag (triggers PyPI deployment)
+git checkout main && git pull
 git tag v0.5.0
 git push origin v0.5.0
 ```
@@ -40,7 +43,7 @@ git push origin v0.5.0
 
 ### GitHub Pages Deployment
 
-GitHub Pages is automatically deployed from the `docs/` directory on every push to `main`. The site is a single static HTML file (`docs/index.html`) — no build step needed.
+GitHub Pages is automatically deployed from the `docs/` directory when changes to `docs/` are merged to `main`. The site is a single static HTML file (`docs/index.html`) — no build step needed.
 
 ## Version Bump Checklist
 
@@ -54,8 +57,8 @@ Before creating a new release tag:
 - [ ] Update test count in `AGENTS.md` if changed (current: 203)
 - [ ] Update engine list in `AGENTS.md` if engines added/removed
 - [ ] Run full test suite: `pytest tests/ -v` (all must pass)
-- [ ] Commit all changes
-- [ ] Push to `main`
+- [ ] Commit all changes on a `release/vX.Y.Z` branch
+- [ ] Open PR and merge to `main`
 - [ ] Create and push version tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
 - [ ] Verify GitHub Actions workflow succeeds
 - [ ] Verify PyPI page shows new version
@@ -114,7 +117,7 @@ pytest tests/ -v
 
 ### Required: PR-based development
 
-**Direct pushes to `main` are prohibited.** All changes must go through a Pull Request so that cubic AI review can run.
+**All changes to `main` must go through a Pull Request** so that cubic AI review can run. Direct pushes to `main` are not permitted — including version bumps and release commits (use a `release/vX.Y.Z` branch). The only direct push allowed is version tags (`git push origin vX.Y.Z`).
 
 ### Workflow
 
