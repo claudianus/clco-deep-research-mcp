@@ -36,7 +36,10 @@ def read_json_safe(path: Path) -> dict[str, Any]:
         return {}
     try:
         with open(path, encoding="utf-8") as f:
-            return json.load(f)  # type: ignore[no-any-return]
+            data = json.load(f)
+            if isinstance(data, dict):
+                return data
+            return {}
     except (json.JSONDecodeError, OSError):
         return {}
 
