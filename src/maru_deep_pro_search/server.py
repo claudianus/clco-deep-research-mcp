@@ -52,7 +52,7 @@ def _get_session_id(ctx: Context | None) -> str:
     if ctx is None:
         return "unknown"
     # client_id is stable for the lifetime of an MCP connection
-    return getattr(ctx, "client_id", None) or getattr(ctx, "request_id", "unknown")
+    return str(getattr(ctx, "client_id", None) or getattr(ctx, "request_id", "unknown"))
 
 
 def _with_enforcement(tool_name: str | None = None):
@@ -711,7 +711,7 @@ def run() -> None:
     try:
         mcp.run(transport="stdio")
     except Exception:
-        asyncio.run(mcp.run_sse())
+        asyncio.run(mcp.run_sse())  # type: ignore[attr-defined]
 
 
 if __name__ == "__main__":

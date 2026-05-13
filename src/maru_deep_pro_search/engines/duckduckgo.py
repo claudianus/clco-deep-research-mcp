@@ -6,6 +6,7 @@ import contextlib
 import logging
 import re
 import time
+from typing import Any
 from urllib.parse import quote_plus, urljoin
 
 from ..exceptions import NetworkError, ParseError
@@ -150,8 +151,8 @@ class DuckDuckGoEngine(SearchEngine):
     def __init__(self, variant: str = "duckduckgo_lite"):
         super().__init__()
         self.variant = variant
-        self._session = None
-        self._stealth_session = None
+        self._session: Any = None
+        self._stealth_session: Any = None
 
     async def close(self) -> None:
         """Close any open sessions to free resources.
@@ -182,7 +183,7 @@ class DuckDuckGoEngine(SearchEngine):
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
         """Search DuckDuckGo with retry and fallback selectors."""
         cfg = _SERP_SELECTORS.get(self.variant, _SERP_SELECTORS["duckduckgo_lite"])
-        search_url = cfg["search_url"].format(query=quote_plus(query))
+        search_url = str(cfg["search_url"]).format(query=quote_plus(query))
 
         try:
             session = await self._get_session()
@@ -208,9 +209,9 @@ class DuckDuckGoEngine(SearchEngine):
             logger.debug("Fallback to all links, found %d", len(containers))
 
         for _i, el in enumerate(containers[: max_results * 3]):
-            title_el = _first(el, cfg["title"])
-            url_el = _first(el, cfg["url"])
-            snippet_el = _first(el, cfg["snippet"])
+            title_el = _first(el, list(cfg["title"]))
+            url_el = _first(el, list(cfg["url"]))
+            snippet_el = _first(el, list(cfg["snippet"]))
 
             title = title_el.text.strip() if title_el else ""
             href = url_el.attrib.get("href", "") if url_el else ""

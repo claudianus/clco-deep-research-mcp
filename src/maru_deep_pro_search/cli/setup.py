@@ -104,7 +104,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
     for name in selected:
         adapter_cls = ADAPTER_REGISTRY[name]
-        adapter = adapter_cls()
+        adapter = adapter_cls()  # type: ignore[abstract]
         print(f"⚙️  {adapter.display_name} 설정 중...")
 
         result = adapter.configure(scope=scope)
@@ -169,7 +169,7 @@ def cmd_restore(args: argparse.Namespace) -> int:
     print("\n🔄 설정 복원 중...\n")
     restored_any = False
     for _name, adapter_cls in ADAPTER_REGISTRY.items():
-        adapter = adapter_cls()
+        adapter = adapter_cls()  # type: ignore[abstract]
         if adapter.detect():
             if adapter.restore():
                 print(f"   ✓ {adapter.display_name} 복원 완료")
@@ -189,7 +189,7 @@ def cmd_check(args: argparse.Namespace) -> int:
     print("\n🔍 설정 상태 확인 중...\n")
     all_ok = True
     for _name, adapter_cls in ADAPTER_REGISTRY.items():
-        adapter = adapter_cls()
+        adapter = adapter_cls()  # type: ignore[abstract]
         if adapter.detect():
             # Simple heuristic: check if MCP config exists
             mcp_ok = adapter.install_mcp(scope="user")  # idempotent

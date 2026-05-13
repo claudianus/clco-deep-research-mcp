@@ -94,7 +94,7 @@ class SessionEnforcer:
     # Tools that REQUIRE deep_research to have been called first.
     # Previously gated all search tools; now only code generation is gated
     # via validate_code_generation() in the generate_code tool itself.
-    RESEARCH_DEPENDENT_TOOLS: set[str] = {}
+    RESEARCH_DEPENDENT_TOOLS: set[str] = set()
 
     # Tools that can be called WITHOUT prior research.
     RESEARCH_EXEMPT_TOOLS: set[str] = {

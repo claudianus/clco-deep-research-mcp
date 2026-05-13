@@ -17,11 +17,14 @@ The project uses **GitHub Actions** to deploy to PyPI automatically:
 ```bash
 # 1. Update version in pyproject.toml
 # 2. Update CHANGELOG.md
-# 3. Commit and push to main
+# 3. Commit on a release branch and open a PR
+git checkout -b release/v0.5.0
 git add -A && git commit -m "feat: v0.5.0 - description"
-git push origin main
+git push -u origin release/v0.5.0
+gh pr create --title "release: v0.5.0" --body "Version bump and changelog"
 
-# 4. Create and push a version tag (this triggers PyPI deployment)
+# 4. After PR is merged to main, create and push a version tag (triggers PyPI deployment)
+git checkout main && git pull
 git tag v0.5.0
 git push origin v0.5.0
 ```
@@ -40,7 +43,7 @@ git push origin v0.5.0
 
 ### GitHub Pages Deployment
 
-GitHub Pages is automatically deployed from the `docs/` directory on every push to `main`. The site is a single static HTML file (`docs/index.html`) — no build step needed.
+GitHub Pages is automatically deployed from the `docs/` directory when changes to `docs/` are merged to `main`. The site is a single static HTML file (`docs/index.html`) — no build step needed.
 
 ## Version Bump Checklist
 
@@ -54,8 +57,8 @@ Before creating a new release tag:
 - [ ] Update test count in `AGENTS.md` if changed (current: 203)
 - [ ] Update engine list in `AGENTS.md` if engines added/removed
 - [ ] Run full test suite: `pytest tests/ -v` (all must pass)
-- [ ] Commit all changes
-- [ ] Push to `main`
+- [ ] Commit all changes on a `release/vX.Y.Z` branch
+- [ ] Open PR and merge to `main`
 - [ ] Create and push version tag: `git tag vX.Y.Z && git push origin vX.Y.Z`
 - [ ] Verify GitHub Actions workflow succeeds
 - [ ] Verify PyPI page shows new version
@@ -108,7 +111,53 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 203 tests, all passing.
+**Current requirement**: 273 tests, all passing.
+
+## Code Review & Merge Workflow
+
+### Required: PR-based development
+
+**All changes to `main` must go through a Pull Request** so that cubic AI review can run. Direct pushes to `main` are not permitted — including version bumps and release commits (use a `release/vX.Y.Z` branch). The only direct push allowed is version tags (`git push origin vX.Y.Z`).
+
+### Workflow
+
+```
+1. feature/fix 브랜치 생성 (main 기준)
+   git checkout -b feat/description
+
+2. 로컬에서 작업 + 커밋
+   git commit -m "feat: description"
+
+3. (선택) 로컬에서 cubic CLI 사전 검증
+   cubic review --base main
+
+4. push → PR 오픈
+   git push -u origin feat/description
+   gh pr create --title "feat: description" --body "..."
+
+5. cubic AI가 PR 자동 리뷰
+   - 인라인 코멘트 (버그 / 개선 제안)
+   - PR 요약 피드백
+   - 수정 후 @cubic-dev-ai 멘션으로 재리뷰 요청
+
+6. 피드백 반영 후 push
+   git commit --amend   # 또는 추가 커밋
+   git push --force-with-lease
+
+7. 머지 조건 (모두 충족 시에만)
+   - CI 전체 통과 (lint + tests + mypy)
+   - cubic AI 리뷰 resolved (또는 명시적 dismiss)
+   - 1개 이상의 approving review
+```
+
+### cubic 동작 방식
+
+| 방식 | 트리거 | 결과 위치 |
+|------|--------|----------|
+| GitHub App | PR 오픈 / push | PR 인라인 코멘트 + 요약 |
+| 로컬 CLI | `cubic review` | 터미널 / JSON 출력 |
+
+**주의**: cubic GitHub App은 PR에서만 동작합니다. `main`에 직접 push하면 AI 리뷰가 실행되지 않으므로 반드시 PR 방식을 사용하세요.
 
 ## Key Architecture Decisions
 

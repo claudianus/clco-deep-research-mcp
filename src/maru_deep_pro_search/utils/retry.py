@@ -32,7 +32,7 @@ async def with_retry(
         retryable_exceptions: Exception types to retry on.
         **kwargs: Keyword arguments for func.
     """
-    last_exception = None
+    last_exception: Exception | None = None
 
     for attempt in range(1, max_attempts + 1):
         try:
@@ -62,4 +62,6 @@ async def with_retry(
             )
             await asyncio.sleep(actual_delay)
 
-    raise last_exception
+    if last_exception is not None:
+        raise last_exception
+    raise RuntimeError("All retry attempts exhausted")

@@ -44,14 +44,19 @@ class KnowledgeStore:
     _instances: dict[str, KnowledgeStore] = {}
     _lock = threading.Lock()
 
+    _db_path: str
+    _conn: sqlite3.Connection | None
+    _encoder: Any
+    _initialized: bool
+
     def __new__(cls, db_path: str | Path | None = None) -> KnowledgeStore:
         path = str(db_path or cls._default_db_path())
         with cls._lock:
             if path not in cls._instances:
                 instance = super().__new__(cls)
                 instance._db_path = path
-                instance._conn: sqlite3.Connection | None = None
-                instance._encoder: Any = None
+                instance._conn = None
+                instance._encoder = None
                 instance._initialized = False
                 cls._instances[path] = instance
             return cls._instances[path]
@@ -318,7 +323,7 @@ class KnowledgeStore:
 
             emb = self._encoder.encode([text], convert_to_numpy=True)
             emb = emb / (np.linalg.norm(emb, axis=1, keepdims=True) + 1e-8)
-            return emb[0].tolist()
+            return emb[0].tolist()  # type: ignore[no-any-return]
         except Exception:
             return None
 

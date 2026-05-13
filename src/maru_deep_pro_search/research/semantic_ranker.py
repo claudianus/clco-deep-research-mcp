@@ -100,7 +100,7 @@ class SemanticRanker:
             from sentence_transformers.util import cos_sim
 
             embs = bi.encode(sentences, convert_to_tensor=False, show_progress_bar=False)
-            return cos_sim(embs, embs).tolist()
+            return cos_sim(embs, embs).tolist()  # type: ignore[no-any-return]
         except Exception as exc:
             logger.warning("Sentence similarity failed: %s", exc)
             return []
