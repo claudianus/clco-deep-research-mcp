@@ -31,7 +31,6 @@ import os
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-
 # ═══════════════════════════════════════════════════════════════════════
 # Research gate state — filesystem-backed session tracking
 # ═══════════════════════════════════════════════════════════════════════

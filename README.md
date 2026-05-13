@@ -148,6 +148,20 @@ All optional. Loaded via `pydantic-settings` with prefix `MARU_SEARCH_`.
 | `TIMEOUT` | `30.0` | Fetch timeout (seconds) |
 | `RETRIES` | `3` | Retry attempts |
 
+### GitHub Actions Bot Identity (optional)
+
+By default, workflow comments appear as `github-actions[bot]`. To use a custom bot name and icon:
+
+1. Create a GitHub App at **Settings → Developer settings → GitHub Apps → New GitHub App**
+   - Name: `marubot` (or your preference)
+   - Upload a custom icon (PNG, 200×200)
+   - Permissions: **Issues** (write), **Pull requests** (write), **Actions** (read)
+2. Install the app on your repository
+3. Go to **Settings → Secrets and variables → Actions** and add:
+   - `MARUBOT_APP_ID` — your GitHub App ID
+   - `MARUBOT_PRIVATE_KEY` — the PEM private key from the app
+4. The generated workflow automatically falls back to `github-actions[bot]` if `MARUBOT_TOKEN` is not set.
+
 ---
 
 ## CLI Commands

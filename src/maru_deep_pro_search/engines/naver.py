@@ -10,7 +10,14 @@ from scrapling import AsyncFetcher
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type, _text, guess_source_type_and_primary
+from .base import (
+    PageContent,
+    SearchEngine,
+    SearchResult,
+    _guess_content_type,
+    _text,
+    guess_source_type_and_primary,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +157,7 @@ class NaverEngine(SearchEngine):
         return await engine.fetch(url, stealth=stealth, timeout=timeout)
 
 
-def _parse_doc(doc) -> "_ParsedResult | None":
+def _parse_doc(doc) -> _ParsedResult | None:
     """Extract title, url, snippet from a single ``.fds-web-doc-root``."""
     # --- URL ---
     link_els = doc.css(_SERP_LINK)

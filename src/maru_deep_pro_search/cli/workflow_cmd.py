@@ -43,6 +43,16 @@ jobs:
         run: |
           pip install git+https://github.com/${{ github.repository }}.git@${{ github.head_ref || github.ref_name }}
 
+      - name: Validate query
+        env:
+          MARU_QUERY: ${{ github.event.inputs.query || github.event.pull_request.title || github.event.issue.title || 'general research' }}
+        run: |
+          if [ -z "$MARU_QUERY" ] || [ "${#MARU_QUERY}" -lt 3 ]; then
+            echo "::error::Query is too short or empty. Minimum 3 characters required."
+            exit 1
+          fi
+          echo "Query validated (${#MARU_QUERY} chars)"
+
       - name: Run deep research
         id: research
         env:
@@ -139,9 +149,9 @@ def cmd_generate_workflow(args: argparse.Namespace) -> int:
     print(f"  {bold('Trigger:')} PR open/sync, issue open, or manual dispatch")
     print(f"  {bold('Install:')} pip install maru-deep-pro-search")
     print(f"  {bold('Features:')}")
-    print(f"    • pip caching (speeds up repeated runs)")
-    print(f"    • Auto-posts research summary as PR/Issue comment")
-    print(f"    • Artifacts uploaded for full report download")
+    print("    • pip caching (speeds up repeated runs)")
+    print("    • Auto-posts research summary as PR/Issue comment")
+    print("    • Artifacts uploaded for full report download")
     return 0
 
 

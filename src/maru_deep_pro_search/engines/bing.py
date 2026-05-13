@@ -10,7 +10,14 @@ from scrapling import AsyncFetcher
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, resolve_canonical_url, resolve_redirect, should_skip_url
-from .base import ContentType, PageContent, SearchEngine, SearchResult, _first, _guess_content_type, guess_source_type_and_primary
+from .base import (
+    PageContent,
+    SearchEngine,
+    SearchResult,
+    _first,
+    _guess_content_type,
+    guess_source_type_and_primary,
+)
 
 logger = logging.getLogger(__name__)
 

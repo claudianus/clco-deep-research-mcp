@@ -34,6 +34,16 @@ jobs:
         run: |
           pip install git+https://github.com/${{ github.repository }}.git@${{ github.head_ref || github.ref_name }}
 
+      - name: Validate query
+        env:
+          MARU_QUERY: ${{ github.event.inputs.query || github.event.pull_request.title || github.event.issue.title || 'general research' }}
+        run: |
+          if [ -z "$MARU_QUERY" ] || [ "${#MARU_QUERY}" -lt 3 ]; then
+            echo "::error::Query is too short or empty. Minimum 3 characters required."
+            exit 1
+          fi
+          echo "Query validated (${#MARU_QUERY} chars)"
+
       - name: Run deep research
         id: research
         env:
