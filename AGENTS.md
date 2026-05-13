@@ -108,7 +108,53 @@ source .venv/bin/activate
 pytest tests/ -v
 ```
 
-**Current requirement**: 203 tests, all passing.
+**Current requirement**: 273 tests, all passing.
+
+## Code Review & Merge Workflow
+
+### Required: PR-based development
+
+**Direct pushes to `main` are prohibited.** All changes must go through a Pull Request so that cubic AI review can run.
+
+### Workflow
+
+```
+1. feature/fix 브랜치 생성 (main 기준)
+   git checkout -b feat/description
+
+2. 로컬에서 작업 + 커밋
+   git commit -m "feat: description"
+
+3. (선택) 로컬에서 cubic CLI 사전 검증
+   cubic review --base main
+
+4. push → PR 오픈
+   git push -u origin feat/description
+   gh pr create --title "feat: description" --body "..."
+
+5. cubic AI가 PR 자동 리뷰
+   - 인라인 코멘트 (버그 / 개선 제안)
+   - PR 요약 피드백
+   - 수정 후 @cubic-dev-ai 멘션으로 재리뷰 요청
+
+6. 피드백 반영 후 push
+   git commit --amend   # 또는 추가 커밋
+   git push
+
+7. 머지 조건 (모두 충족 시에만)
+   - CI 전체 통과 (lint + tests + mypy)
+   - cubic AI 리뷰 resolved (또는 명시적 dismiss)
+   - 1개 이상의 approving review
+```
+
+### cubic 동작 방식
+
+| 방식 | 트리거 | 결과 위치 |
+|------|--------|----------|
+| GitHub App | PR 오픈 / push | PR 인라인 코멘트 + 요약 |
+| 로컬 CLI | `cubic review` | 터미널 / JSON 출력 |
+
+**주의**: cubic GitHub App은 PR에서만 동작합니다. `main`에 직접 push하면 AI 리뷰가 실행되지 않으므로 반드시 PR 방식을 사용하세요.
 
 ## Key Architecture Decisions
 
