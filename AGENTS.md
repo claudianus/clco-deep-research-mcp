@@ -142,7 +142,7 @@ pytest tests/ -v
 
 6. 피드백 반영 후 push
    git commit --amend   # 또는 추가 커밋
-   git push
+   git push --force-with-lease
 
 7. 머지 조건 (모두 충족 시에만)
    - CI 전체 통과 (lint + tests + mypy)
