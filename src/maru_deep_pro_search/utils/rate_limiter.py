@@ -109,3 +109,7 @@ class CircuitBreaker:
     @property
     def state(self) -> str:
         return self._state
+
+    @property
+    def failure_count(self) -> int:
+        return self._failure_count

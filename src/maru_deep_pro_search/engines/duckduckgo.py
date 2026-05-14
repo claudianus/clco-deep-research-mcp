@@ -364,7 +364,7 @@ class DuckDuckGoEngine(SearchEngine):
                     include_formatting=True,
                     include_links=True,
                 )
-                if tf_result and len(tf_result) > max(len(markdown), 200):
+                if tf_result and len(tf_result) > 200:
                     markdown = tf_result
                     plain = (
                         trafilatura.extract(

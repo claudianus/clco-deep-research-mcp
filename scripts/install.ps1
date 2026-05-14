@@ -180,7 +180,7 @@ if (Confirm "지금 설정 마법사를 실행하시겠습니까?") {
 Write-Title "✅ 설치 완료 요약"
 Write-Ok "Python: ${pythonVersion:-${TargetPy} (via uv)}"
 Write-Ok "패키지: $newVer"
-Write-Ok "설치 위치: $(which maru-deep-pro-search)"
+Write-Ok "설치 위치: $((Get-Command maru-deep-pro-search -ErrorAction SilentlyContinue).Source)"
 Write-Host ""
 Write-Host "사용 가능한 명령어:" -Bold
 Write-Host "  maru-deep-pro-search setup         # 에이전트 설정"

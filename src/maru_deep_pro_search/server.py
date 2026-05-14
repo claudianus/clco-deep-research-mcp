@@ -567,6 +567,76 @@ async def version(
 @mcp.tool()
 @_with_validation()
 @_with_audit()
+async def list_engines(
+    ctx: Context | None = None,
+) -> str:
+    """List all available search engines with their metadata.
+
+    BEST FOR:
+    - Discovering which engines are installed
+    - Choosing the right engine for a query
+    - Understanding engine reliability and latency
+    """
+    from .engines.registry import SearchEngineRegistry
+
+    lines = ["## Available Search Engines", ""]
+    for name in SearchEngineRegistry.list_engines():
+        try:
+            cls = SearchEngineRegistry.get(name)
+            status = "🟢" if cls.reliability_score >= 0.85 else "🟡" if cls.reliability_score >= 0.7 else "🔴"
+            lines.append(
+                f"{status} **{name}** — tier {cls.quality_tier}, "
+                f"reliability {cls.reliability_score:.0%}, "
+                f"~{cls.typical_latency_ms}ms"
+            )
+        except Exception:
+            lines.append(f"⚪ **{name}** — metadata unavailable")
+    lines.append("")
+    lines.append("Tip: Use `engine_health()` to check real-time circuit breaker status.")
+    return "\n".join(lines)
+
+
+@mcp.tool()
+@_with_validation()
+@_with_audit()
+async def engine_health(
+    engine: str = "",
+    ctx: Context | None = None,
+) -> str:
+    """Check the health status of search engines.
+
+    BEST FOR:
+    - Diagnosing why a search failed
+    - Checking if an engine is rate-limited
+    - Finding alternative engines when one is down
+
+    Args:
+        engine: Specific engine name to check, or empty for all engines.
+    """
+    from .engines.registry import SearchEngineRegistry
+
+    engines_to_check = [engine] if engine else SearchEngineRegistry.list_engines()
+    lines = ["## Engine Health Status", ""]
+
+    for name in engines_to_check:
+        try:
+            eng = SearchEngineRegistry.create(name)
+            cb = eng._circuit_breaker
+            cb_state = "CLOSED ✅" if cb.state == "closed" else "OPEN ❌" if cb.state == "open" else "HALF-OPEN ⚠️"
+            lines.append(
+                f"**{name}**: {cb_state} | "
+                f"failures: {cb.failure_count}/{cb.failure_threshold} | "
+                f"cooldown: {eng.min_request_interval}s"
+            )
+        except Exception as exc:
+            lines.append(f"**{name}**: ERROR — {exc}")
+
+    return "\n".join(lines)
+
+
+@mcp.tool()
+@_with_validation()
+@_with_audit()
 async def generate_code(
     task_description: str,
     proposed_code: str,
@@ -695,7 +765,6 @@ def _research_main(argv: list[str] | None = None) -> int:
 
 
 def run() -> None:
-    import asyncio
 
     if len(sys.argv) > 1:
         sub = sys.argv[1]
@@ -733,10 +802,7 @@ def run() -> None:
     except Exception:
         pass  # Never block server startup for update checks
 
-    try:
-        mcp.run(transport="stdio")
-    except Exception:
-        asyncio.run(mcp.run_sse_async())
+    mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

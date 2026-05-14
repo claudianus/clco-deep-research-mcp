@@ -4,15 +4,15 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.9.x   | ✅ Active development |
-| < 0.9.0 | ❌ No longer supported |
+| 0.11.x  | ✅ Active development |
+| < 0.11.0 | ❌ No longer supported |
 
 ## Reporting a Vulnerability
 
 If you discover a security vulnerability in `maru-deep-pro-search`, please report it responsibly:
 
 1. **Do NOT open a public issue.**
-2. Email **claudianus@github.com** with:
+2. Open a [GitHub Security Advisory](https://github.com/claudianus/maru-deep-pro-search/security/advisories/new) or email **security@maru.dev** with:
    - A clear description of the vulnerability
    - Steps to reproduce
    - Potential impact assessment
