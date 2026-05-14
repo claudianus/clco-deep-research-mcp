@@ -88,37 +88,40 @@ pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
 
 ---
 
-## 🤖 21개 AI 에이전트 — 스킬 파일 주입 지원
+## 🤖 21개 AI 에이전트 — 확장 메커니즘 매트릭스
 
-한 번의 설정으로 모든 에이전트에 리서치 우선 규칙과 **SKILL.md 파일**을 주입합니다.
+한 번의 설정으로 모든 에이전트의 **확장 표면**에 리서치 우선 규칙을 주입합니다 — hooks, commands, plugins, cron, permissions 등.
 
-| 에이전트 | MCP | 규칙 주입 | 스킬 경로 | 형식 |
-|-------|-----|-----------------|------------|--------|
-| Claude Code | ✅ | `CLAUDE.md` + hooks | `~/.claude/skills/` | nested |
-| Cursor | ✅ | `.cursorrules` + `.cursor/settings.json` | `~/.cursor/rules/` | flat |
-| Kimi | ✅ | `~/.kimi/settings.json` | `~/.kimi/skills/` | nested |
-| Cline | ✅ | `.clinerules` | `~/.cline/skills/` | nested |
-| Continue | ✅ | `.continue/config.json` | `~/.continue/rules/` | flat |
-| Windsurf | ✅ | `.windsurfrules` | `~/.windsurf/rules/` | flat |
-| Zed | ✅ | `.rules` + `assistant.md` | — | — |
-| JetBrains | ⚠️ | `.idea/ai-assistant.xml` | — | — |
-| Cody | ⚠️ | `.cody/prompts.md` | — | — |
-| Devin | ⚠️ | `.devin/rules.md` | — | — |
-| Amazon Q | ⚠️ | `.amazonq/prompts.md` | — | — |
-| Tabnine | ⚠️ | `.tabnine/prompts.md` | `~/.tabnine/guidelines/` | flat |
-| Codeium | ⚠️ | `.codeium/system-prompt.md` | — | — |
-| Copilot | ⚠️ | `.github/copilot-instructions.md` | — | — |
-| Aider | ⚠️ | `CONVENTIONS.md` + `.aider.conf.yml` | — | — |
-| Codex | ✅ | `AGENTS.md` + `~/.codex/config.toml` | — | — |
-| Kilo | ✅ | `kilo.jsonc` instructions | `~/.config/kilo/rules/` | flat |
-| OpenCode | ✅ | `AGENTS.md` + `opencode.json` | — | — |
-| AntiGravity | ✅ | `~/.gemini/antigravity/config.json` | — | — |
-| Hermes | ✅ | `~/.hermes/config.yaml` + plugins | `~/.hermes/skills/` | flat |
-| Supermaven | ⚠️ | `.supermaven/rules.md` | — | — |
+| 에이전트 | MCP | Hooks | Commands | Agents/Cron/Plugins | 규칙 / 프롬프트 | Skills | 기타 표면 |
+|-------|:---:|:-----:|:--------:|:-------------------:|-----------------|--------|-----------|
+| **Claude Code** | ✅ | 4개 라이프사이클 훅 | `research.md` `verify.md` | — | `CLAUDE.md` + hooks | `~/.claude/skills/` nested | 권한 deny 패턴 |
+| **Cursor** | ✅ | — | `research.json` `verify.json` | — | `.cursor/rules/*.md` | `~/.cursor/rules/` flat | `autoEnableTools` |
+| **Kimi** | ✅ | `PreToolUse` (TOML) | — | — | `config.toml` `system_prompt` | `~/.kimi/skills/` nested | `default_yolo=false` |
+| **Cline** | ✅ | `PreToolUse.py` | — | `maru-research-gate.md` 에이전트 + `.cron.md` | `.clinerules/*.md` | `~/.cline/skills/` flat | — |
+| **Continue** | ✅ | — | `research` `verify` | — | `system_message` + `.continue/rules/` | `~/.continue/rules/` flat | — |
+| **Windsurf** | ✅ | 3개 Cascade 훅 | — | — | `.windsurf/rules/*.md` + `AGENTS.md` | `~/.windsurf/rules/` flat | `.codeiumignore` |
+| **Zed** | ✅ | — | — | — | `.rules` + `assistant.md` | — | `tool_permissions` |
+| **JetBrains** | ⚠️ | — | — | — | `.idea/ai-assistant-rules/*.md` | `.idea/ai-assistant-rules/` flat | — |
+| **Cody** | ⚠️ | — | — | — | `.cody/prompts.md` | — | — |
+| **Devin** | ⚠️ | — | — | — | `.devin/rules.md` | — | — |
+| **Amazon Q** | ⚠️ | — | — | — | `.amazonq/rules/*.md` | `.amazonq/rules/` flat | — |
+| **Tabnine** | ⚠️ | — | — | — | `.tabnine/guidelines/*.md` | `.tabnine/guidelines/` flat | — |
+| **Codeium** | ⚠️ | — | — | — | `.codeium/system-prompt.md` | — | — |
+| **Copilot** | ⚠️ | — | — | — | `.github/copilot-instructions.md` | — | — |
+| **Aider** | ⚠️ | — | — | — | `CONVENTIONS.md` + `.aider.conf.yml` | — | Lint-cmd gate, architect mode |
+| **Codex** | ✅ | `codex_hooks` | — | — | `AGENTS.md` + `developer_instructions` | — | `approval_policy` |
+| **Kilo** | ✅ | — | — | — | `kilo.jsonc` `systemPrompt` + `instructions` | `~/.config/kilo/rules/` flat | `experimental.codebase_search` |
+| **OpenCode** | ✅ | — | — | `maru-research-gate` 에이전트 | `AGENTS.md` + `opencode.json` agents | — | — |
+| **AntiGravity** | ✅ | — | — | — | `~/.gemini/antigravity/config.json` | — | — |
+| **Hermes** | ✅ | Gateway + Shell 훅 | — | `maru-research-gate` 플러그인 + cron | `SOUL.md` + `config.yaml` | `~/.hermes/skills/` flat | 플러그인 시스템 |
+| **Supermaven** | ⚠️ | — | — | — | `.supermaven/rules.md` | — | — |
 
-> **범례:** ✅ = 전체 MCP 지원 · ⚠️ = 규칙 주입만 (MCP 미지원)
+> **범례:** ✅ = 전체 MCP 지원 · ⚠️ = 규칙 주입만 (네이티브 MCP 없음)
 >
-> **nested** = `skills/<name>/SKILL.md` · **flat** = `rules/<name>.md`
+> **Hooks** = PreToolUse / PostToolUse / SessionStart / pre_write_code / pre_mcp_tool_use / pre_user_prompt / 등  
+> **Commands** = 슬래시 커맨드 또는 에이전트 설정에 등록된 커스텀 커맨드  
+> **Agents/Cron/Plugins** = 커스텀 에이전트, 크론 스펙, 또는 플러그인 시스템  
+> **Skills** = `nested` = `skills/<name>/SKILL.md` · `flat` = `rules/<name>.md`
 
 ---
 
@@ -148,6 +151,17 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
 서버에 **생성형 LLM은 전혀 없습니다**. 종합은 규칙 기반이며, 에이전트의 LLM이 추론을 담당합니다. 선택적 시맨틱 점수는 임베딩 모델만 사용합니다.
 
 기술적 심층 분석은 [`docs/engine_insights.md`](./docs/engine_insights.md)와 [`docs/lessons_learned.md`](./docs/lessons_learned.md)를 참조하세요.
+
+### KnowledgeStore
+
+SQLite 기반 연구 캐시 저장소 (`./.maru/knowledge.db`):
+
+- **중복 제거** — 동일 쿼리는 `query_hash` 기준으로 UPSERT (access_count +1)
+- **3단계 검색** — 정확히 일치 → FTS5 전문검색 → 시맨틱 유사도 (선택적, 로컬 `intfloat/multilingual-e5-small`)
+- **도메인 통계** — 도메인별 성공률 및 평균 응답 시간 추적
+- **정리(Prune)** — 30일 이상 된 오래된 캐시 엔트리 자동 삭제
+
+`maru-deep-pro-search stats`로 확인합니다.
 
 ---
 
