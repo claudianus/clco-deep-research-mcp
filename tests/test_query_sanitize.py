@@ -53,3 +53,31 @@ class TestSanitizeQuery:
         result = sanitize_query("React latest 2024", current_year=2026)
         # Should not produce "latest latest"
         assert "latest latest" not in result
+
+    def test_future_year_unchanged(self):
+        result = sanitize_query("AI trends 2028", current_year=2026)
+        assert "2028" in result
+
+    def test_sanitize_queries_list(self):
+        from maru_deep_pro_search.utils.query_sanitize import sanitize_queries
+        queries = ["React 2024", "Python 2025"]
+        results = sanitize_queries(queries, current_year=2026)
+        assert results[0] == "React latest"
+        assert "2025" not in results[1]
+
+    def test_whitespace_only_query(self):
+        assert sanitize_query("   ") == "   "
+
+    def test_defensive_future_year_in_match(self, monkeypatch):
+        import re
+        from maru_deep_pro_search.utils import query_sanitize
+        # Patch the stale pattern to include a future year so the defensive
+        # check in _replace_year is exercised.
+        original_pattern = query_sanitize._stale_year_pattern
+
+        def fake_pattern(year):
+            return re.compile(r"\b(2024|2028)\b")
+
+        monkeypatch.setattr(query_sanitize, "_stale_year_pattern", fake_pattern)
+        result = sanitize_query("AI 2028", current_year=2026)
+        assert "2028" in result
