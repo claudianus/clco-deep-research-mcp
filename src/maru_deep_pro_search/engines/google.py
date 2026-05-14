@@ -76,7 +76,7 @@ class GoogleEngine(SearchEngine):
     typical_latency_ms = 3000
     reliability_score = 0.75
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self._session: AsyncStealthySession | None = None
         self._session_started = False

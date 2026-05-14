@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import logging
 import shutil
+import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -203,7 +204,3 @@ class PluginManager:
         for plugin in self.list_plugins():
             spec = plugin.merge_into(spec)
         return spec
-
-
-# Lazy import to avoid circular deps
-import subprocess  # noqa: E402
