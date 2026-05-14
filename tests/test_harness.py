@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import tempfile
 from pathlib import Path
 
@@ -75,6 +76,57 @@ class TestKnowledgeStore:
             db = Path(tmp) / "test.db"
             store = KnowledgeStore(db_path=db)
             assert store.get_domain_stats("nonexistent.com") is None
+
+    def test_close(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "test.db"
+            store = KnowledgeStore(db_path=db)
+            store.save(query="q", answer="a")
+            store.close()
+            assert store._conn is None
+
+    def test_default_db_path(self):
+        from maru_deep_pro_search.harness.persistence import KnowledgeStore
+        path = KnowledgeStore._default_db_path()
+        assert path.name == "knowledge.db"
+
+    def test_entry_serialization(self):
+        from maru_deep_pro_search.harness.persistence import KnowledgeEntry
+        entry = KnowledgeEntry(
+            query="test",
+            answer="answer",
+            sources=[{"url": "https://example.com"}],
+            created_at="2024-01-01T00:00:00",
+        )
+        json_str = entry.to_json()
+        restored = KnowledgeEntry.from_json(json_str)
+        assert restored.query == entry.query
+        assert restored.answer == entry.answer
+
+    def test_bump_access_by_query(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "test.db"
+            store = KnowledgeStore(db_path=db)
+            store.save(query="q1", answer="a1")
+            store._bump_access_by_query("q1", "2024-01-01T00:00:00")
+            stats = store.get_stats()
+            assert stats["total_entries"] == 1
+
+    def test_embedding_column(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "test.db"
+            store = KnowledgeStore(db_path=db)
+            # Manually insert with embedding to test _row_to_entry path
+            q_hash = store._hash_query("q")
+            conn = store._connect()
+            conn.execute(
+                "INSERT INTO knowledge (query_hash, query, answer, sources, created_at, embedding) VALUES (?, ?, ?, ?, ?, ?)",
+                (q_hash, "q", "a", "[]", "2024-01-01", json.dumps([0.1, 0.2, 0.3])),
+            )
+            conn.commit()
+            results = store.query("q")
+            assert len(results) == 1
+            assert results[0].embedding == [0.1, 0.2, 0.3]
 
 
 class TestHarnessProject:
