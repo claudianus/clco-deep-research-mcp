@@ -12,7 +12,7 @@ from functools import wraps
 from urllib.parse import urlparse
 
 from ..exceptions import NetworkError
-from ..utils.rate_limiter import CircuitBreaker
+from ..utils.rate_limiter import CircuitBreaker, RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -145,11 +145,19 @@ class SearchEngine(ABC):
     # Rate limiting: minimum seconds between requests to this engine
     min_request_interval: float = 0.0
 
+    # Rate limiter: max requests per window (additional layer beyond cooldown)
+    rate_limit_max_requests: int = 10
+    rate_limit_window_seconds: float = 60.0
+
     def __init__(self) -> None:
         self._last_request_time: float = 0.0
         self._circuit_breaker = CircuitBreaker(
             failure_threshold=3,
             recovery_seconds=60.0,
+        )
+        self._rate_limiter = RateLimiter(
+            max_requests=self.rate_limit_max_requests,
+            window_seconds=self.rate_limit_window_seconds,
         )
 
     async def _ensure_cooldown(self) -> None:
@@ -185,6 +193,7 @@ class SearchEngine(ABC):
 
         @wraps(original_search)
         async def _wrapped_search(self, query: str, max_results: int = 10) -> list[SearchResult]:
+            await self._rate_limiter.acquire()
             await self._ensure_cooldown()
             if not await self._check_circuit():
                 raise NetworkError(

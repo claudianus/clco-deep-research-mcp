@@ -75,6 +75,7 @@ class BaiduEngine(SearchEngine):
     quality_tier = 2
     typical_latency_ms = 1500
     reliability_score = 0.75
+    min_request_interval = 1.5
 
     def __init__(self):
         super().__init__()

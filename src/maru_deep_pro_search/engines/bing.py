@@ -66,6 +66,7 @@ class BingEngine(SearchEngine):
     quality_tier = 2
     typical_latency_ms = 1200
     reliability_score = 0.90
+    min_request_interval = 0.5
 
     def __init__(self):
         super().__init__()
