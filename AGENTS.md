@@ -20,7 +20,7 @@ uv run pytest tests/ -q
 - [ ] `ruff check .` passes
 - [ ] `ruff format --check .` passes
 - [ ] `mypy src/` passes (0 errors)
-- [ ] `pytest tests/ -q` passes (273 tests)
+- [ ] `pytest tests/ -q` passes (271 tests)
 - [ ] `__version__` synced with `pyproject.toml`
 - [ ] Direct push to `main` is **PROHIBITED** — open a PR
 
