@@ -726,7 +726,7 @@ def run() -> None:
     try:
         mcp.run(transport="stdio")
     except Exception:
-        asyncio.run(mcp.run_sse())  # type: ignore[attr-defined]
+        asyncio.run(mcp.run_sse_async())
 
 
 if __name__ == "__main__":

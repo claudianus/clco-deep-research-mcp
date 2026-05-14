@@ -145,7 +145,7 @@ class SearchEngine(ABC):
     # Rate limiting: minimum seconds between requests to this engine
     min_request_interval: float = 0.0
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._last_request_time: float = 0.0
         self._circuit_breaker = CircuitBreaker(
             failure_threshold=3,
@@ -200,7 +200,7 @@ class SearchEngine(ABC):
                 self._record_failure()
                 raise
 
-        cls.search = _wrapped_search
+        cls.search = _wrapped_search  # type: ignore[method-assign]
 
     @abstractmethod
     async def search(self, query: str, max_results: int = 10) -> list[SearchResult]:
