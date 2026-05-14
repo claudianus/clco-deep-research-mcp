@@ -66,6 +66,7 @@ class EcosiaEngine(SearchEngine):
     quality_tier = 2
     typical_latency_ms = 1100
     reliability_score = 0.85
+    min_request_interval = 1.0
 
     def __init__(self):
         super().__init__()

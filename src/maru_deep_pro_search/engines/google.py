@@ -75,12 +75,24 @@ class GoogleEngine(SearchEngine):
     quality_tier = 3
     typical_latency_ms = 3000
     reliability_score = 0.75
+    min_request_interval = 3.0
 
     def __init__(self) -> None:
         super().__init__()
         self._session: AsyncStealthySession | None = None
         self._session_started = False
         StealthyFetcher.configure(adaptive=True, adaptive_domain="google.com")
+        import atexit
+        atexit.register(self._sync_close_session)
+
+    def _sync_close_session(self) -> None:
+        """Synchronous cleanup for atexit — best-effort session close."""
+        if self._session is not None and self._session_started:
+            try:
+                import asyncio
+                asyncio.run(self._session.close())
+            except Exception:
+                pass
 
     async def _get_session(self) -> AsyncStealthySession:
         """Lazy-start a persistent stealth session."""

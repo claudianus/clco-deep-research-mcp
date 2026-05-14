@@ -72,6 +72,7 @@ class NaverEngine(SearchEngine):
     quality_tier = 2
     typical_latency_ms = 1200
     reliability_score = 0.6
+    min_request_interval = 1.0
 
     def __init__(self):
         super().__init__()

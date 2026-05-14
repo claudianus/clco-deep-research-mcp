@@ -58,7 +58,7 @@ def _compute_bm25_scores(query: str, results: list[SearchResult]) -> dict[str, f
     url_map = {}
     for r in results:
         doc = f"{r.title} {r.snippet} {r.domain}".lower()
-        tokens = doc.split()
+        tokens = extract_keywords(doc) or doc.split()
         corpus.append(tokens)
         url_map[normalize_url(r.url)] = len(corpus) - 1
 

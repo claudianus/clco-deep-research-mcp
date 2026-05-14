@@ -147,6 +147,7 @@ class DuckDuckGoEngine(SearchEngine):
     quality_tier = 1
     typical_latency_ms = 800
     reliability_score = 0.95
+    min_request_interval = 1.0
 
     def __init__(self, variant: str = "duckduckgo_lite"):
         super().__init__()

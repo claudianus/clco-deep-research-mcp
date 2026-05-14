@@ -23,9 +23,6 @@ from .ranker import merge_results
 
 logger = logging.getLogger(__name__)
 
-_PROBLEMATIC_ENGINES = {"yahoo", "startpage"}
-
-
 # ── Data models ───────────────────────────────────────────────────────────
 
 
@@ -94,8 +91,6 @@ async def deep_research(
         seen_classes: set[type] = set()
         engines: list[str] = []
         for e in raw_engines:
-            if e in _PROBLEMATIC_ENGINES:
-                continue
             try:
                 eng_cls = SearchEngineRegistry.get(e)
                 if eng_cls not in seen_classes:

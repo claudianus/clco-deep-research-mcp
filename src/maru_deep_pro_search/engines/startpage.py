@@ -72,6 +72,7 @@ class StartpageEngine(SearchEngine):
     quality_tier = 2
     typical_latency_ms = 3000
     reliability_score = 0.85
+    min_request_interval = 3.0
 
     def __init__(self) -> None:
         super().__init__()
