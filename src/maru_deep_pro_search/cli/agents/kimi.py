@@ -19,7 +19,7 @@ from ..backup import (
     restore_file,
     write_text_safe,
 )
-from ..prompts import get_protocol_for_agent, inject_protocol
+from ..prompts import get_protocol_for_agent
 from .base import AgentAdapter, get_mcp_server_command
 
 # ── Kimi PreToolUse hook script ─────────────────────────────────────
@@ -121,7 +121,7 @@ class KimiAdapter(AgentAdapter):
         if sys_prompt_marker not in content:
             # Remove old system_prompt if present
             lines = [ln for ln in lines if not ln.strip().startswith("system_prompt")]
-            lines.append('')
+            lines.append("")
             lines.append(sys_prompt_marker)
             lines.append('system_prompt = """')
             for pline in protocol.strip().splitlines():
@@ -135,23 +135,23 @@ class KimiAdapter(AgentAdapter):
             hook_script.write_text(_KIMI_HOOK_SCRIPT, encoding="utf-8")
             hook_script.chmod(0o755)
 
-        hook_block = f'''[[hooks]]
+        hook_block = f"""[[hooks]]
 event = "PreToolUse"
 matcher = "WriteFile|ApplyDiff|Shell"
 command = "python3 {hook_script}"
-timeout = 10'''
+timeout = 10"""
 
         if "[[hooks]]" not in content:
-            lines.append('')
+            lines.append("")
             lines.append(hook_block)
         elif hook_script.name not in content:
             # Append after last [[hooks]] block
-            lines.append('')
+            lines.append("")
             lines.append(hook_block)
 
         # 3. Disable default_yolo so research gate can fire
         if "default_yolo" not in content:
-            lines.append('')
+            lines.append("")
             lines.append("# MARU: disable auto-approve so research gate works")
             lines.append("default_yolo = false")
 

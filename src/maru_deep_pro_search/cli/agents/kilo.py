@@ -68,8 +68,10 @@ class KiloAdapter(AgentAdapter):
         # Ensure .kilo/rules/*.md is referenced in instructions
         if "instructions" not in config:
             config["instructions"] = []
-        rules_glob = ".kilo/rules/*.md" if scope == "project" else (
-            str(Path.home() / ".config" / "kilo" / "rules" / "*.md")
+        rules_glob = (
+            ".kilo/rules/*.md"
+            if scope == "project"
+            else (str(Path.home() / ".config" / "kilo" / "rules" / "*.md"))
         )
         if rules_glob not in config["instructions"]:
             config["instructions"].append(rules_glob)

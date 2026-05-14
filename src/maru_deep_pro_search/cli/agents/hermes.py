@@ -34,7 +34,7 @@ from ..backup import (
     restore_file,
     write_text_safe,
 )
-from ..prompts import get_protocol_for_agent
+from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter, get_mcp_server_yaml
 
 

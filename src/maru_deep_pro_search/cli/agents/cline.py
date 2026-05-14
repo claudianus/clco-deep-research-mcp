@@ -69,7 +69,7 @@ if __name__ == "__main__":
 '''
 
 # ── Cline agent markdown ────────────────────────────────────────────
-_CLINE_AGENT_MD = '''---
+_CLINE_AGENT_MD = """---
 name: maru-research-gate
 description: Enforces deep-research before any code generation or file edits
 mode: primary
@@ -78,10 +78,10 @@ mode: primary
 
 You MUST call deep_research before any code generation, file edits, or architecture decisions.
 This is enforced by the maru-deep-pro-search MCP server.
-'''
+"""
 
 # ── Cline cron spec ─────────────────────────────────────────────────
-_CLINE_CRON_MD = '''---
+_CLINE_CRON_MD = """---
 name: maru-research-check
 cronPattern: "0 */6 * * *"
 providerId: openai
@@ -91,7 +91,7 @@ modelId: gpt-4o-mini
 
 Check if the project has had recent research activity. If not, remind the team
 to run deep_research before making significant code changes.
-'''
+"""
 
 
 class ClineAdapter(AgentAdapter):
