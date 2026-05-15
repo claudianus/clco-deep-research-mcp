@@ -25,13 +25,17 @@ This adapter leverages **all** of these surfaces:
 
 from __future__ import annotations
 
+import re
 import shutil
 from pathlib import Path
 
 from ..backup import (
+    backup_dir,
     backup_file,
     read_text_safe,
+    restore_dir,
     restore_file,
+    sorted_backup_paths,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
@@ -72,16 +76,29 @@ class HermesAdapter(AgentAdapter):
         return Path.home() / ".hermes" / "skills"
 
     def backup(self) -> list[Path]:
-        paths = [self._config_path("user")]
-        backups = [backup_file(p) for p in paths]
-        return [b for b in backups if b is not None]
+        paths = [self._config_path("user"), self._soul_md_path("user")]
+        backups: list[Path] = []
+        for p in paths:
+            b = backup_file(p)
+            if b is not None:
+                backups.append(b)
+        plugin_dir = self._plugins_dir("user") / "maru-research-gate"
+        if plugin_dir.exists():
+            bd = backup_dir(plugin_dir)
+            if bd is not None:
+                backups.append(bd)
+        return backups
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._config_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+        for p in [self._config_path("user"), self._soul_md_path("user")]:
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
+        plugin_dir = self._plugins_dir("user") / "maru-research-gate"
+        backs = sorted_backup_paths(plugin_dir)
+        if backs:
+            restored = restore_dir(plugin_dir, backs[0]) or restored
         return restored
 
     # ── install MCP ──────────────────────────────────────────────
@@ -123,7 +140,15 @@ class HermesAdapter(AgentAdapter):
             + "\n".join(f"# {line}" for line in protocol.splitlines())
             + "\n# MARU-RESEARCH-PROTOCOL-END\n"
         )
-        if "MARU-RESEARCH-PROTOCOL-START" not in content:
+        if "MARU-RESEARCH-PROTOCOL-START" in content:
+            content = re.sub(
+                r"# MARU-RESEARCH-PROTOCOL-START.*?# MARU-RESEARCH-PROTOCOL-END\n",
+                protocol_yaml,
+                content,
+                count=1,
+                flags=re.DOTALL,
+            )
+        else:
             content = protocol_yaml + "\n" + content
 
         # Enable our plugin (idempotent: won't duplicate)

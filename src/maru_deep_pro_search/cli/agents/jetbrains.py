@@ -1,15 +1,12 @@
-"""JetBrains AI adapter — supports .idea/ai-assistant.xml and project rules.
+"""JetBrains AI adapter — project rules and optional user marker file.
 
 Official docs:
 - https://www.jetbrains.com/help/ai-assistant/configure-project-rules.html
 - https://www.jetbrains.com/help/ai-assistant/settings-reference-rules.html
 
-JetBrains AI Assistant uses Markdown project rules that can be configured
-via IDE settings. Rules support frontmatter with types:
-- Always — applied to all chat sessions
-- Manually — invoked via @rule: or #rule:
-- By model decision — applied when model considers relevant
-- By file patterns — applied when matching file patterns
+Project rules belong in ``.aiassistant/rules/*.md`` at the project root (JetBrains
+2026 docs). We never write free-form Markdown into ``.idea/ai-assistant.xml``,
+which is IDE XML and must not be corrupted with protocol text.
 """
 
 from __future__ import annotations
@@ -21,6 +18,7 @@ from ..backup import (
     backup_file,
     read_text_safe,
     restore_file,
+    sorted_backup_paths,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
@@ -43,16 +41,13 @@ class JetBrainsAdapter(AgentAdapter):
             or jetbrains_dirs
         )
 
-    def _ai_assistant_path(self, scope: str) -> Path:
-        if scope == "project":
-            return Path(".idea") / "ai-assistant.xml"
-        # JetBrains does not have a documented global AI assistant config file;
-        # we use a marker in the home directory.
+    def _user_marker_path(self) -> Path:
+        """Undocumented global marker — Markdown only."""
         return Path.home() / ".jetbrains-ai" / "maru-protocol.md"
 
     def _rules_dir(self, scope: str) -> Path:
         if scope == "project":
-            return Path(".idea") / "ai-assistant-rules"
+            return Path(".aiassistant") / "rules"
         return Path.home() / ".jetbrains-ai" / "rules"
 
     def _skills_dir(self, scope: str) -> Path | None:
@@ -61,14 +56,14 @@ class JetBrainsAdapter(AgentAdapter):
     skills_format = "flat"
 
     def backup(self) -> list[Path]:
-        paths = [self._ai_assistant_path("user")]
+        paths = [self._user_marker_path()]
         backups = [backup_file(p) for p in paths]
         return [b for b in backups if b is not None]
 
     def restore(self) -> bool:
         restored = False
-        for p in [self._ai_assistant_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+        for p in [self._user_marker_path()]:
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
@@ -80,14 +75,6 @@ class JetBrainsAdapter(AgentAdapter):
     def inject_rules(self, scope: str = "user") -> bool:
         protocol = get_protocol_for_agent(self.name)
 
-        # 1. ai-assistant.xml / maru-protocol.md — legacy fallback
-        path = self._ai_assistant_path(scope)
-        content = read_text_safe(path)
-        new_content = inject_protocol(content, protocol)
-        if new_content != content:
-            write_text_safe(path, new_content)
-
-        # 2. .idea/ai-assistant-rules/*.md — JetBrains project rules format
         rules_dir = self._rules_dir(scope)
         rules_dir.mkdir(parents=True, exist_ok=True)
 
@@ -96,5 +83,12 @@ class JetBrainsAdapter(AgentAdapter):
         new_rule = inject_protocol(rule_content, protocol)
         if new_rule != rule_content:
             write_text_safe(rule_file, new_rule)
+
+        if scope == "user":
+            path = self._user_marker_path()
+            content = read_text_safe(path)
+            new_content = inject_protocol(content, protocol)
+            if new_content != content:
+                write_text_safe(path, new_content)
 
         return True

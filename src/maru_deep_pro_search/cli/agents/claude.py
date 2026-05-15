@@ -11,6 +11,7 @@ from ..backup import (
     read_json_safe,
     read_text_safe,
     restore_file,
+    sorted_backup_paths,
     write_json_safe,
     write_text_safe,
 )
@@ -71,7 +72,7 @@ class ClaudeAdapter(AgentAdapter):
             self._settings_path("user"),
             self._claude_md_path("user"),
         ]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored

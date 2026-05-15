@@ -14,10 +14,9 @@ from pathlib import Path
 
 from ..backup import (
     backup_file,
-    read_json_safe,
     read_text_safe,
     restore_file,
-    write_json_safe,
+    sorted_backup_paths,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
@@ -52,23 +51,20 @@ class AmazonQAdapter(AgentAdapter):
 
     skills_format = "flat"
 
-    def _config_path(self, scope: str) -> Path:
-        if scope == "project":
-            return Path(".amazonq") / "config.json"
-        return Path.home() / ".amazonq" / "config.json"
+    def _rule_file(self, scope: str) -> Path:
+        return self._rules_dir(scope) / "maru-research-protocol.md"
 
     def backup(self) -> list[Path]:
-        paths = [self._config_path("user")]
-        backups = [backup_file(p) for p in paths]
-        return [b for b in backups if b is not None]
+        p = self._rule_file("user")
+        b = backup_file(p)
+        return [b] if b else []
 
     def restore(self) -> bool:
-        restored = False
-        for p in [self._config_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
-            if backups:
-                restored = restore_file(p, backups[0]) or restored
-        return restored
+        p = self._rule_file("user")
+        backs = sorted_backup_paths(p)
+        if backs:
+            return restore_file(p, backs[0])
+        return False
 
     def install_mcp(self, scope: str = "user") -> bool:
         # Amazon Q does not natively support MCP yet.
@@ -79,23 +75,12 @@ class AmazonQAdapter(AgentAdapter):
         rules_dir = self._rules_dir(scope)
         rules_dir.mkdir(parents=True, exist_ok=True)
 
-        rule_file = rules_dir / "maru-research-protocol.md"
+        rule_file = self._rule_file(scope)
         protocol = get_protocol_for_agent(self.name)
 
         content = read_text_safe(rule_file)
         new_content = inject_protocol(content, protocol)
         if new_content != content:
             write_text_safe(rule_file, new_content)
-
-        # 2. config.json — hint for future Amazon Q versions
-        config_path = self._config_path(scope)
-        config = read_json_safe(config_path)
-        if "instructions" not in config:
-            config["instructions"] = {}
-        config["instructions"]["research_first"] = (
-            "You MUST call deep_research before any code generation or file edits. "
-            "This is enforced by the maru-deep-pro-search MCP server."
-        )
-        write_json_safe(config_path, config)
 
         return True

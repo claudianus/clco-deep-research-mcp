@@ -26,6 +26,7 @@ from ..backup import (
     read_text_safe,
     restore_dir,
     restore_file,
+    sorted_backup_paths,
     write_json_safe,
     write_text_safe,
 )
@@ -124,12 +125,12 @@ class WindsurfAdapter(AgentAdapter):
         restored = False
         # Restore files
         for p in [self._mcp_path("user"), self._hooks_path("user"), self._agents_md_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         # Restore directories
         for p in [self._rules_dir("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_dir(p, backups[0]) or restored
         return restored

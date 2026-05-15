@@ -11,6 +11,7 @@ from ..backup import (
     read_json_safe,
     read_text_safe,
     restore_file,
+    sorted_backup_paths,
     write_json_safe,
     write_text_safe,
 )
@@ -53,7 +54,7 @@ class ZedAdapter(AgentAdapter):
     def restore(self) -> bool:
         restored = False
         for p in [self._settings_path("user"), self._assistant_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
@@ -108,10 +109,13 @@ class ZedAdapter(AgentAdapter):
         config: dict[str, Any] = read_json_safe(settings_path)
         if "assistant" not in config:
             config["assistant"] = {}
-        config["assistant"]["default_instructions"] = (
+        maru_hint = (
             "You MUST call deep_research before any code generation or file edits. "
             "This is enforced by the maru-deep-pro-search MCP server."
         )
+        cur_hint = config["assistant"].get("default_instructions")
+        if not cur_hint or (isinstance(cur_hint, str) and "maru-deep-pro-search" in cur_hint):
+            config["assistant"]["default_instructions"] = maru_hint
 
         # Zed's hosted default is already claude-sonnet-4-5 which has excellent
         # tool-use reliability. Only set if user hasn't configured a model.

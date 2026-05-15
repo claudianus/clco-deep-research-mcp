@@ -30,6 +30,18 @@ def restore_file(path: Path, backup_path: Path) -> bool:
     return True
 
 
+def sorted_backup_paths(target: Path) -> list[Path]:
+    """Return ``target``'s ``*.bak.*`` siblings, newest timestamp suffix first."""
+    prefix = f"{target.name}.bak."
+    paths = list(target.parent.glob(f"{target.name}.bak.*"))
+
+    def sort_key(x: Path) -> str:
+        name = x.name
+        return name[len(prefix) :] if name.startswith(prefix) else ""
+
+    return sorted(paths, key=sort_key, reverse=True)
+
+
 def read_json_safe(path: Path) -> dict[str, Any]:
     """Read a JSON file, return {} if missing or corrupt."""
     if not path.exists():

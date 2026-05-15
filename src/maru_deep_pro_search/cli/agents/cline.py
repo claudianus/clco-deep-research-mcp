@@ -8,7 +8,7 @@ Official docs:
 Extension surfaces:
 1. .clinerules/*.md            — primary rules (project-level)
 2. ~/Documents/Cline/Rules/*.md — global rules
-3. .cline/hooks/PreToolUse.*   — lifecycle hooks (stdin JSON → stdout HOOK_CONTROL)
+3. .cline/hooks/PreToolUse     — lifecycle hooks (stdin JSON → stdout JSON)
 4. .cline/agents/*.md          — custom agents (YAML frontmatter)
 5. .cline/skills/              — skills directory
 6. .cline/cron/*.cron.md       — cron automation specs
@@ -28,6 +28,7 @@ from ..backup import (
     read_text_safe,
     restore_dir,
     restore_file,
+    sorted_backup_paths,
     write_text_safe,
 )
 from ..prompts import get_protocol_for_agent, inject_protocol
@@ -59,16 +60,17 @@ def main() -> None:
         sys.exit(0)
 
     if not os.path.exists(MARKER):
-        ctx = "[MARU] Research required before editing. Run deep_research first."
-        print(f'HOOK_CONTROL{{"cancel":true,"contextModification":"{ctx}"}}')
+        msg = "[MARU] Research required before editing. Run deep_research first."
+        print(json.dumps({"cancel": True, "errorMessage": msg}))
         sys.exit(0)
 
     elapsed = time.time() - os.path.getmtime(MARKER)
     if elapsed > TTL_SECONDS:
-        ctx = f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run deep_research."
-        print(f'HOOK_CONTROL{{"cancel":true,"contextModification":"{ctx}"}}')
+        msg = f"[MARU] Research expired ({elapsed/60:.0f}min). Re-run deep_research."
+        print(json.dumps({"cancel": True, "errorMessage": msg}))
         sys.exit(0)
 
+    print(json.dumps({"cancel": False}))
     sys.exit(0)
 
 if __name__ == "__main__":
@@ -150,6 +152,7 @@ class ClineAdapter(AgentAdapter):
     def backup(self) -> list[Path]:
         file_paths = [
             self._mcp_path("user"),
+            self._hooks_dir("user") / "PreToolUse",
             self._hooks_dir("user") / "PreToolUse.py",
         ]
         dir_paths = [
@@ -177,8 +180,12 @@ class ClineAdapter(AgentAdapter):
     def restore(self) -> bool:
         restored = False
         # Restore files
-        for p in [self._mcp_path("user"), self._hooks_dir("user") / "PreToolUse.py"]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+        for p in [
+            self._mcp_path("user"),
+            self._hooks_dir("user") / "PreToolUse",
+            self._hooks_dir("user") / "PreToolUse.py",
+        ]:
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         # Restore directories
@@ -191,7 +198,7 @@ class ClineAdapter(AgentAdapter):
         if skills is not None:
             dir_paths.append(skills)
         for p in dir_paths:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_dir(p, backups[0]) or restored
         return restored
@@ -220,11 +227,20 @@ class ClineAdapter(AgentAdapter):
         if new_content != content:
             write_text_safe(rule_file, new_content)
 
-        # 2. .cline/hooks/PreToolUse.py — lifecycle hook gate
         hooks_dir = self._hooks_dir(scope)
         hooks_dir.mkdir(parents=True, exist_ok=True)
-        hook_file = hooks_dir / "PreToolUse.py"
-        if not hook_file.exists():
+        hook_file = hooks_dir / "PreToolUse"
+        legacy_py = hooks_dir / "PreToolUse.py"
+        if legacy_py.exists():
+            legacy_py.unlink()
+        existing_hook = read_text_safe(hook_file)
+        should_write = (
+            not hook_file.exists()
+            or "MARU" in existing_hook
+            or existing_hook.strip() == ""
+            or existing_hook == _CLINE_PRETOOL_HOOK
+        ) and existing_hook != _CLINE_PRETOOL_HOOK
+        if should_write:
             hook_file.write_text(_CLINE_PRETOOL_HOOK, encoding="utf-8")
             hook_file.chmod(0o755)
 

@@ -191,17 +191,30 @@ def cmd_restore(args: argparse.Namespace) -> int:
 
 
 def cmd_check(args: argparse.Namespace) -> int:
-    """Verify that configs are still in place."""
-    print("\n🔍 설정 상태 확인 중...\n")
+    """Verify configs (read-only; does not modify files)."""
+    from .verify_status import verify_adapter
+
+    print("\n🔍 설정 상태 확인 중 (읽기 전용)...\n")
     all_ok = True
     for _name, adapter_cls in ADAPTER_REGISTRY.items():
         adapter = adapter_cls()  # type: ignore[abstract]
-        if adapter.detect():
-            # Simple heuristic: check if MCP config exists
-            mcp_ok = adapter.install_mcp(scope="user")  # idempotent
-            print(f"   {'✓' if mcp_ok else '✗'} {adapter.display_name}")
-            if not mcp_ok:
-                all_ok = False
+        if not adapter.detect():
+            continue
+        status = verify_adapter(adapter, scope="user")
+        ok = status["mcp"] and status["rules"]
+        detail = []
+        if not status["mcp"]:
+            detail.append("MCP")
+        if not status["rules"]:
+            detail.append("rules")
+        suffix = f" ({', '.join(detail)} missing)" if detail else ""
+        print(f"   {'✓' if ok else '✗'} {adapter.display_name}{suffix}")
+        if not ok:
+            all_ok = False
+    if all_ok:
+        print(f"\n{green('✅ 모든 감지된 에이전트 설정이 정상입니다.')}")
+    else:
+        print(f"\n{yellow('일부 에이전트 설정이 누락되었습니다. setup을 다시 실행하세요.')}")
     return 0 if all_ok else 1
 
 

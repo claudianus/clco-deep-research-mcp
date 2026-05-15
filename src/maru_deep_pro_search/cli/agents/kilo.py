@@ -5,7 +5,7 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from ..backup import backup_file, read_json_safe, restore_file, write_json_safe
+from ..backup import backup_file, read_json_safe, restore_file, sorted_backup_paths, write_json_safe
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter, get_mcp_server_command_list
 
@@ -36,7 +36,7 @@ class KiloAdapter(AgentAdapter):
 
     def restore(self) -> bool:
         path = self._config_path("user")
-        backups = sorted(path.parent.glob(f"{path.name}.bak.*"), reverse=True)
+        backups = sorted_backup_paths(path)
         if backups:
             return restore_file(path, backups[0])
         return False

@@ -12,8 +12,19 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
-from ..prompts import get_protocol_for_agent, inject_protocol
+from ..backup import (
+    backup_file,
+    read_text_safe,
+    restore_file,
+    sorted_backup_paths,
+    write_text_safe,
+)
+from ..prompts import (
+    PROTOCOL_START_MARKER,
+    get_protocol_for_agent,
+    inject_protocol,
+    text_has_research_protocol,
+)
 from .base import AgentAdapter, get_mcp_server_command_list
 
 
@@ -42,7 +53,7 @@ class CodexAdapter(AgentAdapter):
     def restore(self) -> bool:
         restored = False
         for p in [self._config_path("user"), self._agents_md_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
@@ -175,6 +186,16 @@ class CodexAdapter(AgentAdapter):
                 return True
         return False
 
+    @staticmethod
+    def _has_developer_instructions_key(lines: list[str]) -> bool:
+        return any(line.strip().startswith("developer_instructions") for line in lines)
+
+    @staticmethod
+    def _should_manage_developer_instructions(content: str, lines: list[str]) -> bool:
+        if not CodexAdapter._has_developer_instructions_key(lines):
+            return True
+        return text_has_research_protocol(content) or PROTOCOL_START_MARKER in content
+
     def inject_rules(self, scope: str = "user") -> bool:
         """Inject research protocol into Codex via three channels."""
         protocol = get_protocol_for_agent(self.name)
@@ -186,26 +207,21 @@ class CodexAdapter(AgentAdapter):
         if new_content != content:
             write_text_safe(agents_path, new_content)
 
-        # 2. ~/.codex/config.toml — developer_instructions
         config_path = self._config_path(scope)
         config_content = read_text_safe(config_path) or ""
         lines = config_content.splitlines() if config_content else []
 
-        # Remove old developer_instructions completely (including multiline)
-        lines = self._remove_developer_instructions(lines)
-
-        # Append new developer_instructions (TOML multiline string)
-        lines.append("")
-        lines.append('developer_instructions = """')
-        for rule_line in protocol.strip().splitlines():
-            lines.append(rule_line)
-        lines.append('"""')
-
-        # 3. Approval policy — set granular approvals so research gate works
-        if not self._has_approval_policy(lines):
+        if self._should_manage_developer_instructions(config_content, lines):
+            lines = self._remove_developer_instructions(lines)
             lines.append("")
-            lines.append("# Auto-approve MCP tool calls from maru-deep-pro-search")
-            lines.append('approval_policy = "on-request"')
+            lines.append('developer_instructions = """')
+            for rule_line in protocol.strip().splitlines():
+                lines.append(rule_line)
+            lines.append('"""')
+            if not self._has_approval_policy(lines):
+                lines.append("")
+                lines.append("# Auto-approve MCP tool calls from maru-deep-pro-search")
+                lines.append('approval_policy = "on-request"')
+            write_text_safe(config_path, "\n".join(lines) + "\n")
 
-        write_text_safe(config_path, "\n".join(lines) + "\n")
         return True

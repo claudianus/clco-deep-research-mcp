@@ -43,6 +43,7 @@ classifiers = [
 dependencies = [
     "htmldate>=1.9.4",
     "mcp>=1.0.0",
+    "pyyaml>=6.0.1",
     "pygments>=2.20.0",
     "scrapling[fetchers]>=0.2.99",
     "trafilatura>=2.0.0",

@@ -3,7 +3,7 @@
 Official docs: https://opencode.ai/docs/agents
 
 OpenCode supports agents via:
-- JSON config in opencode.json (agents section)
+- JSON config in opencode.json (``agent`` section; official schema)
 - Markdown files in ~/.config/opencode/agents/ or .opencode/agents/
 - The markdown filename becomes the agent name.
 """
@@ -18,6 +18,7 @@ from ..backup import (
     read_json_safe,
     read_text_safe,
     restore_file,
+    sorted_backup_paths,
     write_json_safe,
     write_text_safe,
 )
@@ -58,7 +59,7 @@ class OpenCodeAdapter(AgentAdapter):
     def restore(self) -> bool:
         restored = False
         for p in [self._config_path("user"), self._agents_md_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
@@ -97,22 +98,28 @@ class OpenCodeAdapter(AgentAdapter):
         if new_agent != agent_content:
             write_text_safe(agent_file, new_agent)
 
-        # 3. opencode.json — register the agent in config
+        # 3. opencode.json — register under ``agent`` (OpenCode official schema).
         config_path = self._config_path(scope)
         config = read_json_safe(config_path)
 
-        if "agents" not in config:
-            config["agents"] = {}
-        if "maru-research-gate" not in config["agents"]:
-            config["agents"]["maru-research-gate"] = {
+        legacy = config.get("agents")
+        if isinstance(legacy, dict) and "maru-research-gate" in legacy:
+            legacy.pop("maru-research-gate", None)
+            if not legacy:
+                config.pop("agents", None)
+
+        cfg_agent = config.setdefault("agent", {})
+        if "maru-research-gate" not in cfg_agent:
+            rel = (
+                Path(".opencode") / "agents" / "maru-research-gate.md"
+                if scope == "project"
+                else Path("agents") / "maru-research-gate.md"
+            )
+            prompt_ref = "{file:" + rel.as_posix() + "}"
+            cfg_agent["maru-research-gate"] = {
                 "description": "Enforces deep-research before any code generation",
                 "mode": "primary",
-                "prompt": str(
-                    self._agents_dir(scope).relative_to(
-                        Path(".") if scope == "project" else Path.home()
-                    )
-                    / "maru-research-gate.md"
-                ),
+                "prompt": prompt_ref,
             }
 
         write_json_safe(config_path, config)
