@@ -1,0 +1,9 @@
+src/maru_deep_pro_search/utils/query_gate.py
+  ai_agent 197-204,231-235,239-246,257-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b41dfa2460e4f5e42fe665745318c72cb0a86bdc",
+  "prompts": {}
+}
