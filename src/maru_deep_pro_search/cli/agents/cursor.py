@@ -16,6 +16,7 @@ from ..backup import (
     read_json_safe,
     read_text_safe,
     restore_file,
+    sorted_backup_paths,
     write_json_safe,
     write_text_safe,
 )
@@ -56,9 +57,10 @@ class CursorAdapter(AgentAdapter):
         return Path.home() / ".cursor" / "commands"
 
     def _skills_dir(self, scope: str) -> Path | None:
-        # Re-use the official rules directory for skills too; Cursor loads
-        # every .md file in .cursor/rules/ as a rule.
-        return self._rules_dir(scope)
+        # https://cursor.com/docs/agent/chat/commands — skills live under ``.cursor/skills/``.
+        if scope == "project":
+            return Path(".cursor") / "skills"
+        return Path.home() / ".cursor" / "skills"
 
     def backup(self) -> list[Path]:
         paths = [self._mcp_path("user"), self._settings_path("user")]
@@ -68,7 +70,7 @@ class CursorAdapter(AgentAdapter):
     def restore(self) -> bool:
         restored = False
         for p in [self._mcp_path("user"), self._settings_path("user")]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored

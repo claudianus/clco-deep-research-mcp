@@ -23,6 +23,22 @@ def get_mcp_server_command() -> dict[str, Any]:
     return {"command": sys.executable, "args": ["-m", "maru_deep_pro_search.server"]}
 
 
+def get_continue_experimental_mcp_entry() -> dict[str, Any]:
+    """JSON entry for Continue ``experimental.modelContextProtocolServers`` (stdio).
+
+    See: https://docs.continue.dev/reference/yaml-migration
+    """
+    spec = get_mcp_server_command()
+    return {
+        "transport": {
+            "type": "stdio",
+            "command": spec["command"],
+            "args": list(spec.get("args") or []),
+            "env": dict(spec.get("env") or {}),
+        }
+    }
+
+
 def get_mcp_server_command_list() -> list[str]:
     """Return the MCP server command as a list for agents using list format."""
     binary = shutil.which("maru-deep-pro-search")
@@ -126,6 +142,12 @@ class AgentAdapter(ABC):
                     shutil.copy2(skill_file, dest)
                     copied += 1
         return copied > 0
+
+    def verify_setup(self, scope: str = "user") -> dict[str, bool]:
+        """Read-only status check. Override in subclasses when needed."""
+        from ..verify_status import verify_adapter
+
+        return verify_adapter(self, scope)
 
     def configure(self, scope: str = "user") -> dict[str, Any]:
         """Full setup: backup → install MCP → inject rules → install skills."""

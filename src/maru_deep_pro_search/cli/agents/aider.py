@@ -5,7 +5,14 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-from ..backup import backup_file, read_text_safe, restore_file, write_text_safe
+from ..backup import (
+    backup_file,
+    read_text_safe,
+    restore_file,
+    sorted_backup_paths,
+    write_text_safe,
+)
+from ..idempotent import lines_contain
 from ..prompts import get_protocol_for_agent, inject_protocol
 from .base import AgentAdapter
 
@@ -215,7 +222,7 @@ class AiderAdapter(AgentAdapter):
             self._conventions_path("user"),
             self._config_path("user"),
         ]:
-            backups = sorted(p.parent.glob(f"{p.name}.bak.*"), reverse=True)
+            backups = sorted_backup_paths(p)
             if backups:
                 restored = restore_file(p, backups[0]) or restored
         return restored
@@ -272,8 +279,7 @@ class AiderAdapter(AgentAdapter):
 
         # Insert research gate as FIRST lint-cmd AND test-cmd
         gate_cmd = f"python: python {gate_script}"
-        existing = "\n".join(lines)
-        if gate_cmd not in existing:
+        if not lines_contain(lines, gate_cmd):
             lines.append(f"lint-cmd: {gate_cmd}")
             lines.append(f"test-cmd: {gate_cmd}")
 
@@ -292,10 +298,10 @@ class AiderAdapter(AgentAdapter):
 
         # Only add if not already present
         for lc in lint_cmds:
-            if lc not in existing:
+            if not lines_contain(lines, lc):
                 lines.append(f"lint-cmd: {lc}")
         for tc in test_cmds:
-            if tc not in existing:
+            if not lines_contain(lines, tc):
                 lines.append(f"test-cmd: {tc}")
 
         # Enable auto-test so the test gate (with research check) runs after edits

@@ -110,6 +110,11 @@ def strip_existing_protocol(text: str) -> str:
     return cleaned.strip()
 
 
+def text_has_research_protocol(text: str) -> bool:
+    """True if *text* already contains an injected research protocol block."""
+    return PROTOCOL_START_MARKER in text or "MANDATORY RESEARCH PROTOCOL" in text
+
+
 def inject_protocol(content: str, protocol: str) -> str:
     """Return *content* with *protocol* injected, replacing any old version.
 
