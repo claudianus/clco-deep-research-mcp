@@ -1,29 +1,29 @@
-## Description
-<!-- Describe your changes in detail -->
+## 설명
+<!-- 변경 내용을 구체적으로 -->
 
-## Related Issue
-<!-- If this PR fixes an issue, link it: Fixes #123 -->
+## 관련 이슈
+<!-- 이슈를 닫으면: Fixes #123 -->
 
-## Type of Change
-<!-- Mark relevant options with [x] -->
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Security enhancement
+## 변경 유형
+<!-- 해당하는 항목에 [x] -->
+- [ ] 버그 수정 (기존 동작을 고치는 비호환 아님)
+- [ ] 새 기능 (비호환 아님)
+- [ ] 호환 깨짐 (기존 사용자에게 영향)
+- [ ] 문서만
+- [ ] 성능 개선
+- [ ] 보안 강화
 
-## Verification
-<!-- Describe how you verified the change works -->
-- [ ] Quality gates pass (`ruff check . && ruff format --check . && mypy src/`)
-- [ ] Tested manually with real search queries
+## 검증
+<!-- 어떻게 확인했는지 -->
+- [ ] 품질 게이트 통과 (`uv run ruff check . && uv run ruff format --check . && uv run mypy src/`)
+- [ ] 실제 검색 쿼리로 수동 확인
 
-## Checklist
-- [ ] My code follows the project's style guidelines
-- [ ] I have performed a self-review of my code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have updated the documentation accordingly
-- [ ] My changes generate no new warnings
+## 체크리스트
+- [ ] 프로젝트 스타일을 따름
+- [ ] 스스로 코드 리뷰함
+- [ ] 이해하기 어려운 부분에 주석을 넣음(필요 시)
+- [ ] 문서를 함께 수정함
+- [ ] 불필요한 경고가 새로 생기지 않음
 
-## Screenshots / Logs
-<!-- If applicable, add screenshots or logs to demonstrate the changes -->
+## 스크린샷 / 로그
+<!-- 필요하면 첨부 -->

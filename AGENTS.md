@@ -1,106 +1,108 @@
-# Agent Instructions — maru-deep-pro-search
+# 에이전트 지침 — maru-deep-pro-search
 
-> **CRITICAL**: PyPI deployment is **AUTOMATED** on git tag push. DO NOT use `twine`.
+> **문서 언어:** 이 저장소의 **개발·기여 관련 문서는 한국어**를 기본으로 합니다. (영문 README: [`README.en.md`](README.en.md))
 
-## Quick Start
+> **중요:** PyPI 배포는 **git 태그 push 시 자동**입니다. `twine`으로 수동 배포하지 마세요.
+
+## 빠른 시작
 
 ```bash
-uv sync && source .venv/bin/activate
+uv sync --all-groups && source .venv/bin/activate
 
-# Single-file (fast feedback)
-uv run ruff check src/maru_deep_pro_search/<file>.py
-uv run mypy src/maru_deep_pro_search/<file>.py
+# 단일 파일 (빠른 피드백)
+uv run ruff check src/maru_deep_pro_search/<파일>.py
+uv run mypy src/maru_deep_pro_search/<파일>.py
 
-# Full validation
+# 전체 검증
 uv run ruff check . && uv run ruff format --check . && uv run mypy src/
 ```
 
-**Definition of Done**
-- [ ] `ruff check .` passes
-- [ ] `ruff format --check .` passes
-- [ ] `mypy src/` passes (0 errors)
-- [ ] `__version__` synced with `pyproject.toml`
-- [ ] Direct push to `main` is **PROHIBITED** — open a PR
+**완료 조건(DoD)**
+- [ ] `ruff check .` 통과
+- [ ] `ruff format --check .` 통과
+- [ ] `mypy src/` 통과 (오류 0개)
+- [ ] `__version__`이 `pyproject.toml`과 일치
+- [ ] `main`에 **직접 push 금지** — PR 사용
 
 ---
 
-## Code Style
+## 코드 스타일
 
-- **ruff**: line length 100
-- **Imports**: `from __future__ import annotations` at top
-- **Types**: Full hints; `Any` only with `# type: ignore[no-any-return]`
-- **Naming**: snake_case (functions), PascalCase (classes)
-- **Docstrings**: Google style for public APIs
+- **ruff**: 줄 길이 100
+- **import**: 파일 맨 위에 `from __future__ import annotations`
+- **타입**: 전부 힌트; `Any`는 `# type: ignore[no-any-return]`와 함께만
+- **이름**: 함수 `snake_case`, 클래스 `PascalCase`
+- **독스트링**: 공개 API는 Google 스타일
 
-## Anti-Waste Policy (CTO Directive)
+## 낭비 방지 정책 (CTO 지시)
 
-> **ALL TESTS ARE BANNED.** No test files. No test code. No test fixtures. No test assertions.
+> **테스트는 전면 금지.** 테스트 파일·테스트 코드·픽스처·assert 없음.
 >
-> Tests are a form of technical debt. They slow iteration, create false confidence, and consume more maintenance time than the bugs they catch. The correct way to verify correctness is:
-> 1. **Static analysis** — `ruff` + `mypy` catch 90% of real bugs
-> 2. **Runtime enforcement** — decorators (`_with_validation`, `_with_enforcement`) prevent bad inputs from reaching logic
-> 3. **Manual verification** — run the tool once with real inputs; if it works, ship it
+> 테스트는 기술 부채입니다. 반복을 느리게 하고, 헛된 자신감을 주며, 잡는 버그보다 유지 비용이 큽니다. 올바른 검증은:
+> 1. **정적 분석** — `ruff` + `mypy`가 실제 버그 대부분을 잡음
+> 2. **런타임 강제** — 데코레이터(`_with_validation`, `_with_enforcement`)로 잘못된 입력이 로직에 들어가지 않게 함
+> 3. **수동 검증** — 실제 입력으로 한 번 돌려보고 되면 배포
 >
-> If you feel the urge to write a test, write a better type hint or a stricter validator instead.
+> 테스트를 쓰고 싶으면 타입 힌트를 보강하거나 검증기를 더 엄격하게 만드세요.
 
-### Inheritance Safety (MANDATORY)
+### 상속 안전 (필수)
 
-**ALL subclasses overriding `__init__` MUST call `super().__init__()` as the FIRST statement.**
+**`__init__`을 재정의하는 모든 하위 클래스는 첫 줄에서 반드시 `super().__init__()`를 호출해야 합니다.**
 
 ```python
-# ❌ WRONG
+# 잘못됨
 class XEngine(SearchEngine):
     def __init__(self):
-        self.x = 1  # _circuit_breaker missing!
+        self.x = 1  # _circuit_breaker 등 부모 초기화 누락
 
-# ✅ CORRECT
+# 올바름
 class XEngine(SearchEngine):
     def __init__(self):
-        super().__init__()  # FIRST line
+        super().__init__()  # 첫 줄
         self.x = 1
 ```
 
 ---
 
-## Output Format Invariants
+## 출력 형식 불변 조건
 
-Never break these without explicit user approval:
-- `deep_research`: `## Research:`, `_engines:`, `quality:`, `### Sources`, `#### [N] Title`, `_score:`, `### Auto-Fetched Content` (when auto_fetch > 0)
-- `web_search`: `Search:`, numbered results `1. **Title** [N]`
+사용자가 명시적으로 허용하지 않는 한 깨뜨리지 마세요.
+- `deep_research`: `## Research:`, `_engines:`, `quality:`, `### Sources`, `#### [N] Title`, `_score:`, `### Auto-Fetched Content` (`auto_fetch` > 0일 때)
+- `web_search`: `Search:`, 번호 결과 `1. **Title** [N]`
 - `fetch_page`: `EXTERNAL CONTENT`, `AGENT SECURITY PROTOCOL`
 - `parallel_search`: `### Comparison Summary`, `| Query | Top Source | Type | Primary |`
 
 ---
 
-## Things to Avoid (Gotchas)
+## 피해야 할 것들 (함정)
 
-| # | Trap | Fix |
-|---|------|-----|
-| 1 | `__version__` ≠ `pyproject.toml` | Verify BOTH files on every bump |
-| 2 | PyPI re-upload same version | Must cut new version (0.11.2 → 0.11.3) |
-| 3 | cubic push breaks lint | Run full validation after ANY cubic push |
-| 4 | dependabot summary only | Read FULL advisory text before dismissing |
-| 5 | `hasattr()` hides intent | Use explicit dataclass contracts |
-| 6 | `str(cache.get(key))` | Converts `None` → `"None"`. Use `assert key is not None` |
-| 7 | `\|\| true` in CI | Silently ignores failures. Remove it entirely |
-| 8 | Dead code | Verify computed values are actually consumed |
-| 9 | f-string without placeholders | ruff F541. Remove `f` prefix if no `{}` |
-| 10 | YAML front matter indent | `description: >` requires indent on continuation lines |
-| 11 | YAML colon in strings | Colons need quoting (`'...'`) in front matter |
-| 12 | Invariant omission | Modifying output formats? Update BOTH code AND tests |
-| 13 | Outdated dependabot PR | `@dependabot rebase` before merging after main changes |
-| 14 | `gh pr create` body | Bash interprets backticks/pipes/dollars. Use `--body-file` |
-| 15 | Not pulling main post-merge | `git pull` or stale files remain locally |
-| 16 | Assuming PR is merged | Always `gh pr view N --json state` before acting |
+| # | 함정 | 해결 |
+|---|------|------|
+| 1 | `__version__` ≠ `pyproject.toml` | 버전 올릴 때 **두 파일 모두** 확인 |
+| 2 | PyPI 동일 버전 재업로드 | 새 버전으로 잘라야 함 (0.11.2 → 0.11.3) |
+| 3 | cubic push 후 린트 깨짐 | cubic push **후마다** 전체 검증 |
+| 4 | dependabot 요약만 읽음 | 기각 전 **전문** 확인 |
+| 5 | `hasattr()` 남발 | dataclass 등 **명시적 계약** 사용 |
+| 6 | `str(cache.get(key))` | `None` → `"None"`. `assert key is not None` 등 사용 |
+| 7 | CI의 `\|\| true` | 실패를 삼킴. **완전히 제거** |
+| 8 | 데드 코드 | 계산한 값이 실제로 쓰이는지 확인 |
+| 9 | 플레이스홀더 없는 f-string | ruff F541. `f` 제거 |
+| 10 | YAML front matter 들여쓰기 | `description: >`는 다음 줄 들여쓰기 필수 |
+| 11 | 문자열 안 콜론 | front matter에서는 `'...'`로 따옴표 |
+| 12 | 불변 조건 누락 | 출력 형식 바꾸면 **코드와 문서** 둘 다 |
+| 13 | 오래된 dependabot PR | main 변경 후 머지 전 `@dependabot rebase` |
+| 14 | `gh pr create` 본문에 백틱/파이프/`$` | bash가 해석함. `--body-file` 사용 |
+| 15 | 머지 후 pull 안 함 | `git pull` 안 하면 로컬만 낡음 |
+| 16 | PR 머지 가정 | 행동 전 `gh pr view N --json state` 확인 |
 
 ---
 
-## Release Workflow
+## 릴리스 절차
 
 ```bash
-# 1. Update version in BOTH pyproject.toml AND __init__.py
-# 2. Update CHANGELOG.md + docs/index.html badge
-# 3. Full validation → PR → cubic → merge
+# 1. pyproject.toml과 __init__.py 둘 다 버전 수정
+# 2. CHANGELOG.md + docs/index.html 뱃지
+# 3. 전체 검증 → PR → cubic → merge
 # 4. git checkout main && git pull
 # 5. git tag vX.Y.Z && git push origin vX.Y.Z
 # 6. gh run watch --workflow=publish.yml
@@ -108,7 +110,7 @@ Never break these without explicit user approval:
 
 ---
 
-## Code Review & Merge Workflow
+## 코드 리뷰·머지 워크플로
 
 ```
 1. git checkout -b feat/description
@@ -119,7 +121,7 @@ Never break these without explicit user approval:
 6. 머지 조건: CI 전체 통과 + cubic pass
 ```
 
-**After ANY cubic push to PR branch:**
+**PR 브랜치에 cubic push한 뒤에는 반드시:**
 ```bash
 git pull origin <branch>
 uv run ruff check src/ && uv run ruff format --check src/ && uv run mypy src/
@@ -127,94 +129,76 @@ uv run ruff check src/ && uv run ruff format --check src/ && uv run mypy src/
 
 ---
 
-## Benchmarks
+## 벤치마크
 
 ```bash
 uv run python benchmark/search_quality_benchmark.py
 ```
 
-Multi-engine vs single-engine (TREC-standard, 10 queries):
+다중 엔진 vs 단일 엔진 (TREC 표준, 10쿼리):
 - Precision@5: **+86%** | NDCG@10: **+36%** | MRR: **+25%**
-- Trade-off: ~2× response time
+- 트레이드오프: 응답 시간 ~2배
 
 ---
 
-## Lessons Learned from Execution
+## 실행으로 얻은 교훈
 
-Insights discovered by **running** the code, not by reading it.
+코드를 **읽은** 게 아니라 **돌려서** 알게 된 것들.
 
-### Agent Behavior Design
+### 에이전트 행동 설계
 
-1. **Token efficiency IS enforcement** — Long docs get ignored. 1-line rules get followed. SKILL.md ~50% compression + 13 one-line imperatives.
-2. **Imperative > descriptive** — "STOP and search immediately" works better than "When you encounter uncertainty, consider searching."
-3. **Mid-task triggers are the real value** — Agents search once then code for 30min. Error-driven, refactor-driven, and 10-15min self-check triggers actually change behavior.
+1. **토큰 효율이 곧 강제** — 긴 문서는 무시된다. 한 줄 규칙은 지켜진다. SKILL.md ~50% 압축 + 한 줄 명령 13개.
+2. **명령형 > 서술형** — "멈추고 즉시 검색"이 "불확실하면 검색을 고려"보다 잘 먹힌다.
+3. **중간 트리거가 진짜 가치** — 에이전트는 한 번 검색하고 30분 코딩한다. 오류·리팩터·10–15분 자가 점검 트리거가 행동을 바꾼다.
 
-### mypy Strict Mode (57 → 0 errors)
+### mypy 엄격 모드 (57 → 0 오류)
 
-4. **`cache_key` explicit cast** — `dict.get()` returns `str | None`. Never use `str(cache.get(key))` — converts `None` to `"None"`. Use `assert key is not None`.
-5. **Loop variable shadowing** — Reusing variable names in nested loops breaks inference.
-6. **`__new__` attribute access** — Dataclass `__new__` bypasses tracking. Requires `# type: ignore[attr-defined]`.
-7. **`Exception` catch narrows too wide** — `except Exception as e:` gives `e: Exception`. Assert subclass before specific access.
-8. **Session redefinition** — Same variable in `if`/`else` with different types needs explicit first annotation.
+4. **`cache_key` 명시 캐스트** — `dict.get()`은 `str | None`. `str(cache.get(key))` 금지 — `None`이 `"None"`이 됨. `assert key is not None` 등.
+5. **루프 변수 섀도잉** — 중첩 루프에서 이름 재사용하면 추론 깨짐.
+6. **`__new__` 속성 접근** — dataclass `__new__`는 추적 우회. `# type: ignore[attr-defined]` 필요할 수 있음.
+7. **`Exception` 포착이 너무 넓음** — `except Exception as e:`에서 `e`는 `Exception`. 세부 접근 전 서브클래스 단언.
+8. **세션 재정의** — `if`/`else`에서 같은 변수에 다른 타입이면 첫 어노테이션을 명시.
 
-### CI & Automation
+### CI·자동화
 
-9. **`\|\| true` silently ignores failures** — Found in `validate.yml` and `lint.yml`. Removes all signal while wasting time.
-10. **`gh pr create` body with backticks/pipes/dollars** — Bash interprets as command substitution. Always `--body-file`.
-11. **cubic reviews stale commits** — Trust check status, not comment text. Comments may reflect older commits.
-12. **Quality gate drift** — When `mypy` or `ruff` errors increase, investigate immediately. Static analysis catches real bugs.
-13. **dependabot PR outdated** — Main changes? `@dependabot rebase` before merging. Otherwise lint/type-check fails on stale code.
+9. **`\|\| true`는 실패 은닉** — `validate.yml`, `lint.yml`에서 발견. 신호 제거·시간만 소모.
+10. **`gh pr create` 본문의 백틱/파이프/`$`** — bash 명령 치환. 항상 `--body-file`.
+11. **cubic 리뷰는 오래된 커밋** — 체크 상태를 믿고, 코멘트 문구는 오래됐을 수 있음.
+12. **품질 게이트 드리프트** — `mypy`/`ruff` 오류 증가 시 즉시 조사.
+13. **dependabot PR 낡음** — main 바뀌었으면 머지 전 `@dependabot rebase`.
 
-### Packaging & Distribution
+### 패키징·배포
 
-14. **Root-level files NOT pip-installed** — Only package directory files installed. `skills/` must live in `src/maru_deep_pro_search/skills/` with `[tool.setuptools.package-data]`.
-15. **YAML front matter traps** — `description: >` requires indent. Colons need quoting.
-16. **f-string without placeholders** — ruff F541. Remove `f` if no `{}`.
+14. **루트 파일은 pip에 안 들어감** — 패키지 디렉터리만 설치. `skills/`는 `src/maru_deep_pro_search/skills/` + `[tool.setuptools.package-data]`.
+15. **YAML front matter 함정** — `description: >`는 들여쓰기, 문자열 속 콜론은 따옴표.
+16. **플레이스홀더 없는 f-string** — ruff F541. `f` 제거.
 
-### Test Removal Log
+### 테스트 제거 로그
 
-| Date | File | Reason | Tests Removed |
-|------|------|--------|---------------|
-| 2026-05-15 | `tests/test_documentation.py` | Docstring word-search tests catch no real bugs | 4 |
-| 2026-05-15 | `tests/test_adapter_smoke.py` | 105 parametric `isinstance(bool)` tests across 21 adapters; failure mode is the test itself | 105 |
-| 2026-05-16 | **ALL TEST FILES** | CTO Directive: Tests are banned. Static analysis + runtime enforcement + manual verification are the only quality gates. | ~930 |
+| 날짜 | 파일 | 이유 | 제거된 테스트 수 |
+|------|------|------|------------------|
+| 2026-05-15 | `tests/test_documentation.py` | 독스트링 단어 검색은 실질 버그를 못 잡음 | 4 |
+| 2026-05-15 | `tests/test_adapter_smoke.py` | 21개 어댑터에 걸친 105개 `isinstance(bool)`류; 실패 원인이 테스트 자체 | 105 |
+| 2026-05-16 | **전체 테스트 파일** | CTO 지시: 테스트 금지. 정적 분석 + 런타임 강제 + 수동 검증만. | ~930 |
 
-> **Rule**: Removing a test is a positive signal. It means we reviewed it and found it worthless. Document every removal.
+> **규칙:** 테스트 삭제는 긍정 신호다. 검토했고 가치 없다고 판단했다는 뜻이다. 제거는 모두 기록.
 
-### Benchmark & Quality
+### 벤치마크·품질
 
-17. **DuckDuckGo circuit breaker storm** — Back-to-back modes without `asyncio.sleep(5)` opens breaker.
-18. **Single-engine can win** — `deep_research` does NOT universally dominate. On "httpx async" Bing single matched multi-engine.
-19. **Ground truth breadth** — Narrow patterns (only `nvd.nist.gov`) penalize legitimate sources (GitHub Advisory, Snyk).
+17. **DuckDuckGo 서킷 브레이커 연쇄** — `asyncio.sleep(5)` 없이 연속 모드 전환 시 브레이커 오픈.
+18. **단일 엔진이 이길 수 있음** — `deep_research`가 항상 이기는 건 아님. "httpx async" 등은 Bing 단일이 다중과 동급.
+19. **그라운드 트루스 폭** — `nvd.nist.gov`만 보면 GitHub Advisory, Snyk 같은 정당 출처가 불이익.
 
 ---
 
-## Architecture Decisions
+## 아키텍처 결정
 
-1. **100% FREE** — No paid APIs ever.
-2. **Engine registry** — Multi-engine failover via `SearchEngineRegistry`.
-3. **BM25 + metadata** — Perplexity-level quality, local computation.
-4. **Citation-native** — `[1]`, `[2]` IDs without external services.
-5. **Research-first** — MCP prompts + `_with_enforcement` decorator force search before coding.
-6. **Prompt injection defense** — Zero-width chars removed, chat tokens neutralized.
-7. **Three-layer rate limiting** — Semaphore(3) + cooldowns + token bucket.
-8. **Session-reuse stealth** — `AsyncStealthySession` for Google/Startpage.
-9. **MCP tools provide DATA** — Agent's LLM decides synthesis.
-
-<!-- MARU-RESEARCH-PROTOCOL-START -->
-MANDATORY RESEARCH PROTOCOL
-
-Rule 1: BEFORE any work → deep_research(user's raw intent). No exceptions.
-Rule 2: Uncertain concept/function/class → STOP and search immediately.
-Rule 3: New import/package → verify latest version/API via deep_research first.
-Rule 4: Error/warning/deprecation → search EXACT text BEFORE fixing.
-Rule 5: Refactor or architecture change → re-search best practice first.
-Rule 6: User request changes → re-search new scope before continuing.
-Rule 7: Every 10-15 min of coding → ask "What did I assume?" → search if unsure.
-Rule 8: "I think I know this" → you don't. Search anyway.
-Rule 9: Comparison (A vs B) → parallel_search multi-angle.
-Rule 10: Insufficient results → re-search refined query. NEVER guess.
-Rule 11: Security topic → also search "latest CVE" + "advisory".
-Rule 12: Cite sources [1][2][3] after every search. Never cite from memory.
-Rule 13: No search in last 3-5 tool calls → search again.
-<!-- MARU-RESEARCH-PROTOCOL-END -->
+1. **100% 무료** — 유료 API 없음.
+2. **엔진 레지스트리** — `SearchEngineRegistry`로 다중 엔진 페일오버.
+3. **BM25 + 메타데이터** — Perplexity급 품질, 로컬 계산.
+4. **인용 네이티브** — 외부 서비스 없이 `[1]`, `[2]` ID.
+5. **리서치 퍼스트** — MCP 프롬프트 + `_with_enforcement`로 코딩 전 검색 강제.
+6. **프롬프트 인젝션 방어** — 제로폭 제거, 채팅 토큰 중화.
+7. **3층 레이트 리밋** — Semaphore(3) + 쿨다운 + 토큰 버킷.
+8. **세션 재사용 스텔스** — Google/Startpage용 `AsyncStealthySession`.
+9. **MCP 툴은 데이터만** — 종합은 에이전트 LLM이 결정.

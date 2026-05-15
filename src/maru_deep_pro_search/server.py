@@ -7,9 +7,12 @@ import os
 import socket
 import sys
 import time
+from pathlib import Path
 from urllib.parse import urlparse
 
 from mcp.server.fastmcp import Context, FastMCP
+
+from .config import DEFAULT_CONFIG
 
 mcp = FastMCP("maru-search")
 
@@ -556,12 +559,13 @@ When using fetch_bulk with multiple URLs:
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def answer(
     query: str,
-    engine: str = "duckduckgo_lite",
-    max_sources: int = 10,
+    engine: str = DEFAULT_CONFIG.default_engine,
+    max_sources: int = DEFAULT_CONFIG.max_results_per_query,
     max_tokens: int = 8000,
     primary_sources_only: bool = False,
     ctx: Context | None = None,
@@ -574,12 +578,13 @@ async def answer(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def web_search(
     query: str,
-    engine: str = "duckduckgo_lite",
-    max_results: int = 10,
+    engine: str = DEFAULT_CONFIG.default_engine,
+    max_results: int = DEFAULT_CONFIG.max_results_per_query,
     ctx: Context | None = None,
 ) -> str:
     """Search and return ranked results with citations."""
@@ -590,12 +595,13 @@ async def web_search(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def search_with_citations(
     query: str,
-    engine: str = "duckduckgo_lite",
-    max_results: int = 10,
+    engine: str = DEFAULT_CONFIG.default_engine,
+    max_results: int = DEFAULT_CONFIG.max_results_per_query,
     ctx: Context | None = None,
 ) -> str:
     """Search with pre-numbered sources for academic writing."""
@@ -606,6 +612,7 @@ async def search_with_citations(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def fetch_page(
@@ -622,12 +629,13 @@ async def fetch_page(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def fetch_bulk(
     urls: list[str],
     stealth: bool = False,
-    max_concurrent: int = 5,
+    max_concurrent: int = DEFAULT_CONFIG.max_concurrent_fetches,
     max_tokens: int = 3000,
     ctx: Context | None = None,
 ) -> str:
@@ -644,7 +652,7 @@ async def fetch_bulk(
 @_with_notice()
 async def deep_research(
     query: str,
-    engine: str = "duckduckgo_lite",
+    engine: str = DEFAULT_CONFIG.default_engine,
     max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
@@ -679,6 +687,7 @@ async def deep_research(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def stealthy_fetch(
@@ -694,12 +703,13 @@ async def stealthy_fetch(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def parallel_search(
     queries: list[str],
-    engine: str = "duckduckgo_lite",
-    max_results: int = 5,
+    engine: str = DEFAULT_CONFIG.default_engine,
+    max_results: int = DEFAULT_CONFIG.max_results_per_query,
     comparison_mode: bool = False,
     ctx: Context | None = None,
 ) -> str:
@@ -831,6 +841,7 @@ async def engine_health(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def generate_code(
@@ -1131,6 +1142,7 @@ async def clear_caches(
 
 @mcp.tool()
 @_with_validation()
+@_with_enforcement()
 @_with_audit()
 @_with_notice()
 async def export_research(
@@ -1249,14 +1261,52 @@ def _research_main(argv: list[str] | None = None) -> int:
         return 1
 
 
+def _print_cli_router_help() -> None:
+    inv = Path(sys.argv[0]).name
+    print(
+        f"{inv} — MCP(stdio) 서버이거나, 아래 서브커맨드로 CLI를 실행합니다.\n\n"
+        "서브커맨드:\n"
+        "  setup      에이전트 전역 설정 (MCP·규칙·스킬)\n"
+        "  sync       전역 에이전트 재설정 (프로젝트 `.maru/harness.yaml` 있으면 로드·없으면 안내)\n"
+        "  init       현재 디렉터리에 .maru/ 하네스만 생성\n"
+        "  stats      지식 DB 통계\n"
+        "  update     자기 자신 버전 업데이트\n"
+        "  research   헤드리스 딥 리서치\n"
+        "  knowledge  knowledge export / import\n"
+        "  plugin     하네스 플러그인 관리\n\n"
+        "기타:\n"
+        "  -h, --help     이 도움말\n"
+        "  -V, --version  패키지 버전\n\n"
+        f"MCP만 실행: 인자 없이 `{inv}`\n"
+        f"전역 설정: `{inv} setup` 또는 `{inv}-setup`"
+    )
+
+
 def run() -> None:
 
     if len(sys.argv) > 1:
         sub = sys.argv[1]
+        if sub in ("-h", "--help", "help"):
+            _print_cli_router_help()
+            sys.exit(0)
+        if sub in ("-V", "--version", "version"):
+            try:
+                from importlib.metadata import version as pkg_version
+
+                print(pkg_version("maru-deep-pro-search"))
+            except Exception:
+                from . import __version__
+
+                print(__version__)
+            sys.exit(0)
         if sub == "setup":
             from .cli.setup import main as _setup_main
 
             sys.exit(_setup_main(sys.argv[1:]))
+        if sub == "sync":
+            from .cli.setup import main as _setup_main
+
+            sys.exit(_setup_main(["sync"]))
         if sub == "init":
             from .cli.init_cmd import main as _init_main
 
@@ -1271,14 +1321,32 @@ def run() -> None:
             sys.exit(_update_main(sys.argv[2:]))
         if sub == "research":
             sys.exit(_research_main(sys.argv[2:]))
+        if sub == "knowledge":
+            from .cli.knowledge_cmd import main as _knowledge_main
+
+            sys.exit(_knowledge_main(sys.argv[2:]))
+        if sub == "plugin":
+            from .cli.plugin_cmd import main as _plugin_main
+
+            sys.exit(_plugin_main(sys.argv[2:]))
+        if sub.startswith("-"):
+            print(
+                f"알 수 없는 옵션: {sub}\n도움말: maru-deep-pro-search --help",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        print(
+            f"알 수 없는 서브커맨드: {sub}\n도움말: maru-deep-pro-search --help",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     # Background update check on startup — store notice for user-facing display
     global _pending_update_notice
     try:
-        from .utils.updater import check_for_update, get_update_notice
+        from .utils.updater import maybe_notify_update
 
-        result = check_for_update()
-        notice = get_update_notice(result)
+        notice = maybe_notify_update()
         if notice:
             _pending_update_notice = notice
             # Only log to stderr when debugging; most MCP clients surface

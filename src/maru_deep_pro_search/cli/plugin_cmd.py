@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from ..harness.plugin import PluginManager
 
@@ -69,14 +70,15 @@ def cmd_uninstall(args: argparse.Namespace) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     """Manage maru harness plugins."""
+    prog = Path(sys.argv[0]).name if sys.argv else "maru-deep-pro-search-plugin"
     parser = argparse.ArgumentParser(
-        prog="maru-deep-pro-search-plugin",
+        prog=prog,
         description="Manage maru harness plugins.",
         epilog="Examples:\n  maru-deep-pro-search-plugin list\n  maru-deep-pro-search-plugin install https://github.com/user/plugin.git\n  maru-deep-pro-search-plugin uninstall my-plugin",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--path", default=".", help="Project root (default: .)")
-    subparsers = parser.add_subparsers(dest="command", help="Plugin commands")
+    subparsers = parser.add_subparsers(dest="command", required=True, help="Plugin commands")
 
     subparsers.add_parser("list", help="List installed plugins")
 
@@ -97,8 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "uninstall":
         return cmd_uninstall(args)
 
-    parser.print_help()
-    return 0
+    raise AssertionError(f"unhandled plugin subcommand: {args.command!r}")
 
 
 if __name__ == "__main__":

@@ -126,6 +126,9 @@ class SessionEnforcer:
         "engine_health",
         "session_state",
         "drift_status",
+        "query_knowledge",
+        "cache_stats",
+        "clear_caches",
     }
 
     # Mid-task enforcement: warn after N non-research tools without fresh research

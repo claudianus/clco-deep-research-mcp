@@ -1,36 +1,36 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: 버그 리포트
+about: 재현 가능한 버그를 알려 주세요
 title: "[BUG] "
 labels: bug
 assignees: ''
 
 ---
 
-## Describe the bug
-A clear and concise description of what the bug is.
+## 버그 설명
+무엇이 잘못되었는지 명확하고 짧게 적어 주세요.
 
-## To Reproduce
-Steps to reproduce the behavior:
-1. Run command '...'
-2. With config '...'
-3. See error
+## 재현 방법
+다음 순서로 재현됩니다:
+1. 실행한 명령 '...'
+2. 사용한 설정 '...'
+3. 발생한 오류
 
-## Expected behavior
-A clear and concise description of what you expected to happen.
+## 기대한 동작
+원래 어떻게 되어야 하는지 설명해 주세요.
 
-## Environment
-- OS: [e.g. macOS 14, Ubuntu 22.04]
-- Python version: [e.g. 3.12]
-- Package version: [e.g. 0.9.2]
-- Installation method: [pip / uv / git clone]
+## 환경
+- OS: [예: macOS 14, Ubuntu 22.04]
+- Python: [예: 3.12]
+- 패키지 버전: [예: 0.15.0 — `python -c "import maru_deep_pro_search as m; print(m.__version__)"`]
+- 설치 방법: [pip / uv / git clone]
 
-## Logs / Screenshots
-If applicable, add logs or screenshots to help explain your problem.
+## 로그 / 스크린샷
+가능하면 로그나 캡처를 붙여 주세요.
 
 ```
-Paste logs here
+여기에 로그
 ```
 
-## Additional context
-Add any other context about the problem here.
+## 기타 맥락
+추가로 알릴 내용이 있으면 적어 주세요.

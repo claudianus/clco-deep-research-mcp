@@ -69,6 +69,11 @@ docs/layouts/default-backup.vue
 benchmark/search_quality_report.json
 
 # ── Local agent setup output (use maru-deep-pro-search-setup) ──
+# CopilotAdapter / ClaudeAdapter가 `setup` 시 워크스페이스에 주입하는 파일.
+# 상위 저장소엔 커밋하지 않음(에디터·MCP 전역 규칙과 중복·토큰 낭비 방지).
+/.github/copilot-instructions.md
+/.github/copilot-settings.json
+/CLAUDE.md
 /.mcp.json
 /kilo.jsonc
 /opencode.json

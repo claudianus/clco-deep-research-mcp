@@ -54,25 +54,24 @@ DEFAULT_GITIGNORE = """# Maru Harness
 
 def init_project(
     path: Path | str = ".",
-    agents: list[str] | None = None,
     create_agents_md: bool = True,
     create_gitignore: bool = True,
     create_harness_yaml: bool = True,
 ) -> dict[str, Any]:
-    """Initialize a project with the maru harness.
+    """Initialize project-local maru data (no per-agent dotfiles in the repo).
 
     Creates:
         .maru/knowledge.db   — local knowledge cache
-        .maru/harness.yaml   — declarative harness spec (AHS)
-        AGENTS.md            — project-specific agent instructions (if requested)
+        .maru/harness.yaml   — declarative harness spec (AHS), optional sync source
+        AGENTS.md            — optional project contributor hints (if requested)
         .gitignore additions — exclude harness artifacts
-        Agent-native configs — .claude/settings.json, .aider.conf.yml, etc.
+
+    MCP registration and agent rules live in **user-global** paths only.
+    Run ``maru-deep-pro-search setup`` (or ``setup --agents ...``) on each machine.
 
     Args:
         path: Project root directory.
-        agents: List of agent names to configure (e.g. ["cursor", "claude"]).
-                If None, auto-detect installed agents.
-        create_agents_md: Whether to create AGENTS.md.
+        create_agents_md: Whether to create AGENTS.md when missing.
         create_gitignore: Whether to append harness entries to .gitignore.
         create_harness_yaml: Whether to create `.maru/harness.yaml`.
 
@@ -144,22 +143,10 @@ knowledge_db_path: {spec.knowledge_db_path}
             gitignore.write_text(DEFAULT_GITIGNORE + "\n", encoding="utf-8")
             created.append(str(gitignore))
 
-    # 5. Agent configs at project scope (agent-native files)
-    if agents:
-        from ..cli.setup import ADAPTER_REGISTRY
-
-        for name in agents:
-            adapter_cls = ADAPTER_REGISTRY.get(name)
-            if adapter_cls:
-                adapter = adapter_cls()  # type: ignore[abstract]
-                adapter.configure(scope="project")
-                logger.info("Configured %s for project scope", name)
-
     logger.info("Harness initialized at %s", root)
     return {
         "root": str(root),
         "created": created,
-        "agents_configured": agents or [],
     }
 
 

@@ -1,7 +1,8 @@
 """Self-update utilities for maru-deep-pro-search.
 
 Checks PyPI for newer versions and can optionally auto-update
-via pip or uv. Respects cooldown periods to avoid excessive checks.
+via `pip` or `uv pip` (when `uv` is on PATH). Respects cooldown periods
+to avoid excessive checks.
 """
 
 from __future__ import annotations

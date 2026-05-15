@@ -78,7 +78,8 @@ class AgentAdapter(ABC):
         """Register maru-deep-pro-search MCP server in agent config.
 
         Args:
-            scope: "user" or "project"
+            scope: ``"user"`` (global, default for ``setup`` / ``sync``) or ``"project"``
+                (legacy; not used by the official CLI — avoid writing agent files in repos).
 
         Returns:
             True on success
@@ -90,7 +91,8 @@ class AgentAdapter(ABC):
         """Inject the research-first protocol into agent rules/settings.
 
         Args:
-            scope: "user" or "project"
+            scope: ``"user"`` (global, default for ``setup`` / ``sync``) or ``"project"``
+                (legacy; not used by the official CLI — avoid writing agent files in repos).
 
         Returns:
             True on success

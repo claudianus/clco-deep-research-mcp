@@ -1,41 +1,41 @@
-# Contributor Covenant Code of Conduct
+# 기여자 행동 강령 (Contributor Covenant)
 
-## Our Pledge
+## 우리의 서약
 
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+구성원, 기여자, 리더로서 우리는 나이, 신체 크기, 보이거나 보이지 않는 장애, 민족성, 성적 특성, 성 정체성과 표현, 경력 수준, 교육, 사회·경제적 지위, 국적, 외모, 인종, 종교, 성적 정체성과 지향에 관계없이 **모든 사람**이 괴롭힘 없이 참여할 수 있는 경험을 만들겠다고 서약합니다.
 
-We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
+열린·환영하는·다양하고·포용적이고·건전한 커뮤니티에 기여하는 방식으로 행동하고 상호작용하겠다고 서약합니다.
 
-## Our Standards
+## 우리의 기준
 
-Examples of behavior that contributes to a positive environment:
+긍정적인 환경을 만드는 행동의 예:
 
-- Demonstrating empathy and kindness toward other people
-- Being respectful of differing opinions, viewpoints, and experiences
-- Giving and gracefully accepting constructive feedback
-- Accepting responsibility and apologizing to those affected by our mistakes
-- Focusing on what is best for the community and the project
+- 다른 사람에 대한 공감과 친절
+- 서로 다른 의견·관점·경험에 대한 존중
+- 건설적 피드백을 주고 열린 마음으로 받기
+- 실수로 영향 받은 이들에게 책임을 지고 사과하기
+- 커뮤니티 전체에 가장 이로운 것에 집중
 
-Examples of unacceptable behavior:
+허용되지 않는 행동의 예:
 
-- The use of sexualized language or imagery
-- Trolling, insulting/derogatory comments, and personal or political attacks
-- Public or private harassment
-- Publishing others' private information without permission
-- Other conduct which could reasonably be considered inappropriate
+- 성적 언어나 이미지 사용
+- 트롤링, 모욕·비하 발언, 개인·정치 공격
+- 공적·사적 괴롭힘
+- 동의 없이 타인의 비공개 정보 공개
+- 그 밖에 부적절하다고 합리적으로 판단되는 행동
 
-## Enforcement Responsibilities
+## 책임과 집행
 
-Community leaders are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
+커뮤니티 리더는 허용 가능한 행동의 기준을 명확히 하고 집행할 책임이 있으며, 부적절하다고 판단되는 위협적·공격적·유해한 행동에 대해 적절하고 공정한 시정 조치를 취합니다.
 
-## Scope
+## 범위
 
-This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public spaces.
+이 행동 강령은 모든 커뮤니티 공간에 적용되며, 개인이 공적으로 커뮤니티를 대표할 때도 적용됩니다.
 
-## Enforcement
+## 집행
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders at **claudianus@github.com**. All complaints will be reviewed and investigated promptly and fairly.
+괴롭힘·가학적 행동 등 허용되지 않는 행동이 있으면 **claudianus@github.com**으로 커뮤니티 리더에게 신고할 수 있습니다. 모든 신고는 신속하고 공정하게 검토됩니다.
 
-## Attribution
+## 출처
 
-This Code of Conduct is adapted from the [Contributor Covenant](https://www.contributor-covenant.org), version 2.1.
+이 행동 강령은 [Contributor Covenant](https://www.contributor-covenant.org) 2.1판을 바탕으로 합니다.

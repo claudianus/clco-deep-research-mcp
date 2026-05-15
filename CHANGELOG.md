@@ -1,19 +1,34 @@
-# Changelog
+# 변경 이력 (Changelog)
 
-All notable changes to this project will be documented in this file.
+이 프로젝트의 주요 변경 사항을 여기에 기록합니다.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+형식은 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)를 따르며, [Semantic Versioning](https://semver.org/spec/v2.0.0.html)을 준수합니다.
+
+> **참고:** 과거 항목 본문은 국제 검색·호환을 위해 영어로 남겨 두었습니다. 새 항목부터 필요 시 한국어 요약을 병행할 수 있습니다.
 
 ## [Unreleased]
+
+### Changed
+- **`init` / `setup` 범위** — `init`은 `.maru/` 등 **프로젝트 로컬** 데이터만 만들고 에이전트 점 파일은 쓰지 않음. MCP·규칙·스킬은 `setup` / `sync`가 **항상 사용자(전역)** 경로에만 기록. `setup --scope`·`init --agents` 제거.
+- **CLI** — `server:run` 진입 시 `sync` / `knowledge` / `plugin` 위임, `-V`/`--version`, 잘못된 서브커맨드는 종료 코드 2. `setup --check --agents`로 특정 에이전트만 검증. `plugin`은 하위 명령 필수. `update` 도움말에서 미구현 `--force` 제거. semantic 옵션 설치 시 `uv pip` 우선.
+- **런타임 설정** — `SearchConfig`에 SERP/페이지 fetch/딥리서치/answer/auto-fetch 타임아웃을 분리하고 `tools.py`가 `DEFAULT_CONFIG`를 사용. 환경변수: `MARU_FETCH_HTTP_TIMEOUT`, `MARU_DEEP_RESEARCH_TIMEOUT`, `MARU_ANSWER_TIMEOUT`, `MARU_AUTO_FETCH_TIMEOUT` (기존 `MARU_SEARCH_TIMEOUT`은 SERP용).
+- **MCP·엔진 기본값** — `MARU_SEARCH_ENGINE` / `MARU_SEARCH_MAX_RESULTS` / `MARU_SEARCH_MAX_CONCURRENT` / `MARU_SEARCH_RETRIES`를 `server.py`·`tools.py`·`research/deep.py` 및 SERP `with_retry`에 반영. `parallel_search` 기본 `max_results`는 이제 `MARU_SEARCH_MAX_RESULTS`와 동일(기본 10; 이전 기본 5).
+
+### Fixed
+- **`setup` semantic 안내** — `uv`/`pip` 안내 문구·들여쓰기 정리.
+- **`web_search` / `search_with_citations`** — 엔진 폴백 시 `optimize_for_engine` 적용, `asyncio.wait_for`로 타임아웃 통일; 폴백 시 검색 캐시 오염 방지(캐시 미기록). 응답 헤더에 실제 사용 엔진 표기.
+- **`MARU_SKIP_UPDATE_CHECK`** — MCP `run()` 시작 시 `maybe_notify_update()`를 써서 업데이트 배너가 실제로 생략되도록 수정.
+
+### Documentation
+- **README / README.en** — `pydantic-settings` 오기 제거, `SearchConfig`·타임아웃 환경 변수 표를 코드와 일치.
 
 ## [0.15.0] - 2026-05-16
 
 ### Added
-- **Locale harness in `deep_research`** — Naver/Baidu searches apply `optimize_for_engine` (English tech terms → localized hints) for better in-cluster SERP quality at zero cost.
+- **`deep_research` 로캘 하네스** — Naver/Baidu 검색에 `optimize_for_engine`을 적용(영어 기술어 → 로컬 힌트)해, 무과금으로 클러스터 내 SERP 품질을 개선.
 
 ### Changed
-- **README / README.ko** — document harness `init`, strict query gate, `drift_status`, knowledge CLI; bump tool count to 18.
+- **README** — 하네스 `init`, 엄격 쿼리 게이트, `drift_status`, knowledge CLI 문서화; 툴 수 18로 반영. 기본 README는 한국어, 영문은 `README.en.md`.
 
 ## [0.14.0] - 2026-05-15
 

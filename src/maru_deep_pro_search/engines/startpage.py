@@ -7,6 +7,7 @@ from urllib.parse import quote_plus
 
 from scrapling.fetchers import AsyncStealthySession
 
+from ..config import DEFAULT_CONFIG
 from ..exceptions import NetworkError, ParseError
 from ..utils.retry import with_retry
 from ..utils.url import get_domain, resolve_canonical_url, resolve_redirect, should_skip_url
@@ -73,7 +74,7 @@ class StartpageEngine(SearchEngine):
             page = await with_retry(
                 session.fetch,
                 search_url,
-                max_attempts=2,
+                max_attempts=DEFAULT_CONFIG.retry_attempts,
                 retryable_exceptions=(Exception,),
             )
         except Exception as exc:

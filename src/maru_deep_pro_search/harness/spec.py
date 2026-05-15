@@ -52,9 +52,10 @@ class QualityGate:
 
 @dataclass
 class HarnessSpec:
-    """Declarative spec for a project's agent harness.
+    """Declarative spec read from a project's ``.maru/harness.yaml``.
 
-    The setup CLI reads this and generates agent-native config files.
+    The ``setup`` / ``sync`` CLI reads this from the **current working directory**
+    and translates it into **user-global** agent-native configs (``~/.claude/``, etc.).
     """
 
     # ── MCP server registration ─────────────────────────────────

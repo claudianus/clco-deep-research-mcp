@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 
@@ -97,10 +98,12 @@ def cmd_setup(args: argparse.Namespace) -> int:
         print(red("  선택한 에이전트 중 설치된 것이 없습니다."))
         return 1
 
-    scope = args.scope or "user"
+    scope = "user"
 
     print(f"\n{bold('설정할 에이전트:')} {', '.join(selected)}")
-    print(f"{bold('설정 범위:')} {scope}\n")
+    print(
+        f"{bold('설정 범위:')} {scope} (전역 — 홈 디렉터리 등, 이 저장소에 에이전트 점 파일을 만들지 않음)\n"
+    )
 
     for name in selected:
         adapter_cls = ADAPTER_REGISTRY[name]
@@ -144,25 +147,30 @@ def cmd_setup(args: argparse.Namespace) -> int:
             if not choice or choice.strip().lower() in ("y", "yes"):
                 print("     설치 중...")
                 try:
-                    subprocess.run(
-                        [
+                    uv_bin = shutil.which("uv")
+                    if uv_bin:
+                        cmd = [uv_bin, "pip", "install", "sentence-transformers>=3.0.0"]
+                    else:
+                        cmd = [
                             sys.executable,
                             "-m",
                             "pip",
                             "install",
                             "sentence-transformers>=3.0.0",
-                        ],
-                        check=True,
-                    )
+                        ]
+                    subprocess.run(cmd, check=True)
                     print(f"     {green('✓')} sentence-transformers 설치 완료")
                 except subprocess.CalledProcessError as exc:
                     print(f"     {yellow('!')} 설치 실패: {exc}")
-                    print(f"     수동 설치: {bold('pip install sentence-transformers>=3.0.0')}")
+                    print(f"     수동 설치: {bold('uv pip install sentence-transformers>=3.0.0')}")
             else:
                 print("     설치를 생략합니다.")
-                print(f"     나중에 설치: {bold('pip install sentence-transformers>=3.0.0')}")
+                print(f"     나중에 설치: {bold('uv pip install sentence-transformers>=3.0.0')}")
+                print(f"     또는: {bold('pip install sentence-transformers>=3.0.0')}")
         else:
-            print(f"     설치 시 검색 품질 ↑: {bold('pip install sentence-transformers>=3.0.0')}")
+            print(
+                f"     설치 시 검색 품질 ↑: {bold('uv pip install sentence-transformers>=3.0.0')}"
+            )
             print(f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}")
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
@@ -196,10 +204,15 @@ def cmd_check(args: argparse.Namespace) -> int:
 
     print("\n🔍 설정 상태 확인 중 (읽기 전용)...\n")
     all_ok = True
+    only = set(args.agents) if getattr(args, "agents", None) else None
+    verified = 0
     for _name, adapter_cls in ADAPTER_REGISTRY.items():
+        if only is not None and _name not in only:
+            continue
         adapter = adapter_cls()  # type: ignore[abstract]
         if not adapter.detect():
             continue
+        verified += 1
         status = verify_adapter(adapter, scope="user")
         ok = status["mcp"] and status["rules"]
         detail = []
@@ -211,6 +224,14 @@ def cmd_check(args: argparse.Namespace) -> int:
         print(f"   {'✓' if ok else '✗'} {adapter.display_name}{suffix}")
         if not ok:
             all_ok = False
+    if only is not None and verified == 0:
+        print(
+            yellow(
+                "선택한 에이전트가 이 환경에서 감지되지 않았습니다. "
+                "`setup --list`로 감지 목록을 확인하세요."
+            )
+        )
+        return 1
     if all_ok:
         print(f"\n{green('✅ 모든 감지된 에이전트 설정이 정상입니다.')}")
     else:
@@ -219,17 +240,28 @@ def cmd_check(args: argparse.Namespace) -> int:
 
 
 def cmd_sync(args: argparse.Namespace) -> int:
-    """Re-apply harness.yaml to all configured agents."""
+    """Re-apply global agent configuration (same as setup for each adapter)."""
+    from pathlib import Path
+
     from ..harness.spec import HarnessSpec
 
-    print("\n🔄 Harness 설정 동기화 중...\n")
-    try:
-        HarnessSpec.from_project()
-    except FileNotFoundError:
-        print(red("프로젝트 루트에서 harness.yaml 파일을 찾을 수 없습니다."))
-        return 1
+    print("\n🔄 Harness / 에이전트 전역 동기화 중...\n")
 
-    scope = args.scope  # type: ignore[attr-defined]
+    harness_path = Path.cwd() / ".maru" / "harness.yaml"
+    if harness_path.is_file():
+        print(f"   ℹ 하네스 파일 사용: {harness_path.resolve()}")
+    else:
+        print(
+            yellow(
+                f"   ⚠ `.maru/harness.yaml` 없음 — 기본 스펙으로 전역 에이전트만 재설정합니다. "
+                f"(프로젝트 데이터는 `{Path.cwd() / '.maru'}` / `maru-deep-pro-search init`)"
+            )
+        )
+
+    # Validates YAML parses; spec fields are not yet merged into every adapter.
+    HarnessSpec.from_project()
+
+    scope = "user"
     ok_count = 0
     fail_count = 0
 
@@ -238,12 +270,13 @@ def cmd_sync(args: argparse.Namespace) -> int:
         if not adapter.detect():
             continue
         try:
-            result = adapter.configure(scope)
-            if result:
+            result = adapter.configure(scope=scope)
+            if result.get("success"):
                 print(f"   ✓ {adapter.display_name} 동기화 완료")
                 ok_count += 1
             else:
-                print(f"   ⚠ {adapter.display_name} 변경 사항 없음")
+                print(f"   ⚠ {adapter.display_name} 동기화 실패 또는 변경 없음")
+                fail_count += 1
         except Exception as exc:
             print(f"   ✗ {adapter.display_name} 실패: {exc}")
             fail_count += 1
@@ -257,11 +290,14 @@ def cmd_sync(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from pathlib import Path
+
+    prog = Path(sys.argv[0]).name if sys.argv else "maru-deep-pro-search"
     parser = argparse.ArgumentParser(
-        prog="maru-deep-pro-search",
+        prog=prog,
         description=(
             "Setup tool for maru-deep-pro-search — installs MCP config and "
-            "injects research-first rules into 21 supported AI agents."
+            "injects research-first rules into 20 supported AI agents."
         ),
         epilog=(
             "Examples:\n"
@@ -269,6 +305,7 @@ def main(argv: list[str] | None = None) -> int:
             "  maru-deep-pro-search setup --agents cursor claude  # Configure specific agents\n"
             "  maru-deep-pro-search setup --list       # Show detected agents\n"
             "  maru-deep-pro-search setup --check      # Verify config status\n"
+            "  maru-deep-pro-search setup --check --agents cursor  # Check specific agents\n"
             "  maru-deep-pro-search setup --restore    # Restore from backup\n"
             "\nSupported agents: " + ", ".join(sorted(ADAPTER_REGISTRY.keys()))
         ),
@@ -290,12 +327,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Specific agents to configure (default: auto-detect all)",
     )
     setup_parser.add_argument(
-        "--scope",
-        choices=["user", "project"],
-        default="user",
-        help="Configuration scope: 'user' for global, 'project' for local (default: user)",
-    )
-    setup_parser.add_argument(
         "--restore",
         action="store_true",
         help="Restore agent configs from previous backups",
@@ -312,19 +343,14 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     # sync command
-    sync_parser = subparsers.add_parser(
+    subparsers.add_parser(
         "sync",
-        help="Re-apply harness.yaml configs to all configured agents",
+        help="Re-apply global agent configs (warns if .maru/harness.yaml is missing)",
         description=(
-            "Reads .maru/harness.yaml and re-runs adapter configuration for "
-            "all agents listed in the spec. Use this after editing harness.yaml."
+            "Re-runs the same global `configure()` as setup for all detected agents. "
+            "If `.maru/harness.yaml` exists in the current directory it is validated/loaded "
+            "for future harness-driven customization; adapters today use packaged protocol text."
         ),
-    )
-    sync_parser.add_argument(
-        "--scope",
-        choices=["user", "project"],
-        default="project",
-        help="Configuration scope to sync (default: project)",
     )
 
     args = parser.parse_args(argv)

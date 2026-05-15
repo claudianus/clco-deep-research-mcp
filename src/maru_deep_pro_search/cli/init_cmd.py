@@ -1,4 +1,4 @@
-"""`maru-deep-pro-search init` — Initialize project harness."""
+"""`maru-deep-pro-search init` — Initialize project-local maru harness data."""
 
 from __future__ import annotations
 
@@ -18,10 +18,18 @@ def _green(text: str) -> str:
 
 
 def main(argv: list[str] | None = None) -> int:
-    """Initialize maru harness in the current project."""
+    """Create `.maru/` (knowledge DB, harness.yaml) in a repo — no agent dotfiles here.
+
+    MCP + Claude/Cursor/Copilot 등 에이전트 설정은 **사용자 전역**에만 둡니다.
+    한 번 실행: ``maru-deep-pro-search setup`` (각 개발 머신에서).
+    """
     parser = argparse.ArgumentParser(
         prog="maru-deep-pro-search init",
-        description="Initialize maru harness in the current project.",
+        description=(
+            "Initialize project-local maru harness (.maru/knowledge.db, harness.yaml). "
+            "Does NOT write agent configs under this repo — use `maru-deep-pro-search setup` "
+            "for global MCP + rules."
+        ),
     )
     parser.add_argument(
         "--path",
@@ -29,35 +37,9 @@ def main(argv: list[str] | None = None) -> int:
         help="Project root path (default: current directory)",
     )
     parser.add_argument(
-        "--agents",
-        nargs="+",
-        choices=[
-            "claude",
-            "cursor",
-            "kimi",
-            "windsurf",
-            "antigravity",
-            "kilo",
-            "opencode",
-            "aider",
-            "copilot",
-            "continue",
-            "cline",
-            "zed",
-            "jetbrains",
-            "supermaven",
-            "cody",
-            "codeium",
-            "amazon_q",
-            "devin",
-            "tabnine",
-        ],
-        help="Agents to configure at project scope",
-    )
-    parser.add_argument(
         "--no-agents-md",
         action="store_true",
-        help="Skip creating AGENTS.md",
+        help="Skip creating AGENTS.md (project contributor hints)",
     )
     parser.add_argument(
         "--no-gitignore",
@@ -71,7 +53,6 @@ def main(argv: list[str] | None = None) -> int:
 
     result = init_project(
         path=args.path,
-        agents=args.agents,
         create_agents_md=not args.no_agents_md,
         create_gitignore=not args.no_gitignore,
     )
@@ -79,12 +60,12 @@ def main(argv: list[str] | None = None) -> int:
     for created in result["created"]:
         print(f"  {_green('✓')} {created}")
 
-    if args.agents:
-        print(f"\n  {_green('✓')} Agents configured: {', '.join(args.agents)}")
-
     print(f"\n{_green('✅ Harness initialized!')}")
     print(f"   Knowledge store: {Path(result['root']) / '.maru' / 'knowledge.db'}")
-    print("   Next: commit changes and restart your agent.")
+    print(
+        f"   {_bold('에이전트(MCP·규칙·스킬):')} 이 머신에서 "
+        f"`maru-deep-pro-search setup` 실행 (저장소 밖 전역 경로에만 기록됩니다)."
+    )
     return 0
 
 

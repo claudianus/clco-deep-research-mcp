@@ -12,6 +12,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 
+from ..config import DEFAULT_CONFIG
 from ..engines.base import SearchResult
 from ..engines.registry import SearchEngineRegistry
 from ..exceptions import NetworkError
@@ -64,7 +65,7 @@ _search_semaphore = asyncio.Semaphore(4)
 
 async def deep_research(
     query: str,
-    engine: str = "duckduckgo_lite",
+    engine: str = DEFAULT_CONFIG.default_engine,
     max_sources: int = 30,
     expand_queries: bool = True,
     primary_sources_only: bool = False,
@@ -86,7 +87,13 @@ async def deep_research(
 
     # Phase 0: Engine selection
     if not SearchEngineRegistry.is_registered(engine):
-        logger.warning("Engine '%s' not registered, falling back to duckduckgo_lite", engine)
+        logger.warning(
+            "Engine '%s' not registered, falling back to %s",
+            engine,
+            DEFAULT_CONFIG.default_engine,
+        )
+        engine = DEFAULT_CONFIG.default_engine
+    if not SearchEngineRegistry.is_registered(engine):
         engine = "duckduckgo_lite"
 
     if engine == "duckduckgo_lite":
