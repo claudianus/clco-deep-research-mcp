@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -60,6 +61,48 @@ ADAPTER_REGISTRY = {
     "hermes": HermesAdapter,
     "codex": CodexAdapter,
 }
+
+
+_SENTENCE_TRANSFORMERS_SPEC = "sentence-transformers>=3.0.0"
+
+
+def _pip_install_sentence_transformers() -> tuple[bool, str]:
+    """Install *sentence-transformers* for the interpreter running this CLI.
+
+    Order: ``python -m pip install`` → ``--user`` → ``uv pip`` targeting this
+    executable → ``uv pip install --system`` (works without an active venv).
+
+    Returns:
+        ``(ok, detail)`` — *detail* is the successful shell command or a short
+        error tail.
+    """
+    attempts: list[list[str]] = [
+        [sys.executable, "-m", "pip", "install", _SENTENCE_TRANSFORMERS_SPEC],
+        [sys.executable, "-m", "pip", "install", "--user", _SENTENCE_TRANSFORMERS_SPEC],
+    ]
+    uv_bin = shutil.which("uv")
+    if uv_bin:
+        attempts.extend(
+            (
+                [uv_bin, "pip", "install", "--python", sys.executable, _SENTENCE_TRANSFORMERS_SPEC],
+                [uv_bin, "pip", "install", "--system", _SENTENCE_TRANSFORMERS_SPEC],
+            )
+        )
+
+    last_msg = ""
+    for cmd in attempts:
+        try:
+            subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=900)
+            return True, " ".join(cmd)
+        except subprocess.TimeoutExpired as exc:
+            last_msg = str(exc)
+        except subprocess.CalledProcessError as exc:
+            tail = (exc.stderr or exc.stdout or str(exc)).strip()
+            last_msg = tail[-800:] if tail else str(exc)
+        except OSError as exc:
+            last_msg = str(exc)
+
+    return False, last_msg
 
 
 def cmd_list(args: argparse.Namespace) -> int:
@@ -130,48 +173,39 @@ def cmd_setup(args: argparse.Namespace) -> int:
         elif result.get("skills_supported") is False:
             print("   ℹ SKILL.md 규칙 파일 미지원")
 
-    # Semantic search recommendation
+    # Semantic search: auto-install *sentence-transformers* into the same
+    # interpreter as this CLI (``MARU_SKIP_SEMANTIC_INSTALL=1`` to skip).
     import importlib.util
 
     if importlib.util.find_spec("sentence_transformers"):
         print(f"\n  {green('✓')} semantic search (sentence-transformers) 설치됨")
+    elif os.environ.get("MARU_SKIP_SEMANTIC_INSTALL", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+    ):
+        print(f"\n  {yellow('!')} semantic search 미설치 (MARU_SKIP_SEMANTIC_INSTALL 로 생략)")
+        print(
+            f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_SPEC}')}"
+        )
+        print(f"     또는: {bold(f'uv pip install --system {_SENTENCE_TRANSFORMERS_SPEC}')}")
     else:
-        print(f"\n  {yellow('!')} semantic search 미설치")
-        if sys.stdin.isatty():
-            try:
-                choice = input(
-                    f"     {bold('sentence-transformers를 지금 설치하시겠습니까?')} [Y/n]: "
-                )
-            except (EOFError, KeyboardInterrupt):
-                choice = "n"
-            if not choice or choice.strip().lower() in ("y", "yes"):
-                print("     설치 중...")
-                try:
-                    uv_bin = shutil.which("uv")
-                    if uv_bin:
-                        cmd = [uv_bin, "pip", "install", "sentence-transformers>=3.0.0"]
-                    else:
-                        cmd = [
-                            sys.executable,
-                            "-m",
-                            "pip",
-                            "install",
-                            "sentence-transformers>=3.0.0",
-                        ]
-                    subprocess.run(cmd, check=True)
-                    print(f"     {green('✓')} sentence-transformers 설치 완료")
-                except subprocess.CalledProcessError as exc:
-                    print(f"     {yellow('!')} 설치 실패: {exc}")
-                    print(f"     수동 설치: {bold('uv pip install sentence-transformers>=3.0.0')}")
-            else:
-                print("     설치를 생략합니다.")
-                print(f"     나중에 설치: {bold('uv pip install sentence-transformers>=3.0.0')}")
-                print(f"     또는: {bold('pip install sentence-transformers>=3.0.0')}")
+        print(f"\n  {yellow('!')} semantic search 미설치 — 자동 설치 시도 중...")
+        ok, detail = _pip_install_sentence_transformers()
+        if ok:
+            print(f"     {green('✓')} sentence-transformers 설치 완료 ({detail})")
         else:
+            print(f"     {yellow('!')} 자동 설치 실패")
+            if detail:
+                print(f"     {detail}")
             print(
-                f"     설치 시 검색 품질 ↑: {bold('uv pip install sentence-transformers>=3.0.0')}"
+                f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_SPEC}')}"
             )
-            print(f"     또는: {bold('pip install maru-deep-pro-search[semantic]')}")
+            print(f"     또는: {bold(f'uv pip install --system {_SENTENCE_TRANSFORMERS_SPEC}')}")
+            print(
+                "     PyPI 패키지는 Python 3.10+ 필요: "
+                + bold("python3.12 -m pip install 'maru-deep-pro-search[semantic]'")
+            )
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")
     print(f"   되돌리려면: {bold('maru-deep-pro-search setup --restore')}")
