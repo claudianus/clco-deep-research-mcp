@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<meta charset="UTF-8">
 <meta name="theme-color" content="#042f2e">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>maru-deep-pro-search — Perplexity급 웹 리서치, 0 API 키</title>
-<meta name="description" content="AI 코딩 에이전트용 Perplexity급 검색 MCP — 18툴, 9엔진, 쿼리 게이트, 드리프트 가드, 바이브 코더 플레이북·프롬프트 치트시트 포함. 0원.">
+<meta name="description" content="Cursor·Claude용 무료 웹 조사 MCP. API 키 없이 검색·출처·안전 필터. 초보 바이브 코더도 따라 할 수 있는 순서와 채팅 예시 포함.">
 <meta property="og:title" content="maru-deep-pro-search — Perplexity-grade AI research, zero API keys">
 <meta property="og:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 18 tools, 9-engine failover, BM25+semantic ranking, strict query gate, drift guard, auto-fetch, native citations, and 72-layer prompt injection defense.">
 <meta property="og:type" content="website">
@@ -59,57 +60,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-tailwind.config = {
-  theme: {
-    extend: {
-      colors: {
-        maru: {
-          50: '#f0fdfa',
-          100: '#ccfbf1',
-          200: '#99f6e4',
-          300: '#5eead4',
-          400: '#2dd4bf',
-          500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
-          800: '#115e59',
-          900: '#134e4a',
-          950: '#042f2e',
-        },
-        dark: {
-          950: '#030712',
-          900: '#0a0a0f',
-          800: '#12121a',
-          700: '#1a1a2e',
-          600: '#232336',
-        }
-      },
-      fontFamily: {
-        sans: ['Inter', 'Noto Sans KR', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
-      },
-      animation: {
-        'float': 'float 6s ease-in-out infinite',
-        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'glow': 'glow 2s ease-in-out infinite alternate',
-      },
-      keyframes: {
-        float: {
-          '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-20px)' },
-        },
-        glow: {
-          '0%': { boxShadow: '0 0 20px rgba(20,184,166,0.3)' },
-          '100%': { boxShadow: '0 0 40px rgba(20,184,166,0.6)' },
-        }
-      }
-    }
-  }
-}
-</script>
+<!-- 정적 빌드: Cursor 프리뷰 등에서 cdn.tailwindcss.com 차단 시 레이아웃 유지. 재생성: docs/tailwind.docs.config.cjs 주석 참고 -->
+<link rel="stylesheet" href="maru-tailwind.css">
 <style>
+/* Tailwind CDN 실패 시에도 언어 토글·hidden 유틸이 동작하도록 */
+.hidden { display: none !important; }
 body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; color: #e2e8f0; overflow-x: hidden; }
 .particles { position: fixed; top:0; left:0; width:100%; height:100%; z-index:0; pointer-events:none; }
 .glass { background: rgba(18,18,26,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.06); }
@@ -142,14 +97,14 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 <!-- Nav -->
 <nav class="fixed top-0 w-full z-50 glass border-b border-white/[0.04]">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between min-h-16 py-2 gap-2">
-      <div class="flex items-center gap-3">
+    <div class="flex items-center min-h-16 py-2 gap-2 sm:gap-4">
+      <div class="flex items-center gap-3 shrink-0">
         <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-maru-400 to-blue-500 flex items-center justify-center">
           <i class="fas fa-search text-white text-sm"></i>
         </div>
         <span class="font-bold text-lg tracking-tight">maru-deep-pro-search</span>
       </div>
-      <div class="hidden md:flex items-center gap-1 lg:gap-4 overflow-x-auto no-scrollbar max-w-[58vw] lg:max-w-none py-1">
+      <div class="hidden md:flex flex-1 min-w-0 items-center justify-end gap-1 lg:gap-4 overflow-x-auto no-scrollbar py-1">
         <a href="#problem" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0">문제</a>
         <a href="#solution" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0">해결</a>
         <a href="#security" class="text-xs lg:text-sm text-gray-400 hover:text-white transition whitespace-nowrap shrink-0">보안</a>
@@ -164,7 +119,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <a href="https://pypi.org/project/maru-deep-pro-search/" target="_blank" rel="noopener" class="text-xs lg:text-sm text-gray-500 hover:text-maru-300 transition whitespace-nowrap shrink-0">PyPI</a>
         <button type="button" onclick="toggleLang()" class="text-xs px-3 py-1 rounded-full glass text-maru-300 hover:text-maru-200 transition shrink-0">EN / KO</button>
       </div>
-      <div class="flex md:hidden items-center gap-2 text-[11px]">
+      <div class="flex md:hidden items-center gap-2 text-[11px] ml-auto shrink-0">
         <a href="#playbook" class="text-maru-300 font-medium">플레이북</a>
         <span class="text-gray-600">·</span>
         <a href="#install" class="text-gray-400">설치</a>
@@ -181,16 +136,16 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   <div class="relative z-10 max-w-5xl mx-auto px-4 text-center">
     <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass text-maru-300 text-sm mb-8">
       <span class="w-2 h-2 rounded-full bg-maru-400 animate-pulse"></span>
-      <span class="ko">Zero API Key · Perplexity급 품질</span>
-      <span class="en hidden">Zero API Key · Perplexity-Grade Quality</span>
+      <span class="ko">API 키 없음 · 무료로 꽤 똑똑한 웹 조사</span>
+      <span class="en hidden">Zero API keys · solid free web research</span>
     </div>
     <h1 class="text-5xl md:text-7xl font-black tracking-tight mb-6 leading-tight">
-      <span class="ko">AI가 낡은 사전지식만으로<br><span class="gradient-text">코딩하는 문제를 해결</span>합니다</span>
+      <span class="ko">AI가 <span class="gradient-text">웹 찾아 보기 전에</span> 코드부터 쓰는 걸 줄여 줍니다</span>
       <span class="en hidden">Force Your AI Agent<br>to <span class="gradient-text">Research First</span></span>
     </h1>
     <p class="text-xl md:text-2xl text-gray-400 mb-4 max-w-3xl mx-auto leading-relaxed">
-      <span class="ko">내장 웹 검색이 아닌, <span class="text-white font-semibold">9엔진 폴오버 · BM25+시맨틱 랭킹 · 네이티브 인용</span>을 탑재한 검색 MCP 서버</span>
-      <span class="en hidden">Not a toy search tool. A <span class="text-white font-semibold">9-engine failover · BM25+semantic ranking · citation-native</span> search MCP server with harness setup tools.</span>
+      <span class="ko">Cursor·Claude 같은 AI 코딩 도구에 붙이는 <span class="text-white font-semibold">“웹에서 먼저 찾아 보고, 출처 달고, 막 쓰지 마”</span>용 무료 부품입니다. 검색 사이트가 하나 막혀도 다른 데로 자동 넘어갑니다.</span>
+      <span class="en hidden">A free add-on for AI coding tools: <span class="text-white font-semibold">look things up on the web first, attach sources, don’t guess</span>. If one search site blocks you, it tries another.</span>
     </p>
     <div class="h-8 mb-6">
       <span id="typing" class="text-maru-300 font-mono text-lg typing-cursor"></span>
@@ -198,7 +153,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
     <div class="mb-10">
       <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maru-500/10 border border-maru-500/20 text-maru-300 text-sm font-mono">
         <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-        v0.15.1 — 18 tools · 9 engines · 20 adapters · 72 security signatures · 3-layer enforcement · query gate · auto-fetch
+        v0.15.1 — 기능 18종 · 검색 경로 9개 · 주요 에디터 20곳 지원 · 보안 필터 다층 · 잡담 검색어 정리 · 상위 결과 자동 읽기
       </span>
     </div>
     <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -225,7 +180,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       </div>
       <div class="glass-card rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-purple-400">18</div>
-        <div class="text-xs text-gray-500 mt-1 ko">MCP 툴</div><div class="text-xs text-gray-500 mt-1 en hidden">MCP tools</div>
+        <div class="text-xs text-gray-500 mt-1 ko">에이전트 기능</div><div class="text-xs text-gray-500 mt-1 en hidden">Agent-side features</div>
       </div>
       <div class="glass-card rounded-xl p-4 text-center">
         <div class="text-2xl font-bold text-emerald-400">∞</div>
@@ -254,7 +209,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <i class="fas fa-server text-red-400 text-xl"></i>
         </div>
         <h3 class="text-lg font-bold mb-2 ko">단일 엔진 의존</h3><h3 class="text-lg font-bold mb-2 en hidden">Single Engine</h3>
-        <p class="text-gray-400 text-sm ko">DuckDuckGo가 차단되면 끝입니다. 폴오버가 없어서 하나의 장애가 전체 서비스를 마비시킵니다.</p>
+        <p class="text-gray-400 text-sm ko">검색 한 곳만 쓰면 그 사이트가 막힐 때 끝입니다. 자동으로 다른 검색 경로를 타게 해 둡니다.</p>
         <p class="text-gray-400 text-sm en hidden">DuckDuckGo blocks you? Game over. No failover means one outage kills everything.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal">
@@ -262,7 +217,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <i class="fas fa-sort-amount-down text-orange-400 text-xl"></i>
         </div>
         <h3 class="text-lg font-bold mb-2 ko">랭킹 부재</h3><h3 class="text-lg font-bold mb-2 en hidden">No Ranking</h3>
-        <p class="text-gray-400 text-sm ko">검색엔진이 뱉은 순서 그대로 전달합니다. BM25, 권위도, 신선도 기반 재랭킹이 전혀 없습니다.</p>
+        <p class="text-gray-400 text-sm ko">검색 결과 순서를 그대로 믿습니다. “진짜 도움 되는 글부터” 골라 올리는 단계가 없습니다.</p>
         <p class="text-gray-400 text-sm en hidden">Raw engine order. No BM25, no authority scoring, no freshness filtering.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal">
@@ -270,7 +225,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <i class="fas fa-quote-right text-yellow-400 text-xl"></i>
         </div>
         <h3 class="text-lg font-bold mb-2 ko">인용 환각</h3><h3 class="text-lg font-bold mb-2 en hidden">Citation Hallucination</h3>
-        <p class="text-gray-400 text-sm ko">출처를 지어내거나 아예 무시합니다. `[1]`, `[2]` 네이티브 인용 아키텍처가 없어서 검증이 불가능합니다.</p>
+        <p class="text-gray-400 text-sm ko">출처를 지어내거나 생략하기 쉽습니다. “몇 번 근거[1][2]”처럼 바로 대응시키기 어렵습니다.</p>
         <p class="text-gray-400 text-sm en hidden">Makes up sources or ignores them. No native citation IDs means zero traceability.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal">
@@ -321,7 +276,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="w-10 h-10 rounded-lg bg-maru-500/20 flex items-center justify-center"><i class="fas fa-network-wired text-maru-400"></i></div>
           <h3 class="text-lg font-bold ko">9엔진 자동 폴오버</h3><h3 class="text-lg font-bold en hidden">9-Engine Failover</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">DuckDuckGo · Bing · Google · Yahoo · Ecosia · Baidu · Startpage · Naver. 하나가 망가지면 다음이 즉시 이어받습니다. 장애에 강인합니다.</p>
+        <p class="text-gray-400 text-sm ko">여러 검색 사이트를 돌려 보다가, 하나가 막히면 다른 걸로 이어 줍니다.</p>
         <p class="text-gray-400 text-sm en hidden">Nine engines with automatic failover. One goes down, the next picks up instantly. Resilient by design.</p>
         <div class="flex flex-wrap gap-2 mt-3">
           <span class="engine-badge text-xs px-2 py-1 rounded-md">DuckDuckGo</span>
@@ -337,9 +292,9 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-blue-500">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center"><i class="fas fa-chart-line text-blue-400"></i></div>
-          <h3 class="text-lg font-bold ko">Perplexity급 랭킹</h3><h3 class="text-lg font-bold en hidden">Perplexity-Grade Ranking</h3>
+          <h3 class="text-lg font-bold ko">똑똑한 순서 매기기</h3><h3 class="text-lg font-bold en hidden">Smarter ordering</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">BM25 관련성 + 밀집 시맨틱 유사도 + 권위도/신선도/코드밀도 점수. 최고의 소스가 정상에 오릅니다.</p>
+        <p class="text-gray-400 text-sm ko">검색어와 본문이 얼마나 맞는지, 글이 얼마나 신뢰될 만한지 등을 점수 매겨서 위쪽에 좋은 글을 모읍니다.</p>
         <p class="text-gray-400 text-sm en hidden">BM25 relevance + dense semantic similarity + authority/freshness/code-density scoring. Best sources rise to the top.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-purple-500">
@@ -347,7 +302,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center"><i class="fas fa-link text-purple-400"></i></div>
           <h3 class="text-lg font-bold ko">네이티브 인용</h3><h3 class="text-lg font-bold en hidden">Native Citations</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">모든 주장에 `[1]`, `[2]`, `[3]`이 붙습니다. 출처는 실재하며 추적 가능하고 응답에 직접 포함됩니다.</p>
+        <p class="text-gray-400 text-sm ko">중요한 주장마다 “이건 이 링크에서 봤다” 표시를 붙이기 쉽게 해 줍니다.</p>
         <p class="text-gray-400 text-sm en hidden">Every claim gets `[1]`, `[2]`, `[3]`. Sources are real, traceable, and embedded directly in responses.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-emerald-500">
@@ -355,7 +310,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center"><i class="fas fa-microscope text-emerald-400"></i></div>
           <h3 class="text-lg font-bold ko">딥 리서치 파이프라인</h3><h3 class="text-lg font-bold en hidden">Deep Research Pipeline</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">쿼리 자동 확장 → 다각도 검색 → 크로스엔진 랭킹 → 에이전트가 fetch_page로 선택적 읽기.</p>
+        <p class="text-gray-400 text-sm ko">검색어를 넓혀 보고, 여러 사이트를 돌린 뒤, 정리된 목록을 줍니다. 필요한 공식 페이지만 골라서 읽으면 됩니다.</p>
         <p class="text-gray-400 text-sm en hidden">Auto query expansion → multi-angle search → cross-engine ranking → agent selectively fetches with fetch_page.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-orange-500">
@@ -363,7 +318,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center"><i class="fas fa-shield-virus text-orange-400"></i></div>
           <h3 class="text-lg font-bold ko">프롬프트 인젝션 방어</h3><h3 class="text-lg font-bold en hidden">Prompt Injection Defense</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">가져온 콘텐츠를 정제합니다: 제로폭 문자 제거, 채팅 토큰 중화, 의심 패턴 플래깅. 외부 콘텐츠를 신뢰할 수 없는 입력으로 처리합니다.</p>
+        <p class="text-gray-400 text-sm ko">가져온 웹 글에서 이상한 숨은 문자·유도 문구를 걸러 냅니다. 외부 글은 항상 “못 믿을 입력”으로 취급합니다.</p>
         <p class="text-gray-400 text-sm en hidden">Sanitizes fetched content: strips zero-width chars, neutralizes chat tokens, flags suspicious patterns. Treats all external content as untrusted.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-pink-500">
@@ -371,7 +326,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center"><i class="fas fa-gavel text-pink-400"></i></div>
           <h3 class="text-lg font-bold ko">리서치 우선 강제</h3><h3 class="text-lg font-bold en hidden">Research-First Enforcement</h3>
         </div>
-        <p class="text-gray-400 text-sm ko">설정 CLI가 에이전트에 강제 규칙을 주입합니다: "어떤 코드를 작성하기 전에 반드시 deep_research를 호출하라." 예외 없음.</p>
+        <p class="text-gray-400 text-sm ko">설치할 때 에이전트 설정에 “코드 고치기 전에 웹에서 근거부터 찾아라” 같은 문장을 넣어 줍니다. 말로만 부탁하는 수준이 아닙니다.</p>
         <p class="text-gray-400 text-sm en hidden">Setup CLI injects mandatory rules: "You MUST call deep_research before writing ANY code." No exceptions.</p>
       </div>
     </div>
@@ -397,21 +352,21 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <div class="text-4xl font-bold text-red-400 mb-3">1</div>
         <h3 class="text-lg font-bold mb-2 ko">MCP 프롬프트 주입</h3>
         <h3 class="text-lg font-bold mb-2 en hidden">MCP Prompt Injection</h3>
-        <p class="text-gray-400 text-sm ko">`always_research_first()` 프롬프트가 모든 툴 호출 전 `deep_research`를 강제합니다. 예외는 없습니다.</p>
-        <p class="text-gray-400 text-sm en hidden">`always_research_first()` prompt forces `deep_research` before ANY tool call. No exceptions.</p>
+        <p class="text-gray-400 text-sm ko">서버가 에이전트에게 “먼저 웹 조사부터” 안내 문구를 붙여 둡니다. 한 번에 끝내는 큰 검색(기본 루트)부터 돌게 됩니다.</p>
+        <p class="text-gray-400 text-sm en hidden">The server ships prompts that say “research the web first” before heavy tools. The big bundled research pass is the default spine.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-t-4 border-t-orange-500">
         <div class="text-4xl font-bold text-orange-400 mb-3">2</div>
         <h3 class="text-lg font-bold mb-2 ko">세션 게이트</h3>
         <h3 class="text-lg font-bold mb-2 en hidden">Session Gate</h3>
-        <p class="text-gray-400 text-sm ko">`generate_code()`가 세션 내 리서치 기록이 없으면 코드 생성을 차단하고 누락된 인용 목록을 반환합니다.</p>
-        <p class="text-gray-400 text-sm en hidden">`generate_code()` blocks code generation if no research was done in the session, returning missing citations.</p>
+        <p class="text-gray-400 text-sm ko">이번 대화에서 웹 조사를 한 적이 없으면, 자동 코드 생성 단계를 막고 “근거부터” 돌아가라고 알려 줍니다.</p>
+        <p class="text-gray-400 text-sm en hidden">Auto code drafts stay off until a research pass happened in this chat.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-t-4 border-t-maru-500">
         <div class="text-4xl font-bold text-maru-400 mb-3">3</div>
         <h3 class="text-lg font-bold mb-2 ko">에이전트 규칙 주입</h3>
         <h3 class="text-lg font-bold mb-2 en hidden">Agent Rule Injection</h3>
-        <p class="text-gray-400 text-sm ko">설정 CLI가 에이전트별 설정 파일에 리서치 우선 규칙을 주입합니다. `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json` 등.</p>
+        <p class="text-gray-400 text-sm ko">Cursor·Claude 등 쓰는 앱마다, 프로젝트 규칙 파일에 같은 내용을 자동으로 적어 넣을 수 있습니다.</p>
         <p class="text-gray-400 text-sm en hidden">Setup CLI injects research-first rules into per-agent config files: `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json`, etc.</p>
       </div>
     </div>
@@ -428,8 +383,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <span class="en hidden"><span class="gradient-text">72-Layer</span> Security Defense</span>
       </h2>
       <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-        <span class="ko">MCP 보안 취약점 연구(Huang et al., 2026)의 권고사항을 직접 구현</span>
-        <span class="en hidden">Direct implementation of MCP security research recommendations (Huang et al., 2026)</span>
+        <span class="ko">보안 연구에서 나온 “이런 식으로 망가질 수 있다” 목록을 실제로 막아 넣었습니다.</span>
+        <span class="en hidden">We turned common “how MCP can break” research into concrete checks.</span>
       </p>
     </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -442,9 +397,9 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal text-center">
         <div class="text-4xl font-bold text-orange-400 mb-2"><i class="fas fa-shield-halved"></i></div>
-        <div class="text-sm text-gray-300 mb-1 ko">MCP 특화 탐지</div>
+        <div class="text-sm text-gray-300 mb-1 ko">에이전트 연동 위험</div>
         <div class="text-sm text-gray-300 mb-1 en hidden">MCP-Specific</div>
-        <div class="text-xs text-gray-500 ko">Tool poisoning · Rug pull · Shadowing</div>
+        <div class="text-xs text-gray-500 ko">가짜 도구·갑자기 바뀐 동작 등</div>
         <div class="text-xs text-gray-500 en hidden">Tool poisoning · Rug pull · Shadowing</div>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal text-center">
@@ -495,17 +450,18 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">결과 랭킹</td><td class="px-6 py-4 font-medium en hidden">Result Ranking</td>
               <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">BM25 + 시맨틱</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">BM25 + Semantic</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">여러 기준으로 순서 정리</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">Smarter ranking</td>
             </tr>
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">인용 지원</td><td class="px-6 py-4 font-medium en hidden">Citations</td>
               <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold">[1], [2], [3] 네이티브</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">[1], [2], [3] 네이티브</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">Native [1], [2], [3]</td>
             </tr>
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">딥 리서치</td><td class="px-6 py-4 font-medium en hidden">Deep Research</td>
               <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">7단계 파이프라인</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">7-Phase Pipeline</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">여러 단계로 깊게 조사</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">Deep multi-step research</td>
             </tr>
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">안티봇/스텔스</td><td class="px-6 py-4 font-medium en hidden">Anti-Bot</td>
@@ -515,7 +471,8 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">프롬프트 인젝션 방어</td><td class="px-6 py-4 font-medium en hidden">Injection Defense</td>
               <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold">✓ Sanitize + Tag</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">✓ Sanitize + Tag</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">✓ Sanitize + Tag</td>
             </tr>
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">강제 실행</td><td class="px-6 py-4 font-medium en hidden">Enforcement</td>
@@ -530,12 +487,12 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">로컬 지식 / 드리프트</td><td class="px-6 py-4 font-medium en hidden">Knowledge + drift</td>
               <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">query_knowledge · drift_status</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">query_knowledge · drift_status</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">로컬 메모 검색 · 파일 변화 확인</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">Local notes + change check</td>
             </tr>
             <tr class="comparison-row border-b border-white/5">
               <td class="px-6 py-4 font-medium ko">MCP 프롬프트</td><td class="px-6 py-4 font-medium en hidden">MCP prompts</td>
               <td class="text-center px-6 py-4 text-gray-500 ko">없음</td><td class="text-center px-6 py-4 text-gray-500 en hidden">None</td>
-              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">tool_selection_guide 등</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">tool_selection_guide, …</td>
+              <td class="text-center px-6 py-4 text-maru-300 font-bold ko">툴 고르는 안내 문구 포함</td><td class="text-center px-6 py-4 text-maru-300 font-bold en hidden">Built-in tool guides</td>
             </tr>
             <tr class="comparison-row">
               <td class="px-6 py-4 font-medium ko">비용</td><td class="px-6 py-4 font-medium en hidden">Cost</td>
@@ -559,7 +516,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       </h2>
     </div>
     <div class="glass rounded-2xl p-8 font-mono text-sm scroll-reveal overflow-x-auto">
-      <div class="text-center text-gray-500 mb-4 ko">MCP 클라이언트 계층</div>
+      <div class="text-center text-gray-500 mb-4 ko">AI 코딩 앱 · 에디터</div>
       <div class="text-center text-gray-500 mb-4 en hidden">MCP Client Layer</div>
       <div class="flex justify-center gap-3 mb-4 flex-wrap">
         <span class="px-3 py-1 rounded-lg bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs">Claude Code</span>
@@ -581,16 +538,21 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <span class="px-3 py-1 rounded-lg bg-gray-500/10 border border-gray-500/20 text-gray-300 text-xs">OpenCode</span>
         <span class="px-3 py-1 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs">AntiGravity</span>
       </div>
-      <div class="text-center text-gray-600 mb-4">JSON-RPC 2.0 / stdio</div>
+      <div class="text-center text-gray-600 mb-4 ko">에디터 ↔ 이 서버 사이 연결 (stdio)</div>
       <div class="text-center text-maru-300 mb-4 font-bold">▼</div>
       <div class="border border-maru-500/30 rounded-xl p-4 bg-maru-950/30 mb-4">
         <div class="text-center text-maru-300 font-bold mb-2 ko">maru-deep-pro-search MCP 서버</div>
         <div class="text-center text-maru-300 font-bold mb-2 en hidden">maru-deep-pro-search MCP Server</div>
         <div class="flex flex-wrap justify-center gap-2 text-[10px] mb-3">
-          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25">prompt: tool_selection_guide</span>
-          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25">prompt: always_research_first</span>
-          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25">prompt: anti_bot_strategy</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25 ko">안내: 툴 고르기</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25 ko">안내: 먼저 조사</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25 ko">안내: 검색 막힐 때</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25 en hidden">prompt: tool_selection_guide</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25 en hidden">prompt: always_research_first</span>
+          <span class="px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-200 border border-amber-500/25 en hidden">prompt: anti_bot_strategy</span>
         </div>
+        <div class="text-center text-[10px] text-gray-500 mb-2 ko">아래 작은 칸의 영문은 “기능 등록 이름”입니다. 채팅에는 「웹에서 먼저 조사해」「공식 문서 열어줘」처럼 평범하게 말해도 됩니다.</div>
+        <div class="text-center text-[10px] text-gray-500 mb-2 en hidden">Small labels are MCP tool IDs; in chat you can still say “research the web first” in plain language.</div>
         <div class="grid grid-cols-2 md:grid-cols-6 gap-2 text-xs">
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">deep_research</div>
           <div class="text-center p-2 rounded bg-white/5 text-gray-300">answer</div>
@@ -632,20 +594,20 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div class="text-emerald-300 font-bold text-xs mb-2 ko">랭킹 엔진</div>
           <div class="text-emerald-300 font-bold text-xs mb-2 en hidden">Ranking Engine</div>
           <div class="text-[10px] text-gray-400 space-y-1">
-            <div>BM25Okapi</div>
-            <div>Semantic Similarity</div>
-            <div>Authority/Freshness</div>
-            <div>Code-Density</div>
+            <div>글·질문이 얼마나 비슷한지</div>
+            <div>비슷한 뜻의 글 찾기</div>
+            <div>사이트 신뢰도·날짜</div>
+            <div>코드가 많이 있는 글 우선</div>
           </div>
         </div>
         <div class="border border-orange-500/20 rounded-xl p-3 bg-orange-950/20">
           <div class="text-orange-300 font-bold text-xs mb-2 ko">콘텐츠 추출</div>
           <div class="text-orange-300 font-bold text-xs mb-2 en hidden">Extraction</div>
           <div class="text-[10px] text-gray-400 space-y-1">
-            <div>trafilatura</div>
-            <div>Code Detection</div>
-            <div>API Signature</div>
-            <div>Freshness Score</div>
+            <div>본문만 깔끔히 뽑기</div>
+            <div>코드 블록 찾기</div>
+            <div>API 같은 흔적 찾기</div>
+            <div>낡은 글은 아래로</div>
           </div>
         </div>
       </div>
@@ -898,7 +860,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">엄격 쿼리 게이트</h4>
             <h4 class="text-white font-semibold text-sm en hidden">Strict query gate</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">대화형 질의는 거절·키워드형으로 자동 보정. SERP 낭비 감소.</p>
+            <p class="text-gray-400 text-xs mt-1 ko">잡담 같은 검색 문장은 짧은 키워드로 바꿔 줍니다. 검색 낭비가 줄어요.</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">Rejects chatty queries; auto-optimizes keyword-style searches.</p>
           </div>
         </div>
@@ -909,7 +871,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">드리프트 가드</h4>
             <h4 class="text-white font-semibold text-sm en hidden">Drift guard</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">`drift_status`·락파일 지문으로 리서치 전후 변경 감지.</p>
+            <p class="text-gray-400 text-xs mt-1 ko">조사 전후로 내 폴더가 바뀌었는지 가볍게 확인합니다.</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">Manifest fingerprints + `drift_status` without extra web calls.</p>
           </div>
         </div>
@@ -920,7 +882,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">환경변수 기본값</h4>
             <h4 class="text-white font-semibold text-sm en hidden">Env-driven defaults</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">`MARU_SEARCH_*` 타임아웃·엔진·동시 fetch·재시도를 MCP 툴과 엔진에 반영.</p>
+            <p class="text-gray-400 text-xs mt-1 ko">대기 시간·동시에 열 페이지 수 같은 값을 환경 변수로 조절합니다.</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">`SearchConfig` wires timeouts, engine, concurrency, retries into tools &amp; SERP retries.</p>
           </div>
         </div>
@@ -931,7 +893,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">20개 에이전트 어댑터</h4>
             <h4 class="text-white font-semibold text-sm en hidden">20 agent adapters</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">setup/sync가 전역 경로에 MCP·규칙·스킬을 주입.</p>
+            <p class="text-gray-400 text-xs mt-1 ko">Cursor 등 20개 앱에 맞춰 MCP·규칙 파일을 자동 배치합니다.</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">Global-only agent writes; `init` keeps `.maru/` local.</p>
           </div>
         </div>
@@ -942,7 +904,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">품질 게이트</h4>
             <h4 class="text-white font-semibold text-sm en hidden">Quality gates</h4>
-            <p class="text-gray-400 text-xs mt-1 ko">`ruff`·`mypy` 중심 정적 분석; 자동 테스트 스위트 없음(의도적).</p>
+            <p class="text-gray-400 text-xs mt-1 ko">문법 검사·타입 검사로 실수를 줄입니다. 자동 테스트 묶음은 넣지 않았습니다(의도적으로 짧게 유지).</p>
             <p class="text-gray-400 text-xs mt-1 en hidden">Static analysis + runtime enforcement; no bundled test suite by design.</p>
           </div>
         </div>
@@ -953,7 +915,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
           <div>
             <h4 class="text-white font-semibold text-sm ko">semantic 자동 설치</h4>
             <h4 class="text-white font-semibold text-sm en hidden">Semantic auto-install</h4>
-            <p class="text-gray-400 text-xs mt-1 ko"><code class="text-teal-300/90">setup</code>이 <code class="text-teal-300/90">sentence-transformers</code>를 pip/uv 폴백으로 설치. <span class="kbd">MARU_SKIP_SEMANTIC_INSTALL=1</span> 생략.</p>
+            <p class="text-gray-400 text-xs mt-1 ko">설치할 때 “비슷한 글 찾기”에 쓰는 패키지를 자동으로 깔아 줍니다. 필요 없으면 끌 수 있어요.</p>
             <p class="text-gray-400 text-xs mt-1 en hidden"><code class="text-teal-300/90">setup</code> installs <code class="text-teal-300/90">sentence-transformers</code> via pip/uv fallbacks. Skip with <span class="kbd">MARU_SKIP_SEMANTIC_INSTALL=1</span>.</p>
           </div>
         </div>
@@ -966,61 +928,63 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 <section id="playbook" class="py-24 relative border-t border-white/[0.04]">
   <div class="max-w-6xl mx-auto px-4">
     <div class="text-center mb-4 scroll-reveal">
-      <p class="section-kicker ko">바이브 코딩 · 실전 워크플로</p>
-      <p class="section-kicker en hidden">Vibe coding · Battle-tested workflow</p>
+      <p class="section-kicker ko">처음 써도 되는 순서</p>
+      <p class="section-kicker en hidden">Beginner-friendly flow</p>
       <h2 class="text-3xl md:text-5xl font-bold mt-2 mb-3">
-        <span class="ko">한 페이지로 끝내는 <span class="gradient-text">리서치 → 코딩</span> 루프</span>
-        <span class="en hidden">The <span class="gradient-text">research → code</span> loop on one page</span>
+        <span class="ko">웹에서 찾고 → 확인하고 → <span class="gradient-text">그다음 코드</span></span>
+        <span class="en hidden"><span class="gradient-text">Research → verify → code</span> in plain steps</span>
       </h2>
       <p class="text-gray-400 text-sm md:text-base max-w-3xl mx-auto leading-relaxed">
-        <span class="ko">에이전트가 “기억” 대신 <strong class="text-gray-200">툴 출력</strong>에 의존하게 만드는 순서입니다. 아래를 사용자 메시지/프로젝트 규칙에 그대로 붙여 넣어도 됩니다.</span>
-        <span class="en hidden">Train the agent to trust <strong class="text-gray-200">tool output</strong>, not parametric memory. Paste into your project rules or first message.</span>
+        <span class="ko">아래 순서는 <strong class="text-gray-200">에이전트가 먼저 웹을 보도록</strong> 유도하는 흐름이에요. 영어 이름은 몰라도 됩니다. “공식 문서부터 읽어”처럼 말하면 MCP가 알아서 필요한 기능을 켭니다.</span>
+        <span class="en hidden">Push the agent to <strong class="text-gray-200">hit the web before coding</strong>. You can speak in plain language; the MCP picks tools.</span>
       </p>
     </div>
     <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4 scroll-reveal">
       <div class="glass-card rounded-2xl p-5 border-t-4 border-t-maru-500 relative overflow-hidden">
         <div class="absolute top-3 right-3 text-5xl font-black text-white/[0.03] select-none">1</div>
-        <h3 class="text-sm font-bold text-maru-300 mb-2 ko">의도 고정</h3>
-        <h3 class="text-sm font-bold text-maru-300 mb-2 en hidden">Lock intent</h3>
-        <p class="text-gray-400 text-xs leading-relaxed ko">“무엇을 바꾸는지 / 어떤 실패인지 / 어떤 버전·스택인지” 3줄. 추측 금지 선언.</p>
-        <p class="text-gray-400 text-xs leading-relaxed en hidden">3 lines: change scope, failure mode, versions/stack. “No guessing.”</p>
+        <h3 class="text-sm font-bold text-maru-300 mb-2 ko">무엇을 고치는지 말하기</h3>
+        <h3 class="text-sm font-bold text-maru-300 mb-2 en hidden">Say what you’re fixing</h3>
+        <p class="text-gray-400 text-xs leading-relaxed ko">증상 한 줄, 쓰는 언어·프레임워크, “지금 당장 목표”만 적어도 충분해요. 추측 금지라고 덧붙이면 더 좋아요.</p>
+        <p class="text-gray-400 text-xs leading-relaxed en hidden">Symptom, stack, goal in a few lines. Say “no guessing” if you want rigor.</p>
       </div>
       <div class="glass-card rounded-2xl p-5 border-t-4 border-t-blue-500 relative overflow-hidden">
         <div class="absolute top-3 right-3 text-5xl font-black text-white/[0.03] select-none">2</div>
-        <h3 class="text-sm font-bold text-blue-300 mb-2 ko"><code class="text-xs text-blue-200">deep_research</code></h3>
-        <h3 class="text-sm font-bold text-blue-300 mb-2 en hidden"><code class="text-xs text-blue-200">deep_research</code></h3>
-        <p class="text-gray-400 text-xs leading-relaxed ko">키워드형 쿼리(게이트 통과). 멀티 엔진·BM25·시맨틱·인용 ID까지 한 번에.</p>
-        <p class="text-gray-400 text-xs leading-relaxed en hidden">Keyword query (passes gate). Multi-engine + BM25 + semantic + citation IDs.</p>
+        <h3 class="text-sm font-bold text-blue-300 mb-2 ko">웹에서 한 번에 조사</h3>
+        <h3 class="text-sm font-bold text-blue-300 mb-2 en hidden">One-pass web research</h3>
+        <p class="text-gray-400 text-xs leading-relaxed ko">검색창에 타이핑할 법한 <strong>짧은 한국어/영어 키워드</strong>로 부탁하세요. 잡담처럼 길게 쓰면 결과가 흐려질 수 있어요.</p>
+        <p class="text-gray-400 text-xs leading-relaxed en hidden">Ask for <strong>short keyword-style probes</strong> like you’d type into Google—not long chatty paragraphs.</p>
       </div>
       <div class="glass-card rounded-2xl p-5 border-t-4 border-t-purple-500 relative overflow-hidden">
         <div class="absolute top-3 right-3 text-5xl font-black text-white/[0.03] select-none">3</div>
-        <h3 class="text-sm font-bold text-purple-300 mb-2 ko"><code class="text-xs text-purple-200">fetch_page</code> 1–2개</h3>
-        <h3 class="text-sm font-bold text-purple-300 mb-2 en hidden"><code class="text-xs text-purple-200">fetch_page</code> top 1–2</h3>
-        <p class="text-gray-400 text-xs leading-relaxed ko">공식 문서·릴리즈 노트·CVE만 정독. 블로그 요약은 보조.</p>
-        <p class="text-gray-400 text-xs leading-relaxed en hidden">Official docs, release notes, advisories — not opinion blogs first.</p>
+        <h3 class="text-sm font-bold text-purple-300 mb-2 ko">공식 글 1~2개만 읽기</h3>
+        <h3 class="text-sm font-bold text-purple-300 mb-2 en hidden">Open 1–2 official pages</h3>
+        <p class="text-gray-400 text-xs leading-relaxed ko">문서·릴리즈 노트·보안 공지만 정독하라고 못 박으면, 블로그 요약에 시간 안 태웁니다.</p>
+        <p class="text-gray-400 text-xs leading-relaxed en hidden">Tell it to read official docs / release notes / advisories first—not random blogs.</p>
       </div>
       <div class="glass-card rounded-2xl p-5 border-t-4 border-t-emerald-500 relative overflow-hidden">
         <div class="absolute top-3 right-3 text-5xl font-black text-white/[0.03] select-none">4</div>
-        <h3 class="text-sm font-bold text-emerald-300 mb-2 ko">코드 전 <code class="text-emerald-200 text-xs">drift_status</code></h3>
-        <h3 class="text-sm font-bold text-emerald-300 mb-2 en hidden">Before code: <code class="text-emerald-200 text-xs">drift_status</code></h3>
-        <p class="text-gray-400 text-xs leading-relaxed ko">리서치 이후 레포 변경 감지. 대규모 리팩터 중엔 특히 유용.</p>
-        <p class="text-gray-400 text-xs leading-relaxed en hidden">Catch repo drift after research; vital mid-refactor.</p>
+        <h3 class="text-sm font-bold text-emerald-300 mb-2 ko">코드 고치기 전에 폴더 확인</h3>
+        <h3 class="text-sm font-bold text-emerald-300 mb-2 en hidden">Check the tree before edits</h3>
+        <p class="text-gray-400 text-xs leading-relaxed ko">조사한 뒤 내가 파일을 건드렸는지, 다른 브랜치를 땄는지 확인하라고 하면 덜 엇나가요.</p>
+        <p class="text-gray-400 text-xs leading-relaxed en hidden">Ask the agent to notice if the repo moved since the last lookup—great during refactors.</p>
       </div>
     </div>
     <div class="mt-6 glass rounded-2xl p-5 md:p-6 scroll-reveal border border-maru-500/15">
       <div class="flex flex-wrap items-center gap-2 mb-3">
-        <span class="text-xs font-bold text-maru-300 uppercase tracking-wider ko">복붙용 시스템 스니펫</span>
-        <span class="text-xs font-bold text-maru-300 uppercase tracking-wider en hidden">Copy-paste system snippet</span>
+        <span class="text-xs font-bold text-maru-300 uppercase tracking-wider ko">규칙에 붙이기 좋은 짧은 문단</span>
+        <span class="text-xs font-bold text-maru-300 uppercase tracking-wider en hidden">Short block for project rules</span>
         <span class="text-[10px] px-2 py-0.5 rounded bg-white/5 text-gray-500">optional</span>
       </div>
-      <pre class="text-[11px] md:text-xs font-mono text-gray-300 leading-relaxed whitespace-pre-wrap ko">1) 먼저 deep_research로 최신 근거를 수집하고, 응답의 [N] 인용과 URL을 나열하라.
-2) 공식 문서·보안 권고만 fetch_page로 열어 확인한 뒤 요약하라.
-3) 코드를 쓰기 전 drift_status로 작업 트리 변경을 확인하라.
-4) generate_code는 세션에 리서치가 있을 때만 사용하라.</pre>
-      <pre class="text-[11px] md:text-xs font-mono text-gray-300 leading-relaxed whitespace-pre-wrap en hidden">1) Run deep_research first; list [N] citations + URLs from the tool output.
-2) fetch_page only official docs/advisories; summarize what you verified.
-3) Call drift_status before editing when the repo may have moved.
-4) Use generate_code only after research exists in this session.</pre>
+      <p class="text-[10px] text-gray-500 mb-2 ko">괄호 안 이름은 로그에 나오는 기능일 뿐이에요. 채팅은 평어로 써도 됩니다.</p>
+      <p class="text-[10px] text-gray-500 mb-2 en hidden">Parentheses show internal tool IDs for logs—you can still speak normally in chat.</p>
+      <pre class="text-[11px] md:text-xs font-mono text-gray-300 leading-relaxed whitespace-pre-wrap ko">1) 코드를 쓰기 전에 항상 웹에서 최신 근거를 모으고, 답에 [1] 같은 표시와 링크를 달아 줘.
+2) 공식 문서·보안 공지만 열어서 확인한 뒤 요약해 줘.
+3) 수정하기 전에 작업 폴더가 바뀌었는지 한 번 확인해 줘.
+4) 이번 대화에서 조사를 끝낸 뒤에만 자동 코드 초안을 써 줘.</pre>
+      <pre class="text-[11px] md:text-xs font-mono text-gray-300 leading-relaxed whitespace-pre-wrap en hidden">1) Before coding, gather fresh web evidence and cite with [n]-style markers + URLs.
+2) Open only official docs/advisories; summarize what you verified.
+3) Before edits, check whether the workspace changed since your last look.
+4) Draft code only after research happened in this session.</pre>
     </div>
   </div>
 </section>
@@ -1029,56 +993,86 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 <section id="prompts" class="py-24 relative">
   <div class="max-w-6xl mx-auto px-4">
     <div class="text-center mb-12 scroll-reveal">
-      <p class="section-kicker ko">프롬프트 엔지니어링</p>
-      <p class="section-kicker en hidden">Prompt engineering</p>
+      <p class="section-kicker ko">채팅 예시</p>
+      <p class="section-kicker en hidden">Chat examples</p>
       <h2 class="text-3xl md:text-5xl font-bold mt-2 mb-3">
-        <span class="ko">엄격 <span class="gradient-text">쿼리 게이트</span>를 친구로 쓰기</span>
-        <span class="en hidden">Make the strict <span class="gradient-text">query gate</span> your ally</span>
+        <span class="ko"><span class="gradient-text">짧은 검색어</span>를 잘 뽑기</span>
+        <span class="en hidden">Write <span class="gradient-text">tight keywords</span>, not essays</span>
       </h2>
-      <p class="text-gray-400 text-sm max-w-2xl mx-auto ko">대화체·감정 표현은 SERP 낭비로 거절됩니다. <span class="kbd">MARU_STRICT_QUERY=0</span>이면 거절만 끄고 자동 키워드 보정은 유지.</p>
-      <p class="text-gray-400 text-sm max-w-2xl mx-auto en hidden">Chatty prompts get rejected (saves SERP budget). <span class="kbd">MARU_STRICT_QUERY=0</span> disables rejection only; auto keyword fix remains.</p>
+      <p class="text-gray-400 text-sm max-w-2xl mx-auto ko">이 MCP는 <strong class="text-gray-200">긴 잡담</strong>보다 <strong class="text-gray-200">검색창에 칠 한두 줄</strong>이 들어올 때 결과가 좋아요. 아래는 “내가 채팅에 이렇게 쓰면 된다”는 예시입니다.</p>
+      <p class="text-gray-400 text-sm max-w-2xl mx-auto en hidden">This MCP works best when the agent passes <strong class="text-gray-200">short keyword probes</strong>, not long chat paragraphs. Examples below are plain chat you can copy.</p>
     </div>
+    <p class="text-center text-[11px] text-gray-500 mb-6 scroll-reveal ko">💡 “구글에 칠 법한 말로 조사해”라고 한 번만 적어 주면, 에이전트가 긴 설명을 검색창에 그대로 붙여 넣는 일이 줄어요.</p>
+    <p class="text-center text-[11px] text-gray-500 mb-6 scroll-reveal en hidden">💡 Say “search like you’d type into Google” once—fewer rambling strings hit the search box.</p>
     <div class="grid lg:grid-cols-2 gap-6 scroll-reveal">
       <div class="glass rounded-2xl p-5 prompt-bad bg-red-950/10">
-        <h3 class="text-red-300 text-sm font-bold mb-3 ko">이렇게 쓰면 거절되기 쉬움</h3>
-        <h3 class="text-red-300 text-sm font-bold mb-3 en hidden">Often rejected</h3>
-        <ul class="text-xs text-gray-400 space-y-2 font-mono">
-          <li class="ko">“이거 왜 안 돼?” “공식 문서 좀 찾아줘 ㅠㅠ”</li>
-          <li class="en hidden">“Why doesn't this work?” “pls find docs im stuck 😭”</li>
-          <li class="ko">“최신 정보로 알려줘” (주제 없음)</li>
-          <li class="en hidden">“Tell me the latest” (no topic)</li>
-        </ul>
+        <h3 class="text-red-300 text-sm font-bold mb-1 ko">이런 말은 아쉬워요</h3>
+        <h3 class="text-red-300 text-sm font-bold mb-1 en hidden">Vague asks</h3>
+        <p class="text-[10px] text-red-200/70 mb-3 ko">상황이 비어 있으면, 에이전트도 “최신 정보 알려줘” 같은 뭉뚱그린 검색만 하게 돼요.</p>
+        <p class="text-[10px] text-red-200/70 mb-3 en hidden">Empty context → vague searches.</p>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-400 leading-relaxed whitespace-pre-wrap ko">공부 좀 해와. 인터넷 뒤져서 제일 좋은 방법으로 고쳐줘 ㅠ
+
+이거 왜 안 돼? 너가 알아서 찾아봐.
+
+최신으로 해줘. (뭘 최신으로?)</pre>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-400 leading-relaxed whitespace-pre-wrap en hidden">Just figure it out from the web, best practice pls 🙏
+
+Why is this broken? idk search for me
+
+Make it “modern”. (modern what?)</pre>
       </div>
       <div class="glass rounded-2xl p-5 prompt-good bg-emerald-950/10">
-        <h3 class="text-emerald-300 text-sm font-bold mb-3 ko">이렇게 쓰면 통과 + 품질 ↑</h3>
-        <h3 class="text-emerald-300 text-sm font-bold mb-3 en hidden">Passes + higher quality</h3>
-        <ul class="text-xs text-gray-300 space-y-2 font-mono leading-relaxed">
-          <li>httpx AsyncClient streaming 2026 python timeout cancel</li>
-          <li>CVE-2025-XXXX library name advisory site:github.com OR site:nvd.nist.gov</li>
-          <li>uv pip install editable pyproject PEP 621 setuptools migration</li>
-          <li class="ko text-gray-400">주제 + 동작 + 연도/버전 힌트를 한 줄에.</li>
-          <li class="en hidden text-gray-400">Topic + action + year/version hints in one line.</li>
-        </ul>
+        <h3 class="text-emerald-300 text-sm font-bold mb-1 ko">이렇게 말하면 편해요</h3>
+        <h3 class="text-emerald-300 text-sm font-bold mb-1 en hidden">Clearer prompts</h3>
+        <p class="text-[10px] text-emerald-200/80 mb-3 ko"><strong>버전·증상·금지(추측 금지)</strong>를 적고, 검색에 쓸 <strong>짧은 문장 몇 개</strong>를 같이 적어 주세요. 기술 이름은 천천히 써도 됩니다.</p>
+        <p class="text-[10px] text-emerald-200/80 mb-3 en hidden">Add <strong>version + symptom + “no guessing”</strong>, plus a few <strong>short probes</strong> you’d type into Google.</p>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-200 leading-relaxed whitespace-pre-wrap ko">우리 백엔드는 FastAPI + Python 3.12야. 응답 스트림이 중간에 끊겨.
+추측으로 때우지 말고, 웹에서 아래 검색어처럼 짧게 여러 번 찾아 줘:
+「fastapi stream 끊김」,「fastapi 공식 문서 스트리밍」
+찾은 뒤에는 공식 문서 링크만 골라서 요약해 줘.</pre>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-200 leading-relaxed whitespace-pre-wrap en hidden">We’re on FastAPI + Python 3.12; the response stream dies mid-flight.
+No guessing—run a few short web probes like:
+`fastapi stream disconnect`, `fastapi official streaming docs`
+Then summarize only what official docs say.</pre>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-200 leading-relaxed whitespace-pre-wrap ko mt-3">ruff를 올렸더니 import 관련 경고가 너무 많아졌어.
+한 번에 고치지 말고, 아래처럼 짧은 검색어 세 가지로 각각 찾아서 표로만 비교해 줘:
+「ruff import 정리 방법」,「ruff 설정 예시」,「ruff 경고 끄는 법」</pre>
+        <pre class="text-[11px] md:text-xs font-mono text-gray-200 leading-relaxed whitespace-pre-wrap en hidden mt-3">After upgrading ruff, import warnings exploded.
+Don’t fix blindly—search three tight phrases separately, e.g.
+`ruff import cleanup`, `ruff config example`, `ruff silence warnings`
+Then give a tiny comparison table in plain language.</pre>
       </div>
     </div>
     <div class="mt-8 grid md:grid-cols-3 gap-4 scroll-reveal">
       <div class="glass-card rounded-xl p-4">
         <h4 class="text-white text-xs font-bold mb-2 ko">보안 이슈</h4>
         <h4 class="text-white text-xs font-bold mb-2 en hidden">Security</h4>
-        <p class="text-[11px] text-gray-500 leading-relaxed ko">CVE 번호, 제품명, <code class="text-gray-400">affected versions</code>, <code class="text-gray-400">site:nvd.nist.gov</code> 혼합.</p>
-        <p class="text-[11px] text-gray-500 leading-relaxed en hidden">CVE + product + <code class="text-gray-400">affected versions</code> + authority domains.</p>
+        <pre class="text-[10px] font-mono text-gray-400 leading-relaxed whitespace-pre-wrap ko">CVE 번호랑 쓰는 패키지 버전이 있어.
+먼저 “공식 보안 공지 + 패키지 이름 + CVE”로 짧게 검색하고,
+나온 공식 링크만 열어서 같은 내용인지 확인해 줘.</pre>
+        <pre class="text-[10px] font-mono text-gray-400 leading-relaxed whitespace-pre-wrap en hidden">We have a CVE id + package version.
+Search short phrases like `express CVE advisory site:github.com`,
+then open only vendor/npm/github pages and cross-check.</pre>
       </div>
       <div class="glass-card rounded-xl p-4">
-        <h4 class="text-white text-xs font-bold mb-2 ko">비교 질문</h4>
-        <h4 class="text-white text-xs font-bold mb-2 en hidden">Compare</h4>
-        <p class="text-[11px] text-gray-500 leading-relaxed ko">A vs B + 기준(성능·DX·라이선스) + 사용 맥락.</p>
-        <p class="text-[11px] text-gray-500 leading-relaxed en hidden">A vs B + criteria (perf, DX, license) + your context.</p>
+        <h4 class="text-white text-xs font-bold mb-2 ko">둘 중 뭐가 나을까</h4>
+        <h4 class="text-white text-xs font-bold mb-2 en hidden">Pick between options</h4>
+        <pre class="text-[10px] font-mono text-gray-400 leading-relaxed whitespace-pre-wrap ko">uv로 갈지, 예전 방식(pip-tools)으로 갈지 고민이야.
+“uv 장단점”, “pip-tools 장단점”, “팀이 배우기 쉬운 쪽”처럼
+짧은 검색어 세 개로 각각 찾아서 표로만 정리해 줘.</pre>
+        <pre class="text-[10px] font-mono text-gray-400 leading-relaxed whitespace-pre-wrap en hidden">Choosing uv vs pip-tools.
+Run three short probes like `uv lock workflow`, `pip-tools onboarding`, `uv vs pip-tools ci`
+Then summarize in a table: speed, learning curve, CI pain.</pre>
       </div>
       <div class="glass-card rounded-xl p-4">
-        <h4 class="text-white text-xs font-bold mb-2 ko">디버깅</h4>
-        <h4 class="text-white text-xs font-bold mb-2 en hidden">Debug</h4>
-        <p class="text-[11px] text-gray-500 leading-relaxed ko">스택 트레이스 키워드 + 프레임워크 버전 + OS.</p>
-        <p class="text-[11px] text-gray-500 leading-relaxed en hidden">Trace token + framework version + OS in the query.</p>
+        <h4 class="text-white text-xs font-bold mb-2 ko">에러 잡기</h4>
+        <h4 class="text-white text-xs font-bold mb-2 en hidden">Debugging</h4>
+        <pre class="text-[10px] font-mono text-gray-400 leading-relaxed whitespace-pre-wrap ko">아래 에러 로그 붙일게. Django 5.1, 맥이야.
+에러 메시지 핵심만 뽑아서 짧은 검색어 한 줄로 웹 조사하고,
+GitHub 이슈나 릴리즈 노트 링크만 골라서 설명해 줘.</pre>
+        <pre class="text-[10px] font-mono text-gray-400 leading-relaxed whitespace-pre-wrap en hidden">Trace below (Django 5.1, macOS).
+Pull one tight line from the error, search the web with that line,
+then explain using only official issue/release links.</pre>
       </div>
     </div>
   </div>
@@ -1088,48 +1082,50 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 <section id="tools" class="py-24 relative border-t border-white/[0.04]">
   <div class="max-w-6xl mx-auto px-4">
     <div class="text-center mb-10 scroll-reveal">
-      <p class="section-kicker ko">18 MCP 툴 · 고밀도 레퍼런스</p>
-      <p class="section-kicker en hidden">18 tools · dense reference</p>
+      <p class="section-kicker ko">기능 살펴보기 (영문은 등록 이름)</p>
+      <p class="section-kicker en hidden">Tool map (IDs for logs)</p>
       <h2 class="text-3xl md:text-4xl font-bold mt-2">
-        <span class="ko">무슨 툴을 <span class="gradient-text">언제</span> 쓸까</span>
-        <span class="en hidden">Which tool <span class="gradient-text">when</span></span>
+        <span class="ko">언제 <span class="gradient-text">뭘 켜면</span> 되나</span>
+        <span class="en hidden">What to reach for <span class="gradient-text">when</span></span>
       </h2>
+      <p class="text-gray-500 text-xs max-w-2xl mx-auto mt-2 ko">왼쪽 영문은 설정·로그에 나오는 이름입니다. 채팅에는 “웹에서 찾아”, “이 페이지 열어”처럼 말해도 됩니다.</p>
+      <p class="text-gray-500 text-xs max-w-2xl mx-auto mt-2 en hidden">Left column is the MCP tool id; in chat you can still use plain language.</p>
     </div>
     <div class="glass rounded-2xl overflow-x-auto scroll-reveal">
       <table class="w-full text-left text-[11px] md:text-xs dense-tool-row">
         <thead>
           <tr class="border-b border-white/10 bg-white/[0.02]">
             <th class="px-3 py-2 text-maru-300 font-semibold whitespace-nowrap">Tool</th>
-            <th class="px-3 py-2 text-gray-400 font-medium ko">한 줄 가이드</th>
+            <th class="px-3 py-2 text-gray-400 font-medium ko">쉬운 설명</th>
             <th class="px-3 py-2 text-gray-400 font-medium en hidden">One-liner</th>
-            <th class="px-3 py-2 text-gray-500 font-medium ko">메모</th>
+            <th class="px-3 py-2 text-gray-500 font-medium ko">팁</th>
             <th class="px-3 py-2 text-gray-500 font-medium en hidden">Notes</th>
           </tr>
         </thead>
         <tbody class="text-gray-300">
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">deep_research</td><td class="px-3 py-2 text-gray-400 ko">코드 전 필수 리서치 루트</td><td class="px-3 py-2 text-gray-400 en hidden">Pre-code research spine</td><td class="px-3 py-2 text-gray-500 ko">게이트·auto_fetch·인용</td><td class="px-3 py-2 text-gray-500 en hidden">Gate, auto_fetch, cites</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">web_search</td><td class="px-3 py-2 text-gray-400 ko">빠른 팩트/링크만</td><td class="px-3 py-2 text-gray-400 en hidden">Fast facts &amp; links</td><td class="px-3 py-2 text-gray-500 ko">SERP만, 얕음</td><td class="px-3 py-2 text-gray-500 en hidden">SERP-only</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">parallel_search</td><td class="px-3 py-2 text-gray-400 ko">A/B/C 각도 동시 비교</td><td class="px-3 py-2 text-gray-400 en hidden">Multi-angle compare</td><td class="px-3 py-2 text-gray-500 ko">표 형식 요약에 유리</td><td class="px-3 py-2 text-gray-500 en hidden">Great for tables</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">search_with_citations</td><td class="px-3 py-2 text-gray-400 ko">인용이 필요한 짧은 검색</td><td class="px-3 py-2 text-gray-400 en hidden">Cited shallow search</td><td class="px-3 py-2 text-gray-500 ko">[N] + URL</td><td class="px-3 py-2 text-gray-500 en hidden">[N] + URL</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">answer</td><td class="px-3 py-2 text-gray-400 ko">통합 요약 답변</td><td class="px-3 py-2 text-gray-400 en hidden">Bundled answer</td><td class="px-3 py-2 text-gray-500 ko">소스 한도·타임아웃 별도</td><td class="px-3 py-2 text-gray-500 en hidden">Own timeouts</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">fetch_page</td><td class="px-3 py-2 text-gray-400 ko">공식 문서 정독</td><td class="px-3 py-2 text-gray-400 en hidden">Read official HTML</td><td class="px-3 py-2 text-gray-500 ko">Sanitize·AGENT SECURITY 블록</td><td class="px-3 py-2 text-gray-500 en hidden">Sanitized + banner</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">fetch_bulk</td><td class="px-3 py-2 text-gray-400 ko">여러 URL 병렬</td><td class="px-3 py-2 text-gray-400 en hidden">Parallel URLs</td><td class="px-3 py-2 text-gray-500 ko">동시성 ENV</td><td class="px-3 py-2 text-gray-500 en hidden">Concurrency from ENV</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">stealthy_fetch</td><td class="px-3 py-2 text-gray-400 ko">안티봇 강한 페이지</td><td class="px-3 py-2 text-gray-400 en hidden">Anti-bot heavy</td><td class="px-3 py-2 text-gray-500 ko">느리지만 생존율 ↑</td><td class="px-3 py-2 text-gray-500 en hidden">Slower, higher survival</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">generate_code</td><td class="px-3 py-2 text-gray-400 ko">세션 리서치 후 코드</td><td class="px-3 py-2 text-gray-400 en hidden">Code after research</td><td class="px-3 py-2 text-gray-500 ko">게이트 2층</td><td class="px-3 py-2 text-gray-500 en hidden">Layer-2 gate</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">session_state</td><td class="px-3 py-2 text-gray-400 ko">세션 인용 스냅샷</td><td class="px-3 py-2 text-gray-400 en hidden">Session cite snapshot</td><td class="px-3 py-2 text-gray-500 ko">리서치 누락 디버깅</td><td class="px-3 py-2 text-gray-500 en hidden">Debug missing cites</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">query_knowledge</td><td class="px-3 py-2 text-gray-400 ko">로컬 지식 저장소</td><td class="px-3 py-2 text-gray-400 en hidden">SQLite knowledge</td><td class="px-3 py-2 text-gray-500 ko">`.maru/` 프로젝트</td><td class="px-3 py-2 text-gray-500 en hidden">`.maru/` project</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">drift_status</td><td class="px-3 py-2 text-gray-400 ko">리서치 후 파일 변화</td><td class="px-3 py-2 text-gray-400 en hidden">Post-research drift</td><td class="px-3 py-2 text-gray-500 ko">락파일 지문</td><td class="px-3 py-2 text-gray-500 en hidden">Lockfile fingerprint</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">export_research</td><td class="px-3 py-2 text-gray-400 ko">팀 공유 산출물</td><td class="px-3 py-2 text-gray-400 en hidden">Team export</td><td class="px-3 py-2 text-gray-500 ko">영수증·메타</td><td class="px-3 py-2 text-gray-500 en hidden">Receipts + meta</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">list_engines</td><td class="px-3 py-2 text-gray-400 ko">엔진 카탈로그</td><td class="px-3 py-2 text-gray-400 en hidden">Engine catalog</td><td class="px-3 py-2 text-gray-500 ko">지연·신뢰도</td><td class="px-3 py-2 text-gray-500 en hidden">Latency tiers</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">engine_health</td><td class="px-3 py-2 text-gray-400 ko">서킷 브레이커 상태</td><td class="px-3 py-2 text-gray-400 en hidden">Circuit health</td><td class="px-3 py-2 text-gray-500 ko">DDG 연속 호출 주의</td><td class="px-3 py-2 text-gray-500 en hidden">Mind DDG storms</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">cache_stats</td><td class="px-3 py-2 text-gray-400 ko">캐시 적중률</td><td class="px-3 py-2 text-gray-400 en hidden">Cache hit ratio</td><td class="px-3 py-2 text-gray-500 ko">튜닝 전후 비교</td><td class="px-3 py-2 text-gray-500 en hidden">Before/after tuning</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">clear_caches</td><td class="px-3 py-2 text-gray-400 ko">오염된 SERP 초기화</td><td class="px-3 py-2 text-gray-400 en hidden">Reset bad SERP cache</td><td class="px-3 py-2 text-gray-500 ko">이상한 결과일 때</td><td class="px-3 py-2 text-gray-500 en hidden">When results look stale</td></tr>
-          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">version</td><td class="px-3 py-2 text-gray-400 ko">서버·의존성 버전</td><td class="px-3 py-2 text-gray-400 en hidden">Server version</td><td class="px-3 py-2 text-gray-500 ko">이슈 리포트에 첨부</td><td class="px-3 py-2 text-gray-500 en hidden">Attach to bug reports</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">deep_research</td><td class="px-3 py-2 text-gray-400 ko">웹 조사를 한 번에 깊게</td><td class="px-3 py-2 text-gray-400 en hidden">Pre-code research spine</td><td class="px-3 py-2 text-gray-500 ko">잡담 검색어 정리·상위 글 자동 읽기·출처 번호</td><td class="px-3 py-2 text-gray-500 en hidden">Gate, auto_fetch, cites</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">web_search</td><td class="px-3 py-2 text-gray-400 ko">가볍게 링크만</td><td class="px-3 py-2 text-gray-400 en hidden">Fast facts &amp; links</td><td class="px-3 py-2 text-gray-500 ko">목록만 보고 끝</td><td class="px-3 py-2 text-gray-500 en hidden">SERP-only</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">parallel_search</td><td class="px-3 py-2 text-gray-400 ko">검색어 여러 개 동시에</td><td class="px-3 py-2 text-gray-400 en hidden">Multi-angle compare</td><td class="px-3 py-2 text-gray-500 ko">표로 비교할 때</td><td class="px-3 py-2 text-gray-500 en hidden">Great for tables</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">search_with_citations</td><td class="px-3 py-2 text-gray-400 ko">짧은 검색 + 출처</td><td class="px-3 py-2 text-gray-400 en hidden">Cited shallow search</td><td class="px-3 py-2 text-gray-500 ko">[1] + 링크</td><td class="px-3 py-2 text-gray-500 en hidden">[N] + URL</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">answer</td><td class="px-3 py-2 text-gray-400 ko">짧게 한 방에 요약</td><td class="px-3 py-2 text-gray-400 en hidden">Bundled answer</td><td class="px-3 py-2 text-gray-500 ko">시간 제한 따로 있음</td><td class="px-3 py-2 text-gray-500 en hidden">Own timeouts</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">fetch_page</td><td class="px-3 py-2 text-gray-400 ko">한 페이지 통째로 읽기</td><td class="px-3 py-2 text-gray-400 en hidden">Read official HTML</td><td class="px-3 py-2 text-gray-500 ko">깨끗이 정리된 본문</td><td class="px-3 py-2 text-gray-500 en hidden">Sanitized + banner</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">fetch_bulk</td><td class="px-3 py-2 text-gray-400 ko">여러 페이지 동시에</td><td class="px-3 py-2 text-gray-400 en hidden">Parallel URLs</td><td class="px-3 py-2 text-gray-500 ko">동시에 열 개수는 설정으로</td><td class="px-3 py-2 text-gray-500 en hidden">Concurrency from ENV</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">stealthy_fetch</td><td class="px-3 py-2 text-gray-400 ko">막히는 사이트 전용</td><td class="px-3 py-2 text-gray-400 en hidden">Anti-bot heavy</td><td class="px-3 py-2 text-gray-500 ko">느리지만 열리는 편</td><td class="px-3 py-2 text-gray-500 en hidden">Slower, higher survival</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">generate_code</td><td class="px-3 py-2 text-gray-400 ko">조사 후 코드 초안</td><td class="px-3 py-2 text-gray-400 en hidden">Code after research</td><td class="px-3 py-2 text-gray-500 ko">조사 안 하면 막힘</td><td class="px-3 py-2 text-gray-500 en hidden">Layer-2 gate</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">session_state</td><td class="px-3 py-2 text-gray-400 ko">지금 세션에 뭐가 쌓였는지</td><td class="px-3 py-2 text-gray-400 en hidden">Session cite snapshot</td><td class="px-3 py-2 text-gray-500 ko">출처가 비었을 때</td><td class="px-3 py-2 text-gray-500 en hidden">Debug missing cites</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">query_knowledge</td><td class="px-3 py-2 text-gray-400 ko">내 PC에 모아둔 메모 검색</td><td class="px-3 py-2 text-gray-400 en hidden">SQLite knowledge</td><td class="px-3 py-2 text-gray-500 ko">프로젝트 `.maru/`</td><td class="px-3 py-2 text-gray-500 en hidden">`.maru/` project</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">drift_status</td><td class="px-3 py-2 text-gray-400 ko">폴더가 바뀌었는지</td><td class="px-3 py-2 text-gray-400 en hidden">Post-research drift</td><td class="px-3 py-2 text-gray-500 ko">락파일 비교</td><td class="px-3 py-2 text-gray-500 en hidden">Lockfile fingerprint</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">export_research</td><td class="px-3 py-2 text-gray-400 ko">조사 결과 보내기</td><td class="px-3 py-2 text-gray-400 en hidden">Team export</td><td class="px-3 py-2 text-gray-500 ko">팀에 공유할 때</td><td class="px-3 py-2 text-gray-500 en hidden">Receipts + meta</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">list_engines</td><td class="px-3 py-2 text-gray-400 ko">검색 경로 목록</td><td class="px-3 py-2 text-gray-400 en hidden">Engine catalog</td><td class="px-3 py-2 text-gray-500 ko">느림·막힘 참고</td><td class="px-3 py-2 text-gray-500 en hidden">Latency tiers</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">engine_health</td><td class="px-3 py-2 text-gray-400 ko">검색 경로 건강 상태</td><td class="px-3 py-2 text-gray-400 en hidden">Circuit health</td><td class="px-3 py-2 text-gray-500 ko">연속 검색 시 쉬기</td><td class="px-3 py-2 text-gray-500 en hidden">Mind DDG storms</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">cache_stats</td><td class="px-3 py-2 text-gray-400 ko">캐시가 얼마나 맞았는지</td><td class="px-3 py-2 text-gray-400 en hidden">Cache hit ratio</td><td class="px-3 py-2 text-gray-500 ko">느릴 때 확인</td><td class="px-3 py-2 text-gray-500 en hidden">Before/after tuning</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">clear_caches</td><td class="px-3 py-2 text-gray-400 ko">검색 캐시 비우기</td><td class="px-3 py-2 text-gray-400 en hidden">Reset bad SERP cache</td><td class="px-3 py-2 text-gray-500 ko">이상한 결과일 때</td><td class="px-3 py-2 text-gray-500 en hidden">When results look stale</td></tr>
+          <tr class="border-b border-white/[0.04]"><td class="px-3 py-2 font-mono text-maru-200">version</td><td class="px-3 py-2 text-gray-400 ko">버전 정보</td><td class="px-3 py-2 text-gray-400 en hidden">Server version</td><td class="px-3 py-2 text-gray-500 ko">문의할 때 첨부</td><td class="px-3 py-2 text-gray-500 en hidden">Attach to bug reports</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="text-center text-[11px] text-gray-500 mt-4 ko">MCP 프롬프트 <code class="text-gray-400">tool_selection_guide</code> · <code class="text-gray-400">always_research_first</code> — 스키마만 보고 툴 고르지 말 것.</p>
-    <p class="text-center text-[11px] text-gray-500 mt-4 en hidden">MCP prompts <code class="text-gray-400">tool_selection_guide</code> · <code class="text-gray-400">always_research_first</code> — don’t pick tools from schema alone.</p>
+    <p class="text-center text-[11px] text-gray-500 mt-4 ko">에디터에 붙는 안내 문구(툴 고르기·먼저 조사 등)를 함께 읽으면 더 수월해요. 이름만 보고 고르지 말고, 위 표의 “쉬운 설명”을 기준으로 생각해 보세요.</p>
+    <p class="text-center text-[11px] text-gray-500 mt-4 en hidden">Read the bundled MCP prompts (tool picking, research-first). Use the plain-language column—not IDs alone.</p>
   </div>
 </section>
 
@@ -1179,7 +1175,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       </div>
       <div class="glass-card rounded-xl p-4">
         <div class="font-mono text-maru-300 mb-1">MARU_SEARCH_MAX_CONCURRENT</div>
-        <p class="text-gray-500 leading-relaxed ko"><code class="text-gray-400">fetch_bulk</code> 기본 동시성 (기본 5).</p>
+        <p class="text-gray-500 leading-relaxed ko">여러 페이지를 동시에 열 때 기본 개수(보통 5개).</p>
         <p class="text-gray-500 leading-relaxed en hidden">Default <code class="text-gray-400">fetch_bulk</code> concurrency (5).</p>
       </div>
     </div>
@@ -1369,12 +1365,12 @@ animateParticles();
 
 // Typing Effect
 const koTexts = [
-  "9엔진 폴오버로 장애 없는 검색...",
-  "BM25 + 시맨틱으로 최고의 소스만 선별...",
-  "[1], [2] 네이티브 인용으로 환각 차단...",
-  "엄격 쿼리 게이트로 SERP 낭비 차단...",
-  "리서치 우선 규칙으로 에이전트 강제...",
-  "0 API 키. 100% 무료. 영원히."
+  "검색 한 곳이 막혀도 다른 데로 넘어가요…",
+  "짧은 키워드로 찾으면 더 잘 맞아요…",
+  "출처 번호로 근거를 붙일 수 있어요…",
+  "긴 잡담보다 검색창에 칠 말이 중요해요…",
+  "코드 전에 폴더가 바뀌었는지도 확인해요…",
+  "API 키 없이 무료로 쓸 수 있어요."
 ];
 const enTexts = [
   "9-engine failover for resilient search...",
