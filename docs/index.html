@@ -6,20 +6,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>maru-deep-pro-search — 멀티엔진 웹 조사 MCP</title>
 <meta name="description" content="Cursor·Claude Code 등에 붙이는 무료 MCP. API 키 없이 다중 엔진 검색·재랭킹·인용·페일오버·쿼리 게이트. 설치와 채팅 예시 포함.">
-<meta property="og:title" content="maru-deep-pro-search — Perplexity-grade AI research, zero API keys">
-<meta property="og:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 18 tools, 9-engine failover, BM25+semantic ranking, strict query gate, drift guard, auto-fetch, native citations, and 72-layer prompt injection defense.">
+<link rel="canonical" href="https://claudianus.github.io/maru-deep-pro-search/">
+<meta property="og:title" content="maru-deep-pro-search — Multi-engine web research MCP">
+<meta property="og:description" content="Free MCP for Cursor, Claude Code, and peers: nine search engines with failover, BM25 + semantic re-ranking, native [n] citations, strict query gate, drift guard, auto-fetch, and layered fetch sanitization. No API keys.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://claudianus.github.io/maru-deep-pro-search/">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:locale:alternate" content="en_US">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="maru-deep-pro-search — Force your AI agent to research first">
-<meta name="twitter:description" content="Universal AI search MCP server — Perplexity-level quality with zero API keys. 18 tools, 9-engine failover, BM25+semantic ranking, strict query gate, drift guard, auto-fetch, native citations. Docker sandbox. Audit logging.">
+<meta name="twitter:title" content="maru-deep-pro-search — Multi-engine web research MCP">
+<meta name="twitter:description" content="Nine-engine search MCP with failover, re-ranked SERPs, citations, query gate, drift guard—no API keys. Docker sandbox and audit logging.">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🔍%3C/text%3E%3C/svg%3E">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "maru-deep-pro-search",
-  "description": "Universal AI search MCP server — Perplexity-level quality with zero API keys. Multi-engine web scraping, intelligent ranking, and citation-native answers.",
+  "description": "Multi-engine web research MCP for coding agents (Cursor, Claude Code, …): failover search, BM25 + semantic re-ranking, native citations, strict query gate, drift guard, auto-fetch, and layered sanitization. No API keys.",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Any",
   "programmingLanguage": "Python",
@@ -35,13 +38,13 @@
     "72-layer prompt injection defense",
     "MCP audit logging",
     "Docker sandbox support",
-    "20 AI agent adapters with skill injection",
-    "3-layer real research enforcement with quality score",
+    "20 agent adapters with skill injection",
+    "Three-layer enforcement (prompts, session gate, config rules) with quality score",
     "Auto-fetch top results in deep_research",
     "SQLite KnowledgeStore with semantic search",
     "Code generation validation (generate_code)",
     "Self-update system",
-    "Vibe coder playbook (research→code loop)",
+    "Playbook: search, cite, then code",
     "Prompt cheatsheet for strict query gate",
     "Environment variable cheatsheet"
   ],
@@ -324,10 +327,10 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-l-4 border-l-pink-500">
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 rounded-lg bg-pink-500/20 flex items-center justify-center"><i class="fas fa-gavel text-pink-400"></i></div>
-          <h3 class="text-lg font-bold ko">리서치 우선 강제</h3><h3 class="text-lg font-bold en hidden">Research-First Enforcement</h3>
+          <h3 class="text-lg font-bold ko">리서치 우선 강제</h3><h3 class="text-lg font-bold en hidden">Search-before-code guardrails</h3>
         </div>
         <p class="text-gray-400 text-sm ko">설치 시 에이전트 설정에 <strong>리서치 우선</strong> 정책을 주입합니다. 단순 권고 문구가 아니라 서버·세션·규칙 파일이 함께 동작합니다.</p>
-        <p class="text-gray-400 text-sm en hidden">Setup injects research-first policies into agent configs (e.g. `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json`). The bundled research pass is the default spine before code edits.</p>
+        <p class="text-gray-400 text-sm en hidden">Install seeds cite-before-edit policies into agent configs (e.g. `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json`). Server, session gate, and files move together—not a lone reminder line.</p>
       </div>
     </div>
   </div>
@@ -353,7 +356,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <h3 class="text-lg font-bold mb-2 ko">MCP 프롬프트 주입</h3>
         <h3 class="text-lg font-bold mb-2 en hidden">MCP Prompt Injection</h3>
         <p class="text-gray-400 text-sm ko">서버가 에이전트에 리서치 우선 안내를 프롬프트로 제공하며, 번들된 대형 리서치 패스가 기본 진입 경로가 됩니다.</p>
-        <p class="text-gray-400 text-sm en hidden">The server ships prompts that say “research the web first” before heavy tools. The big bundled research pass is the default spine.</p>
+        <p class="text-gray-400 text-sm en hidden">Bundled MCP prompts bias the agent toward a full web pass before heavy codegen tools. That bundled pass stays the default entry point.</p>
       </div>
       <div class="glass-card rounded-2xl p-6 scroll-reveal border-t-4 border-t-orange-500">
         <div class="text-4xl font-bold text-orange-400 mb-3">2</div>
@@ -367,7 +370,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
         <h3 class="text-lg font-bold mb-2 ko">에이전트 규칙 주입</h3>
         <h3 class="text-lg font-bold mb-2 en hidden">Agent Rule Injection</h3>
         <p class="text-gray-400 text-sm ko">Cursor·Claude 등 에이전트별 규칙 파일에 동일한 리서치 우선 정책을 자동 삽입할 수 있습니다.</p>
-        <p class="text-gray-400 text-sm en hidden">Setup CLI injects research-first rules into per-agent config files: `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json`, etc.</p>
+        <p class="text-gray-400 text-sm en hidden">Setup CLI writes the same search-and-cite guardrails into each agent’s config files: `.cursorrules`, `CLAUDE.md`, `.kimi/settings.json`, and friends.</p>
       </div>
     </div>
   </div>
@@ -625,7 +628,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
       </h2>
       <p class="text-gray-400 text-lg max-w-2xl mx-auto">
         <span class="ko">한 번의 설정으로 모든 에이전트에 리서치 강제 규칙 주입</span>
-        <span class="en hidden">One setup injects research-first rules into every agent</span>
+        <span class="en hidden">One setup pushes the same search-and-cite guardrails into every supported agent</span>
       </p>
     </div>
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 scroll-reveal">
@@ -924,7 +927,7 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
   </div>
 </section>
 
-<!-- Vibe coder playbook -->
+<!-- Playbook: search, cite, then code -->
 <section id="playbook" class="py-24 relative border-t border-white/[0.04]">
   <div class="max-w-6xl mx-auto px-4">
     <div class="text-center mb-4 scroll-reveal">
@@ -1125,7 +1128,7 @@ then explain using only official issue/release links.</pre>
       </table>
     </div>
     <p class="text-center text-[11px] text-gray-500 mt-4 ko">에디터에 붙는 안내 문구(툴 고르기·먼저 조사 등)를 함께 읽으면 더 수월해요. 이름만 보고 고르지 말고, 위 표의 “쉬운 설명”을 기준으로 생각해 보세요.</p>
-    <p class="text-center text-[11px] text-gray-500 mt-4 en hidden">Read the bundled MCP prompts (tool picking, research-first). Use the plain-language column—not IDs alone.</p>
+    <p class="text-center text-[11px] text-gray-500 mt-4 en hidden">Skim the bundled MCP prompts for tool choice and search order. Prefer the plain-language column over raw tool IDs.</p>
   </div>
 </section>
 
