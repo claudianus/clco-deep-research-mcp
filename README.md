@@ -53,15 +53,17 @@ curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main
 irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
 ```
 
-**수동 (pip):**
+**수동 (pip, Python ≥3.10):**
 ```bash
-pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
+python3 -m pip install --user "maru-deep-pro-search[semantic]" && maru-deep-pro-search setup
 ```
+`setup`은 `sentence-transformers`가 없으면 같은 인터프리터에 자동 설치를 시도합니다. 건너뛰려면 `MARU_SKIP_SEMANTIC_INSTALL=1`을 설정하세요.
 
-**권장 (uv — 빠른 설치):**
+**권장 (uv — 빠른 설치, semantic 포함):**
 ```bash
-uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git
+uv tool install --python 3.12 --with "sentence-transformers>=3.0.0" git+https://github.com/claudianus/maru-deep-pro-search.git
 ```
+PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic]"` 로 동일합니다.
 
 설정 마법사가 AI 에이전트를 자동 감지하고, 기존 설정을 백업한 뒤 MCP 설정을 주입하고, 리서치 우선 규칙을 강제합니다.
 

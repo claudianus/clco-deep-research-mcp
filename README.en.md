@@ -53,15 +53,17 @@ curl -sSL https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main
 irm https://raw.githubusercontent.com/claudianus/maru-deep-pro-search/main/scripts/install.ps1 | iex
 ```
 
-**Manual (pip):**
+**Manual (pip, Python ≥3.10):**
 ```bash
-pip install maru-deep-pro-search[semantic] && maru-deep-pro-search setup
+python3 -m pip install --user "maru-deep-pro-search[semantic]" && maru-deep-pro-search setup
 ```
+`setup` tries to auto-install `sentence-transformers` into the same interpreter when missing. Set `MARU_SKIP_SEMANTIC_INSTALL=1` to skip.
 
-**Recommended (uv — fastest):**
+**Recommended (uv — fastest, includes semantic):**
 ```bash
-uv tool install --python 3.12 git+https://github.com/claudianus/maru-deep-pro-search.git
+uv tool install --python 3.12 --with "sentence-transformers>=3.0.0" git+https://github.com/claudianus/maru-deep-pro-search.git
 ```
+From PyPI only: `uv tool install --python 3.12 "maru-deep-pro-search[semantic]"`.
 
 The setup wizard auto-detects your AI agent, backs up existing configs, injects MCP settings, and enforces research-first rules.
 

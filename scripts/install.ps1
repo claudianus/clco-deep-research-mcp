@@ -151,10 +151,11 @@ Write-Title "4. 패키지 설치"
 if ($useUv) {
     Write-Info "GitHub 저장소에서 최신 코드를 받습니다..."
     & $uvBin tool install --python $TargetPy --reinstall `
+        --with "sentence-transformers>=3.0.0" `
         "git+https://github.com/claudianus/maru-deep-pro-search.git"
 } else {
     Write-Info "PyPI에서 설치합니다..."
-    & $pythonCmd -m pip install --user maru-deep-pro-search
+    & $pythonCmd -m pip install --user "maru-deep-pro-search[semantic]"
 }
 
 # Verify

@@ -182,10 +182,11 @@ section "4. 패키지 설치"
 if [ "$USE_UV" = true ]; then
     info "GitHub 저장소에서 최신 코드를 받습니다..."
     "$UV_BIN" tool install --python "${TARGET_PY}" --reinstall \
+        --with "sentence-transformers>=3.0.0" \
         "git+https://github.com/claudianus/maru-deep-pro-search.git"
 else
     info "PyPI에서 설치합니다..."
-    $PYTHON_CMD -m pip install --user maru-deep-pro-search
+    $PYTHON_CMD -m pip install --user "maru-deep-pro-search[semantic]"
 fi
 
 # Verify
