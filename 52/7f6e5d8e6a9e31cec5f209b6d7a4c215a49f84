@@ -1,0 +1,59 @@
+README.md
+  s_48732b6ec24419::t_95580e8bc5bfea 77
+README.en.md
+  s_48732b6ec24419::t_7ffec5da3622f6 77
+pyproject.toml
+  s_48732b6ec24419::t_b1db7577dc524b 3
+docs/index.html
+  s_48732b6ec24419::t_30b525ccd5ca4e 949-1019,1021-1046,1048,1050-1114,1116-1130,1133-1160,1164-1175
+  s_48732b6ec24419::t_991d01c961e989 1375,1383
+  s_48732b6ec24419::t_3b9913288431ec 1020
+  s_48732b6ec24419::t_ea661a34a29a4c 1161-1163
+  s_48732b6ec24419::t_be87f55de2b6eb 43-44
+  s_48732b6ec24419::t_37ab631443a649 42,45
+  s_48732b6ec24419::t_53ed75acd636bc 890-891
+  s_48732b6ec24419::t_b4831b9cddb8d1 1115
+  s_48732b6ec24419::t_4cf28224fea44f 7
+  s_48732b6ec24419::t_4ad9d0d492fa1d 1047,1049
+  s_48732b6ec24419::t_94fc103ee966b8 145
+  s_48732b6ec24419::t_e9b4794fe75a8a 4
+  s_48732b6ec24419::t_9516f32438498d 128-134
+  s_48732b6ec24419::t_87bef1b18a97c9 204,209-213
+  s_48732b6ec24419::t_7b2d29bc26d06d 893
+  s_48732b6ec24419::t_e5499c99eed68c 1131-1132
+  s_48732b6ec24419::t_dfb012214cdc6e 1264-1265
+  s_48732b6ec24419::t_0df4ee204b9e79 590-592
+  s_48732b6ec24419::t_db421a48764b41 152-173
+  s_48732b6ec24419::t_6a96c7095e4338 201
+  s_48732b6ec24419::t_a973bc754374a9 526-539
+  s_48732b6ec24419::t_537923a423f0a6 1176-1183
+  s_48732b6ec24419::t_977f7ccdddf100 589,593
+  s_48732b6ec24419::t_35e4c25e415314 525
+  s_48732b6ec24419::t_d82c73f10919af 25
+  s_48732b6ec24419::t_caed26578cae77 1221
+  s_48732b6ec24419::t_396d81cde2f126 1222-1230
+  s_48732b6ec24419::t_53bdacbc5bedbb 1261
+src/maru_deep_pro_search/__init__.py
+  s_48732b6ec24419::t_47dce7c4dee9c4 7
+CHANGELOG.md
+  s_48732b6ec24419::t_b3e715538e9e00 29
+  s_48732b6ec24419::t_5e966b373c8dbb 26-28,30-33
+uv.lock
+  ai_agent 1139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "527f6e5d8e6a9e31cec5f209b6d7a4c215a49f84",
+  "prompts": {},
+  "sessions": {
+    "s_48732b6ec24419": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "067dff20-aa21-4b5a-bcbf-a4c6b17394ff",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
