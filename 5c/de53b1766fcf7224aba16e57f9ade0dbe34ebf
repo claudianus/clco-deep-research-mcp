@@ -1,0 +1,28 @@
+src/maru_deep_pro_search/research/gap_detector.py
+  s_15929f54bfa054::t_e1f6ddb915d556 58-63
+src/maru_deep_pro_search/research/deep.py
+  s_15929f54bfa054::t_fb59879d2c8f53 342,344
+src/maru_deep_pro_search/server.py
+  s_15929f54bfa054::t_5acda7b277abc3 292-294,304
+  s_15929f54bfa054::t_2e7b205b6eb0a6 630
+src/maru_deep_pro_search/harness/enforcer.py
+  s_15929f54bfa054::t_f711c7d189393c 113
+src/maru_deep_pro_search/utils/sanitize.py
+  s_15929f54bfa054::t_c855bfd61a564d 445,448,452,457-462
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "5cde53b1766fcf7224aba16e57f9ade0dbe34ebf",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
