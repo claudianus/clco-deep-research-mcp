@@ -1,0 +1,38 @@
+src/maru_deep_pro_search/tools.py
+  s_15929f54bfa054::t_dce7167d2ed186 735,737-739
+  s_15929f54bfa054::t_09b90de81ed169 22
+  s_15929f54bfa054::t_5594a0ecd80eef 587,590
+src/maru_deep_pro_search/harness/project.py
+  s_15929f54bfa054::t_8e1e57c9390330 40
+src/maru_deep_pro_search/research/deep.py
+  s_15929f54bfa054::t_250e9f3f78ca70 361-362,366-371
+  s_15929f54bfa054::t_9921e4dd5d753e 272
+docs/index.html
+  s_15929f54bfa054::t_ad51f33e992bb6 855-856
+  s_15929f54bfa054::t_22db0779153671 158-159
+benchmark/search_quality_benchmark.py
+  s_15929f54bfa054::t_37288c443eeefa 403-406,417-420,426-427
+src/maru_deep_pro_search/research/pipeline.py
+  s_15929f54bfa054::t_ecdfcec9e295c6 81-101,104
+  s_15929f54bfa054::t_d758ff5371a6c0 6
+docs/agent_matrix.html
+  s_15929f54bfa054::t_c629ba1c213484 30
+src/maru_deep_pro_search/harness/enforcer.py
+  s_15929f54bfa054::t_be432ff3c99200 300,304
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "e92e4583ad4a01f2ecb24514cc912e254c851191",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
