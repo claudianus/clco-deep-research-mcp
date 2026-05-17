@@ -1,0 +1,23 @@
+src/maru_deep_pro_search/cli/agents/continue_.py
+  s_15929f54bfa054::t_91b5e7801ed803 142,145-148
+src/maru_deep_pro_search/cli/agents/hermes_plugin.py
+  s_15929f54bfa054::t_e0b0c1c18c2af2 71-72
+  s_15929f54bfa054::t_6fd3c7303562a0 159
+  s_15929f54bfa054::t_2f436af915546b 46-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "cacd45421646620b205a40aec296062a8ade4e6f",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
