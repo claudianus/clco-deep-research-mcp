@@ -339,5 +339,6 @@ class ClaudeAdapter(AgentAdapter):
 
         for filename, content in commands.items():
             cmd_path = cmds_dir / filename
-            if not cmd_path.exists():
+            existing = cmd_path.read_text(encoding="utf-8") if cmd_path.exists() else ""
+            if existing != content:
                 cmd_path.write_text(content, encoding="utf-8")

@@ -702,7 +702,7 @@ async def tool_answer(
             for s in result.sources
             if s.citation_id in {p.citation_id for p in planned[:fetch_count]}
         ] or result.sources[:fetch_count]
-        fetch_budget = max(500, max_tokens // max(len(selected) + 2, 3))
+        fetch_budget = max(1, max_tokens // max(len(selected) + 2, 3))
         fetch_lines.extend(["### Fetched Evidence", ""])
         for src in selected[:fetch_count]:
             try:

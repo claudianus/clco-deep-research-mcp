@@ -28,7 +28,7 @@ _CONVERSATIONAL_SUFFIX = re.compile(
 )
 _KOREAN_SEARCH_FILLER = re.compile(
     r"(?:"
-    r"딥리서치(?:해서)?|리서치(?:해서)?|검색(?:해서)?|찾아(?:서)?|조사(?:해서)?|"
+    r"딥리서치(?:해서)?|리서치(?:해서)?|찾아(?:서)?|조사(?:해서)?|"
     r"알려줘|알려주세요|찾아줘|찾아주세요|검색해줘|검색해주세요|"
     r"추천해줘|추천해주세요|정리해줘|정리해주세요|해줘|해주세요"
     r")"
@@ -128,7 +128,8 @@ _SECURITY_HINT = re.compile(r"\b(cve|vulnerability|exploit|security|ghsa|advisor
 _COMPARE_HINT = re.compile(r"\b(vs\.?|versus|compare|comparison|better than)\b", re.I)
 _FRESHNESS_HINT = re.compile(
     r"\b(latest|current|recent|today|price|prices|recommendation|buy|used|market)\b|"
-    r"(최신|현재|요즘|오늘|시세|가격|추천|중고|구매|가성비)"
+    r"(최신|현재|요즘|오늘|시세|가격|추천|중고|구매|가성비)",
+    re.I,
 )
 _YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
 

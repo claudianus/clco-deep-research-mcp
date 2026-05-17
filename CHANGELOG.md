@@ -8,6 +8,12 @@
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-05-17
+
+### Fixed
+- **cubic PR #89** — Hermes 게이트: 툴 실패 시 `_mark_research` 생략; `query_gate` freshness 대소문자·한국어 filler; `enforcer` 미분류 툴 fail-closed; `server` `[BLOCKED]` 휴리스틱 축소; `answer` `max_tokens` 하한; `setup` pip 따옴표; Cursor command JSON 폴백; DuckDuckGo logger import 시 강제 제거; Claude command `setup` 시 갱신.
+- **README** — 버전 예시·answer-first vs deep_research 문서 정합.
+
 ## [0.16.0] - 2026-05-17
 
 ### Added

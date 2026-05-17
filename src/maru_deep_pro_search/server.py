@@ -240,7 +240,6 @@ def _is_research_result(result: object) -> bool:
         "## [query rejected]",
         "## [blocked]",
         "error executing tool",
-        "[blocked]",
     )
     return not any(marker in head for marker in failure_markers)
 

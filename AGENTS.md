@@ -119,6 +119,7 @@ class XEngine(SearchEngine):
 4. gh pr create --title "feat: description" --body-file /tmp/pr.md
 5. cubic AI 리뷰 → 피드백 반영 → push
 6. 머지 조건: CI 전체 통과 + cubic pass
+7. **cubic 인라인 코멘트(P1/P2)** — 체크 pass만으로 머지 금지. 반영하거나 근거 있는 기각을 PR에 남긴 뒤 머지
 ```
 
 **PR 브랜치에 cubic push한 뒤에는 반드시:**

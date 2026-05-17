@@ -74,7 +74,7 @@ PyPI만 쓸 때는 `uv tool install --python 3.12 "maru-deep-pro-search[semantic
 ### 1. 설치 확인
 ```bash
 maru-deep-pro-search --version
-# 예: 0.15.1
+# 예: 0.16.0
 ```
 
 ### 2. 에이전트 설정
@@ -97,7 +97,7 @@ maru-deep-pro-search setup
 ```
 
 ### 4. 첫 리서치
-에이전트에게 *「FastAPI vs Django 2025를 리서치하고 뭘 쓸지 알려줘」*처럼 요청하면, 보통 `deep_research()`를 먼저 호출한 뒤 실제 인용이 있는 답을 만듭니다.
+에이전트에게 *「갤럭시 중고폰 최신 시세」*처럼 일반 질문이면 `answer()`가, *「FastAPI vs Django 2025 아키텍처 비교」*처럼 기술·깊은 조사면 `deep_research()`가 먼저 호출된 뒤 인용이 있는 답을 만듭니다.
 
 ### 5. 프로젝트 하네스 (팀·로컬 데이터만)
 작업 중인 저장소에 **프로젝트 전용** `.maru/knowledge.db`, `.maru/harness.yaml`, 선택적 `AGENTS.md`만 만들려면:
@@ -246,7 +246,7 @@ MCP 클라이언트 (Claude, Cursor, Kimi, Windsurf, ...)
 
 ### 3계층 강제 아키텍처
 
-1. **MCP 프롬프트 주입** — `always_research_first()` 프롬프트가 툴 호출 전 `deep_research`를 강하게 유도
+1. **MCP 프롬프트 주입** — `always_research_first()` 프롬프트가 일반 질문은 `answer`, 코드·보안·깊은 조사는 `deep_research`를 유도
 2. **세션 게이트** — 서버 `SessionEnforcer`가 연구 의존 툴을 차단하고, `generate_code()`가 `research_id`·인용을 검증
 3. **에이전트 규칙** — `setup`이 홈 등 **전역** 경로의 설정 파일에 리서치 프로토콜을 주입(저장소 루트의 `.cursor/` 등에는 쓰지 않음)
 

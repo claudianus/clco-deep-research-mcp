@@ -164,12 +164,25 @@ def register(ctx) -> None:
         }
         SESSION_FILE.write_text(json.dumps(data, indent=2))
 
+    def _dispatch_succeeded(result: object) -> bool:
+        if not isinstance(result, str) or not result.strip():
+            return False
+        head = result[:500].lower()
+        failure_markers = (
+            "## [query rejected]",
+            "## [blocked]",
+            "error executing tool",
+        )
+        return not any(marker in head for marker in failure_markers)
+
     # ── Slash command: /ask ─────────────────────────────────────────
     def cmd_ask(query: str = "") -> str:
         """Trigger answer with the given query."""
         if not query.strip():
             return "Usage: /ask <query>"
         result = ctx.dispatch_tool("answer", {"query": query.strip(), "mode": "balanced"})
+        if not _dispatch_succeeded(result):
+            return f"[MARU] Answer failed — research gate not unlocked.\n{result}"
         _mark_research(query)
         return f"[MARU] Answer evidence ready. {result}"
 
@@ -185,6 +198,8 @@ def register(ctx) -> None:
         if not query.strip():
             return "Usage: /search <query>"
         result = ctx.dispatch_tool("web_search", {"query": query.strip()})
+        if not _dispatch_succeeded(result):
+            return f"[MARU] Search failed — research gate not unlocked.\n{result}"
         _mark_research(query)
         return f"[MARU] Search completed. {result}"
 
@@ -206,6 +221,8 @@ def register(ctx) -> None:
             "parallel_search",
             {"queries": queries[:5], "comparison_mode": True},
         )
+        if not _dispatch_succeeded(result):
+            return f"[MARU] Comparison failed — research gate not unlocked.\n{result}"
         _mark_research(query)
         return f"[MARU] Comparison completed. {result}"
 
@@ -222,8 +239,9 @@ def register(ctx) -> None:
             return "Usage: /research <query>"
 
         result = ctx.dispatch_tool("deep_research", {"query": query.strip()})
+        if not _dispatch_succeeded(result):
+            return f"[MARU] Research failed — gate not unlocked.\n{result}"
         _mark_research(query)
-
         return f"[MARU] Research completed. {result}"
 
     ctx.register_command(
