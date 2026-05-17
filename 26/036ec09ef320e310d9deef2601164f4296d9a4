@@ -1,0 +1,51 @@
+src/maru_deep_pro_search/cli/agents/hermes_plugin.py
+  s_15929f54bfa054::t_b9b7a0099365b3 46
+  s_15929f54bfa054::t_4bcdb326831cc0 68
+  s_15929f54bfa054::t_716ea66e262a58 90-93,96,101,110
+  s_15929f54bfa054::t_7c9d418a50d346 155
+docs/index.html
+  s_15929f54bfa054::t_3c25713e3ab91b 29,855-856,1260
+  s_15929f54bfa054::t_fc4e7e4dfc8783 158-159
+src/maru_deep_pro_search/cli/agents/continue_.py
+  s_15929f54bfa054::t_825613a569190b 222
+  s_15929f54bfa054::t_7ad7fc87f0a08a 238
+  s_15929f54bfa054::t_a8fbc9bb59ea2f 141-149
+README.md
+  s_15929f54bfa054::t_515ba2305100a7 77
+src/maru_deep_pro_search/__init__.py
+  s_15929f54bfa054::t_e81a66350b8a97 7
+CHANGELOG.md
+  s_15929f54bfa054::t_9f833c932df6d3 11-22
+AGENT_COMPATIBILITY.md
+  s_15929f54bfa054::t_ccd5674f9ba72e 7-16,18-27,33,35-40,57,60,62-63,85-91
+  s_15929f54bfa054::t_fd410895c48074 17
+uv.lock
+  ai_agent 1139
+README.en.md
+  s_15929f54bfa054::t_01b3d104b0d29b 77
+src/maru_deep_pro_search/utils/cache.py
+  s_15929f54bfa054::t_ecd5adfac72d46 97-101
+src/maru_deep_pro_search/tools.py
+  s_15929f54bfa054::t_9de7c0d4d32962 206
+  s_15929f54bfa054::t_4c43fb087954f5 19
+pyproject.toml
+  s_15929f54bfa054::t_db0dcb4186ea19 3
+ROADMAP.md
+  s_15929f54bfa054::t_6aaa750eb12651 5,13,16,18,20-21,26,30,32-34,56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "26036ec09ef320e310d9deef2601164f4296d9a4",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
