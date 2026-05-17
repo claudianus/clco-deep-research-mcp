@@ -125,8 +125,6 @@ class DuckDuckGoEngine(SearchEngine):
         scrapling_logger = logging.getLogger("scrapling")
         if not any(isinstance(f, _SuppressScraplingNoise) for f in scrapling_logger.filters):
             scrapling_logger.addFilter(_SuppressScraplingNoise())
-        if scrapling_logger.level > logging.WARNING:
-            scrapling_logger.setLevel(logging.WARNING)
 
     async def close(self) -> None:
         """Close any open sessions to free resources.

@@ -170,11 +170,12 @@ def _write_cursor_command(path: Path, name: str, description: str, prompt: str) 
     import json as _json
 
     cmd = {"name": name, "description": description, "prompt": prompt}
-    existing_prompt: str | None = None
+    serialized = _json.dumps(cmd, indent=2) + "\n"
+    existing: str | None = None
     if path.exists():
         try:
-            existing_prompt = _json.loads(path.read_text(encoding="utf-8")).get("prompt")
-        except (_json.JSONDecodeError, OSError, UnicodeDecodeError):
-            existing_prompt = None
-    if existing_prompt != prompt:
-        path.write_text(_json.dumps(cmd, indent=2) + "\n", encoding="utf-8")
+            existing = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            existing = None
+    if existing != serialized:
+        path.write_text(serialized, encoding="utf-8")

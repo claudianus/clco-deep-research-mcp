@@ -165,15 +165,9 @@ def register(ctx) -> None:
         SESSION_FILE.write_text(json.dumps(data, indent=2))
 
     def _dispatch_succeeded(result: object) -> bool:
-        if not isinstance(result, str) or not result.strip():
-            return False
-        head = result[:500].lower()
-        failure_markers = (
-            "## [query rejected]",
-            "## [blocked]",
-            "error executing tool",
-        )
-        return not any(marker in head for marker in failure_markers)
+        from maru_deep_pro_search.utils.tool_result import is_successful_tool_result
+
+        return is_successful_tool_result(result)
 
     # ── Slash command: /ask ─────────────────────────────────────────
     def cmd_ask(query: str = "") -> str:

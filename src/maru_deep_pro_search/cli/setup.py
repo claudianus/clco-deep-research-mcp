@@ -64,7 +64,7 @@ ADAPTER_REGISTRY = {
 
 
 _SENTENCE_TRANSFORMERS_SPEC = "sentence-transformers>=3.0.0"
-_SENTENCE_TRANSFORMERS_PIP = f"'{_SENTENCE_TRANSFORMERS_SPEC}'"
+_SENTENCE_TRANSFORMERS_PIP = f'"{_SENTENCE_TRANSFORMERS_SPEC}"'
 
 
 def _pip_install_sentence_transformers() -> tuple[bool, str]:
