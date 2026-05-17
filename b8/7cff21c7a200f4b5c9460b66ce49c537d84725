@@ -1,0 +1,29 @@
+AGENTS.md
+  s_15929f54bfa054::t_7b790af3b0834f 125-127,135,142,146
+README.md
+  s_15929f54bfa054::t_f94cc770baff13 211
+src/maru_deep_pro_search/utils/updater.py
+  s_15929f54bfa054::t_226e1417d459fd 129
+README.en.md
+  s_15929f54bfa054::t_25cda039982e15 208
+src/maru_deep_pro_search/cli/setup.py
+  s_15929f54bfa054::t_25e723845b9921 376-377
+src/maru_deep_pro_search/cli/update_cmd.py
+  s_15929f54bfa054::t_b43bca8138e3bd 59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.8",
+  "base_commit_sha": "b87cff21c7a200f4b5c9460b66ce49c537d84725",
+  "prompts": {},
+  "sessions": {
+    "s_15929f54bfa054": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "36ef6e70-4837-46d2-a0c1-50b0bc3b675a",
+        "model": "default"
+      },
+      "human_author": "ryan.h.park <claudianus@engineer.com>"
+    }
+  }
+}
