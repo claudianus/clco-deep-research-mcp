@@ -167,8 +167,15 @@ class CursorAdapter(AgentAdapter):
 
 def _write_cursor_command(path: Path, name: str, description: str, prompt: str) -> None:
     """Write a Cursor custom slash command definition."""
-    cmd = {"name": name, "description": description, "prompt": prompt}
     import json as _json
 
-    if not path.exists() or _json.loads(path.read_text()).get("prompt") != prompt:
-        path.write_text(_json.dumps(cmd, indent=2) + "\n")
+    cmd = {"name": name, "description": description, "prompt": prompt}
+    serialized = _json.dumps(cmd, indent=2) + "\n"
+    existing: str | None = None
+    if path.exists():
+        try:
+            existing = path.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            existing = None
+    if existing != serialized:
+        path.write_text(serialized, encoding="utf-8")

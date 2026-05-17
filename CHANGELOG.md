@@ -8,6 +8,12 @@
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-05-17
+
+### Fixed
+- **cubic PR #89** — Hermes 게이트: 툴 실패 시 `_mark_research` 생략; `query_gate` freshness 대소문자·한국어 filler; `enforcer` 미분류 툴 fail-closed; `server` `[BLOCKED]` 휴리스틱 축소; `answer` fetch 예산·`max_tokens` 정합; `setup` pip 따옴표; Cursor/Claude command 갱신·JSON 폴백; DuckDuckGo scrapling 필터만 인스턴스화.
+- **cubic PR #90** — `tool_result.is_successful_tool_result` 공유; Hermes BLOCKED 응답 감지; README `0.16.1` 예시.
+
 ## [0.16.0] - 2026-05-17
 
 ### Added

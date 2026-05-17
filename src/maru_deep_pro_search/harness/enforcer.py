@@ -240,16 +240,17 @@ class SessionEnforcer:
         if tool_name in self.RESEARCH_EXEMPT_TOOLS:
             return state
 
-        if tool_name not in self.FRESH_RESEARCH_REQUIRED_TOOLS:
+        if tool_name in self.FRESH_RESEARCH_REQUIRED_TOOLS:
+            if not state.research_done:
+                raise ResearchRequiredError(tool_name)
+            if not state.is_fresh:
+                raise ResearchRequiredError(
+                    f"{tool_name} (research expired after 30min — run deep_research again)"
+                )
             return state
 
         if not state.research_done:
             raise ResearchRequiredError(tool_name)
-
-        if not state.is_fresh:
-            raise ResearchRequiredError(
-                f"{tool_name} (research expired after 30min — run deep_research again)"
-            )
 
         return state
 

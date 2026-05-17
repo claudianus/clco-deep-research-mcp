@@ -64,6 +64,7 @@ ADAPTER_REGISTRY = {
 
 
 _SENTENCE_TRANSFORMERS_SPEC = "sentence-transformers>=3.0.0"
+_SENTENCE_TRANSFORMERS_PIP = f'"{_SENTENCE_TRANSFORMERS_SPEC}"'
 
 
 def _pip_install_sentence_transformers() -> tuple[bool, str]:
@@ -193,9 +194,9 @@ def cmd_setup(args: argparse.Namespace) -> int:
             if detail:
                 print(f"     {detail}")
             print(
-                f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_SPEC}')}"
+                f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_PIP}')}"
             )
-            print(f"     또는: {bold(f'uv pip install --system {_SENTENCE_TRANSFORMERS_SPEC}')}")
+            print(f"     또는: {bold(f'uv pip install --system {_SENTENCE_TRANSFORMERS_PIP}')}")
             print(
                 "     PyPI 패키지는 Python 3.10+ 필요: "
                 + bold("python3.12 -m pip install 'maru-deep-pro-search[semantic]'")
@@ -204,7 +205,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         print(f"\n  {yellow('!')} semantic search 미설치 — 기본 설정에서는 자동 설치하지 않음")
         print(f"     필요하면: {bold('MARU_ENABLE_SEMANTIC_INSTALL=1 maru-deep-pro-search setup')}")
         print(
-            f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_SPEC}')}"
+            f"     수동: {bold(f'{sys.executable} -m pip install --user {_SENTENCE_TRANSFORMERS_PIP}')}"
         )
 
     print(f"\n{green('✅ 완료!')} 에이전트를 재시작하면 적용됩니다.")

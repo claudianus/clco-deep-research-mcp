@@ -74,7 +74,7 @@ The setup wizard auto-detects your AI agent, backs up existing configs, injects 
 ### 1. Verify installation
 ```bash
 maru-deep-pro-search --version
-# Expected: 0.15.1
+# Expected: 0.16.1
 ```
 
 ### 2. Set up your agent
@@ -97,9 +97,7 @@ Add to your `~/.claude/settings.json`:
 ```
 
 ### 4. First research
-Ask your agent: *"Research FastAPI vs Django 2025 and tell me which to choose."*
-
-The agent will automatically call `deep_research()` first, then synthesize an answer with real citations.
+Ask your agent: *"Latest used Galaxy phone prices"* for `answer()`, or *"Research FastAPI vs Django 2025 architecture"* for `deep_research()` — then the agent synthesizes with real citations.
 
 ### 5. Project harness (local data only)
 
@@ -245,7 +243,7 @@ MCP Client (Claude, Cursor, Kimi, Windsurf, ...)
 
 ### 3-Layer Enforcement
 
-1. **MCP Prompt Injection** — `always_research_first()` prompt forces `deep_research` before any tool call
+1. **MCP Prompt Injection** — `always_research_first()` routes general questions to `answer` and coding/security work to `deep_research`
 2. **Session Gate** — `generate_code()` blocks code generation if no research was done in the session
 3. **Agent Rules** — `setup` injects the protocol into **global** per-agent config paths (home, etc.); the official CLI does not write agent dotfiles under the repo root.
 

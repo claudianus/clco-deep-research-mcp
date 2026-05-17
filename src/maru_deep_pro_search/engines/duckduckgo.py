@@ -31,10 +31,6 @@ class _SuppressScraplingNoise(logging.Filter):
         return "This logic is deprecated" not in record.getMessage()
 
 
-logging.getLogger("scrapling").addFilter(_SuppressScraplingNoise())
-logging.getLogger("scrapling").setLevel(logging.WARNING)
-
-
 # Multiple selector sets for fault tolerance
 _SERP_SELECTORS = {
     "duckduckgo": {
@@ -126,6 +122,9 @@ class DuckDuckGoEngine(SearchEngine):
         self.variant = variant
         self._session: Any = None
         self._stealth_session: Any = None
+        scrapling_logger = logging.getLogger("scrapling")
+        if not any(isinstance(f, _SuppressScraplingNoise) for f in scrapling_logger.filters):
+            scrapling_logger.addFilter(_SuppressScraplingNoise())
 
     async def close(self) -> None:
         """Close any open sessions to free resources.

@@ -233,16 +233,9 @@ def _tool_query(name: str, args: tuple, kwargs: dict) -> str:
 
 
 def _is_research_result(result: object) -> bool:
-    if not isinstance(result, str) or not result.strip():
-        return False
-    head = result[:500].lower()
-    failure_markers = (
-        "## [query rejected]",
-        "## [blocked]",
-        "error executing tool",
-        "[blocked]",
-    )
-    return not any(marker in head for marker in failure_markers)
+    from .utils.tool_result import is_successful_tool_result
+
+    return is_successful_tool_result(result)
 
 
 def _with_enforcement(tool_name: str | None = None):
