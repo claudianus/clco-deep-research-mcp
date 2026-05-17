@@ -56,7 +56,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     print(f"  설치됨: {cyan(result.current_version)}")
-    print(f"  PyPI 최신: {cyan(result.latest_version or 'unknown')}")
+    print(f"  PyPI 최신: {cyan(result.latest_version or '알 수 없음')}")
 
     if not result.update_available:
         print(f"\n{green('✅')} 최신 버전입니다.")

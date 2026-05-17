@@ -126,7 +126,7 @@ def get_update_notice(result: UpdateCheckResult) -> str | None:
         f"│     Latest:    {result.latest_version}\n"
         f"│\n"
         f"│  Run:  maru-deep-pro-search update --with-setup\n"
-        f"│     or  pip install -U {PACKAGE_NAME} && setup --repair\n"
+        f"│     or  pip install -U {PACKAGE_NAME} && {PACKAGE_NAME} setup --repair\n"
         f"└─────────────────────────────────────────────────────────────┘\n"
     )
 

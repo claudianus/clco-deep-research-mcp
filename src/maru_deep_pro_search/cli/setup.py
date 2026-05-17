@@ -373,7 +373,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog=prog,
         description=(
-            "maru-deep-pro-search 설정 — MCP·리서치 우선 규칙을 20개 에이전트 전역 경로에 주입합니다."
+            f"maru-deep-pro-search 설정 — MCP·리서치 우선 규칙을 "
+            f"{len(ADAPTER_REGISTRY)}개 에이전트 전역 경로에 주입합니다."
         ),
         epilog=(
             "예시:\n"

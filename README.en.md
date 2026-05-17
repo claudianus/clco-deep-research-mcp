@@ -205,7 +205,7 @@ The tables below are **advanced / diagnostics**. Most work is the three tools ab
 User request?
 ├── General web question / latest price / recommendation? → answer(query, mode="balanced")
 ├── Code / security / architecture / deep research? → deep_research(query, auto_fetch=3)
-│   └── default max_sources=10; raise max_sources only if you need more
+│   ├── default max_sources=10; raise max_sources only if you need more
     ├── Multiple angles? → parallel_search
     ├── Specific URLs? → fetch_page / fetch_bulk
     ├── Blocked site? → stealthy_fetch (last resort)

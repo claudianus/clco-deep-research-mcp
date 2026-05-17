@@ -208,7 +208,7 @@ maru-deep-pro-search-init
 사용자 요청?
 ├── 일반 웹 질문 / 최신 시세 / 추천? → answer(query, mode="balanced")
 ├── 코드 / 보안 / 아키텍처 / 깊은 조사? → deep_research(query, auto_fetch=3)
-│   └── 기본 max_sources=10; 더 필요하면 max_sources만 올리기
+│   ├── 기본 max_sources=10; 더 필요하면 max_sources만 올리기
     ├── 다각도 분석? → parallel_search
     ├── 특정 URL 읽기? → fetch_page / fetch_bulk
     ├── 사이트 차단? → stealthy_fetch (최후 수단)
