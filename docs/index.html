@@ -75,6 +75,26 @@ body { font-family: 'Inter', 'Noto Sans KR', sans-serif; background: #030712; co
 .glass-card:hover { transform: translateY(-4px); border-color: rgba(20,184,166,0.3); box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 20px rgba(20,184,166,0.1); }
 .gradient-text { background: linear-gradient(135deg, #2dd4bf, #0ea5e9, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 .code-block { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; overflow: hidden; }
+/* 설치 코드 블록: 긴 URL 줄바꿈 + 얇은 커스텀 가로 스크롤바 */
+.code-block pre {
+  overflow-x: auto;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.45) rgba(13, 17, 23, 0.6);
+}
+.code-block pre::-webkit-scrollbar { height: 5px; }
+.code-block pre::-webkit-scrollbar-track {
+  background: rgba(13, 17, 23, 0.6);
+  border-radius: 0 0 12px 12px;
+}
+.code-block pre::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45);
+  border-radius: 999px;
+}
+.code-block pre::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.55);
+}
 .scroll-reveal { opacity: 0; transform: translateY(40px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
 .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
 .typing-cursor::after { content: '|'; animation: blink 1s step-end infinite; }
